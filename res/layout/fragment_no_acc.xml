@@ -12,7 +12,7 @@
         android:text="@string/noaccount" />
 
     <EditText
-        android:id="@+id/editText1"
+        android:id="@+id/username"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -22,15 +22,22 @@
     </EditText>
 
     <EditText
-        android:id="@+id/editText2"
+        android:id="@+id/password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/password"
         android:inputType="textPassword" />
+    
+    <Spinner
+        android:id="@+id/uniSelect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:prompt="@string/universe" />
 
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/login" />

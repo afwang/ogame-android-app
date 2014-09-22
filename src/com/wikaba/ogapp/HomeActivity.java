@@ -1,8 +1,9 @@
-package com.wikaba.lolcomp.ogameapp;
+package com.wikaba.ogapp;
 
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,15 +13,24 @@ import android.view.ViewGroup;
 import android.os.Build;
 
 public class HomeActivity extends ActionBarActivity {
+	static final String DEFAULT_ACC = "default_account";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-		//TODO: Check if there exists an account in our database.
-		//If yes -> load the last account stored.
-		//If no -> Throw up an error message.
-		
+
+		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+		long accIdToLoad = prefs.getLong(DEFAULT_ACC, -1);
+		if(accIdToLoad < 0) {
+			//TODO: Check if there is an account in database. If there is, load the
+			//first one returned by cursor. If no account in database, load the no-acc
+			//fragment
+			if(savedInstanceState == null) {
+				getSupportFragmentManager().beginTransaction()
+				.add(new NoAccountFragment(), null).commit();
+			}
+		}
 	}
 
 	@Override

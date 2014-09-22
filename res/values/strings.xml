@@ -9,6 +9,7 @@
     <string name="noaccount">No account stored. Log in below.</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="universe">Select account\'s universe</string>
     <string name="login">Login</string>
 
 </resources>
