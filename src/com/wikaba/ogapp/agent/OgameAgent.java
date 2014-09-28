@@ -55,13 +55,20 @@ public class OgameAgent {
 	public Object login(String universe, String username, String password) {
 		final int timeoutMillis = 30 * 1000;
 		HttpURLConnection connection = null;
-		
+		URI theUri;
+		Collection<HttpCookie> cookies;
+		StringBuilder cookieHeaderBuilder;
+		boolean cookieAddedYet = false;
+		boolean hasCookies = false;
+		String cookieHeaderStr;
+		int response;
 		StringBuilder buffer = new StringBuilder();
 		
+		/*
+		 * FIRST REQUEST
+		 */
+		System.out.println("START FIRST REQUEST (login)");
 		String uri = LOGIN_URL;
-		boolean isFirstRequest = true;
-		boolean locationToFollow = true;
-		
 		String parameters;
 		try {
 			parameters = "kid=&uni=" + URLEncoder.encode(universe, "UTF-8") + "&login=" + URLEncoder.encode(username, "UTF-8") + "&pass=" + URLEncoder.encode(password, "UTF-8");
@@ -71,128 +78,266 @@ public class OgameAgent {
 			return null;
 		}
 		String length = Integer.toString(parameters.length());
-		
-		while(locationToFollow) {
-			locationToFollow = false;
-			try {
-				connection = (HttpURLConnection)(new URL(uri)).openConnection();
-				URI theUri = new URI(uri);
-				connection.setConnectTimeout(timeoutMillis);
-				connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-				//Set cookies.
-				boolean hasCookies = false;
-				boolean cookieAddedYet = false;
-				Collection<HttpCookie> cookies = cookieStore.values();
-				StringBuilder cookieHeaderBuilder = new StringBuilder();
-				Iterator<HttpCookie> cookieIter = cookies.iterator();
-				while(cookieIter.hasNext()) {
-					HttpCookie cookie = cookieIter.next();
-					String locationDomain = theUri.getAuthority();
-					String cookieDomain = cookie.getDomain();
-					String locationPath = theUri.getPath();
-					String cookiePath = cookie.getPath();
-					
-					/* add the cookie to the list to be sent only if the URI authority (the domain)
-					 * contains the cookie's domain.
-					 */
-					if(cookieDomain != null && !locationDomain.equals(cookieDomain) && cookieDomain.length() > 0 && cookieDomain.charAt(0) != '.') {
-						cookieDomain = '.' + cookieDomain;
-					}
-					if(locationDomain.contains(cookieDomain) && locationPath.contains(cookiePath)) {
-						if(cookieAddedYet == true) {
-							cookieHeaderBuilder.append(',');
-						}
-						cookieHeaderBuilder.append(cookie.getName())
-						.append('=')
-						.append(cookie.getValue());
-						cookieAddedYet = true;
-						hasCookies = true;
+		try {
+			connection = (HttpURLConnection)(new URL(uri)).openConnection();
+			theUri = new URI(uri);
+			connection.setConnectTimeout(timeoutMillis);
+			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			//No cookies to set on the first HTTP request
+			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+			connection.setRequestProperty("Content-Length", length);
+			connection.setDoOutput(true);
+			connection.setRequestMethod("POST");
+			Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+			System.out.println(parameters);
+			writer.write(parameters);
+			writer.flush();
+			writer.close();
+			
+			connection.setInstanceFollowRedirects(false);
+			response = connection.getResponseCode();
+			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+				System.out.println("Everything went okay! Response " + response);
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				System.out.println("Response headers:");
+				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+				for(Map.Entry<String, List<String>> mapping : entrySet) {
+					List<String> values = mapping.getValue();
+					for(String val : values) {
+						System.out.println(mapping.getKey() + ": " + val);
 					}
 				}
-				String cookieHeaderStr = cookieHeaderBuilder.toString();
-				if(hasCookies)
-					connection.setRequestProperty("Cookie", cookieHeaderStr);
-				
-				connection.setInstanceFollowRedirects(false);
-				
-				if(isFirstRequest) {
-					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-					connection.setRequestProperty("Content-Length", length);
-					connection.setDoOutput(true);
-					connection.setRequestMethod("POST");
-					Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-					System.out.println(parameters);
-					writer.write(parameters);
-					writer.flush();
-					writer.close();
-					isFirstRequest = false;
-				}
-				else {
-					connection.setRequestMethod("GET");
+				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
+				for(String cookieHeader : cookieHeaders) {
+					System.out.println(cookieHeader);
+					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
+					for(HttpCookie cookie : cookiesList) {
+						cookieStore.put(cookie.getName(), cookie);
+					}
 				}
 				
-				connection.connect();
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+					System.out.println("Redirected to: " + uri);
+				}
 				
-				int response = connection.getResponseCode();
-				if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
-					System.out.println("Everything went okay!");
-					
-					Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-					List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
-					for(String cookieHeader : cookieHeaders) {
-						System.out.println(cookieHeader);
-						List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
-						for(HttpCookie cookie : cookiesList) {
-							cookieStore.put(cookie.getName(), cookie);
-						}
-					}
-					
-					BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-					String line;
-					while((line = reader.readLine()) != null) {
-						buffer.append(line);
-						buffer.append('\n');
-					}
-					reader.close();
-					
-					List<String> locationHeader = responseHeaders.get("Location");
-					if(locationHeader != null && locationHeader.size() > 0) {
-						uri = locationHeader.get(0);
-						locationToFollow = true;
-					}
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while((line = reader.readLine()) != null) {
+					System.out.println(line);
 				}
-				else {
-					System.err.println("Something went wrong!");
-					BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-					String line;
-					while((line = errReader.readLine()) != null) {
-						buffer.append(line);
-						buffer.append('\n');
-					}
-					errReader.close();
+				reader.close();
+			}
+			else {
+				System.err.println("Something went wrong!");
+				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				String line;
+				while((line = errReader.readLine()) != null) {
+					buffer.append(line);
+					buffer.append('\n');
 				}
+				errReader.close();
 			}
-			catch(MalformedURLException e) {
-				System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
-				e.printStackTrace();
-			}
-			catch(IOException e) {
-				System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
-				e.printStackTrace();
-			}
-			catch (URISyntaxException e) {
-				System.err.println("URI error: " + e + '\n' + e.getMessage());
-				e.printStackTrace();
-			}
-			catch(Exception e) {
-				System.err.println("What went wrong: " + e + '\n' + e.getMessage());
-				e.printStackTrace();
-			}
-			finally {
-				if(connection != null) {
-					connection.disconnect();
+			connection.disconnect();
+			System.out.println("END FIRST REQUEST (login)");
+			
+			/*
+			 * SECOND REQUEST
+			 */
+			System.out.println("START SECOND REQUEST");
+			connection = (HttpURLConnection)(new URL(uri)).openConnection();
+			theUri = new URI(uri);
+			connection.setConnectTimeout(timeoutMillis);
+			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			connection.setDoOutput(false);
+			connection.setRequestMethod("GET");
+			connection.setInstanceFollowRedirects(false);
+			
+			cookies = cookieStore.values();
+			cookieHeaderBuilder = new StringBuilder();
+			cookieAddedYet = false;
+			hasCookies = false;
+			for(HttpCookie cookie : cookies) {
+				String locationDomain = theUri.getAuthority();
+				String cookieDomain = cookie.getDomain();
+				String locationPath = theUri.getPath();
+				String cookiePath = cookie.getPath();
+				
+				/* add the cookie to the list to be sent only if the URI authority (the domain)
+				 * contains the cookie's domain.
+				 */
+				if(cookieDomain != null && !locationDomain.equals(cookieDomain) && cookieDomain.length() > 0 && cookieDomain.charAt(0) != '.') {
+					cookieDomain = '.' + cookieDomain;
+				}
+				if(locationDomain.contains(cookieDomain) && locationPath.contains(cookiePath)) {
+					if(cookieAddedYet) {
+						cookieHeaderBuilder.append(',');
+					}
+					cookieHeaderBuilder.append(cookie.toString());
+					cookieAddedYet = true;
+					hasCookies = true;
 				}
 			}
+			cookieHeaderStr = cookieHeaderBuilder.toString();
+			if(hasCookies)
+				connection.setRequestProperty("Cookie", cookieHeaderStr);
+			
+			connection.connect();
+			
+			response = connection.getResponseCode();
+			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+				System.out.println("Everything went okay! Response " + response);
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				System.out.println("Response headers:");
+				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+				for(Map.Entry<String, List<String>> mapping : entrySet) {
+					List<String> values = mapping.getValue();
+					for(String val : values) {
+						System.out.println(mapping.getKey() + ": " + val);
+					}
+				}
+				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
+				for(String cookieHeader : cookieHeaders) {
+					System.out.println(cookieHeader);
+					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
+					for(HttpCookie cookie : cookiesList) {
+						cookieStore.put(cookie.getName(), cookie);
+					}
+				}
+				
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+					System.out.println("Redirected to: " + uri);
+				}
+				
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while((line = reader.readLine()) != null) {
+					System.out.println(line);
+				}
+				reader.close();
+			}
+			else {
+				System.err.println("Something went wrong!");
+				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				String line;
+				while((line = errReader.readLine()) != null) {
+					buffer.append(line);
+					buffer.append('\n');
+				}
+				errReader.close();
+			}
+			connection.disconnect();
+			System.out.println("END SECOND REQUEST");
+			
+			/*
+			 * THIRD REQUEST (final request)
+			 */
+			System.out.println("START THIRD REQUEST");
+			connection = (HttpURLConnection)(new URL(uri)).openConnection();
+			theUri = new URI(uri);
+			connection.setConnectTimeout(timeoutMillis);
+			connection.setRequestProperty("Host", theUri.getAuthority());
+			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+			connection.setDoOutput(false);
+			connection.setDoInput(true);
+			connection.setRequestMethod("GET");
+			connection.setInstanceFollowRedirects(false);
+			
+			cookies = cookieStore.values();
+			cookieHeaderBuilder = new StringBuilder();
+			cookieAddedYet = false;
+			hasCookies = false;
+			for(HttpCookie cookie : cookies) {
+				String locationDomain = theUri.getAuthority();
+				String cookieDomain = cookie.getDomain();
+				String locationPath = theUri.getPath();
+				String cookiePath = cookie.getPath();
+				
+				/* add the cookie to the list to be sent only if the URI authority (the domain)
+				 * contains the cookie's domain.
+				 */
+				if(cookieDomain != null && !locationDomain.equals(cookieDomain) && cookieDomain.length() > 0 && cookieDomain.charAt(0) != '.') {
+					cookieDomain = '.' + cookieDomain;
+				}
+				if(locationDomain.contains(cookieDomain) && locationPath.contains(cookiePath)) {
+					if(cookieAddedYet) {
+						cookieHeaderBuilder.append(';');
+					}
+					cookieHeaderBuilder.append(cookie.toString());
+					
+					System.out.println("Cookie added: " + cookie.toString());
+					cookieAddedYet = true;
+					hasCookies = true;
+				}
+			}
+			cookieHeaderStr = cookieHeaderBuilder.toString();
+			if(hasCookies)
+				connection.setRequestProperty("Cookie", cookieHeaderStr);
+			
+			connection.connect();
+			
+			response = connection.getResponseCode();
+			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+				System.out.println("Everything went okay! Response " + response);
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				System.out.println("Response headers:");
+				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+				for(Map.Entry<String, List<String>> mapping : entrySet) {
+					List<String> values = mapping.getValue();
+					for(String val : values) {
+						System.out.println(mapping.getKey() + ": " + val);
+					}
+				}
+				
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while((line = reader.readLine()) != null) {
+					buffer.append(line);
+					buffer.append('\n');
+				}
+				reader.close();
+				
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+					System.out.println("Redirected to: " + uri);
+				}
+			}
+			else {
+				System.err.println("Something went wrong!");
+				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				String line;
+				while((line = errReader.readLine()) != null) {
+					buffer.append(line);
+					buffer.append('\n');
+				}
+				errReader.close();
+			}
+			connection.disconnect();
+			System.out.println("END THIRD REQUEST");
+		}
+		catch(MalformedURLException e) {
+			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		catch(IOException e) {
+			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		catch (URISyntaxException e) {
+			System.err.println("URI error: " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		catch(Exception e) {
+			System.err.println("What went wrong: " + e + '\n' + e.getMessage());
+			e.printStackTrace();
 		}
 			
 		return buffer;
