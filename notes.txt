@@ -1,0 +1,28 @@
+The time of arrival for events is printed in the HTML file. Fortunately,
+Javascript is not needed to receive the arrival times (only needed by browser
+to make the dynamic countdown timer).
+See line 562 of the Overview page source for an example of how the arrival time is listed.
+
+The event details are encoded in HTML as attribute name-value pairs in
+the <tr...> tags. See line 571 of the Overview page sourcefor an example.
+All fleet events are have a class attribute set as "eventFleet." It is unknown
+if this is also the case for missile launches.
+
+After pull parsing reaches to the <tr class="eventFleet"> line, we can parse
+for the following items in the following order:
+	1. a <td...> element with attribute class="originFleet". This line tells us the
+	   origin planet's name.
+	2. a <td...> element with attribute class="coordsOrigin". This line tells us the
+	   origin planet's coordinates.
+	3. a <td...> element with attribute class="icon_movement".
+		1. Then pull in a
+		   <scan... with class="tooltip tooltipRight tooltipClose". The title
+		   attribute of this scan tag contains all the details about the fleet in
+		   this event.
+	4. a <td...> element with attribute class="destFleet". This line tells us the
+	   destination planet's name.
+	5. a <td...> element with attribute class="destCoords". This line tells us the
+	   destination planet's coordinates.
+	   
+We repeat the above steps for each <tr class="eventFleet"> we find, and we can
+build a list of events to return.
