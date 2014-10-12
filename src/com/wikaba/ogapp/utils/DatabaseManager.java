@@ -24,7 +24,7 @@ public class DatabaseManager implements Closeable {
 		database = null;
 	}
 	
-	public boolean addAccount(String universe, String username, String passwd) {
+	public long addAccount(String universe, String username, String passwd) {
 		if(database == null) {
 			open();
 		}
@@ -54,7 +54,7 @@ public class DatabaseManager implements Closeable {
 		cv.put(AccountsContract.USERNAME, username);
 		cv.put(AccountsContract.PASSWORD, passwd);
 		long id = database.insert(AccountsContract.ACCOUNTS_TABLE, null, cv);
-		return id >= 0;
+		return id;
 	}
 	
 	public boolean removeAccount(String universe, String username) {
@@ -115,6 +115,11 @@ public class DatabaseManager implements Closeable {
 				+ AccountsContract.UNIVERSE + " text, "
 				+ AccountsContract.USERNAME + " text, "
 				+ AccountsContract.PASSWORD + " text);";
+//				+ AccountsContract.PHPSESSID_VALUE + " text DEFAULT \"\", "
+//				+ AccountsContract.LOGIN_COOKIE_NAME + " text, "
+//				+ AccountsContract.LOGIN_COOKIE_VALUE + " text, "
+//				+ AccountsContract.PRSESS_COOKIE_NAME + " text, "
+//				+ AccountsContract.PRSESS_COOKIE_VALUE + " text);";
 		
 		public DBHelper(Context ctx, String name, int version) {
 			super(ctx, DB_NAME, null, VERSION);
@@ -137,4 +142,11 @@ class AccountsContract {
 	static final String UNIVERSE = "universe";
 	static final String USERNAME = "username";
 	static final String PASSWORD = "password";
+	
+	//Cookie-related column names:
+	static final String PHPSESSID_VALUE = "PHPSESSID";
+	static final String LOGIN_COOKIE_NAME = "login_cookie_name";
+	static final String LOGIN_COOKIE_VALUE = "login_cookie_value";
+	static final String PRSESS_COOKIE_NAME = "prsess_cookie_name";
+	static final String PRSESS_COOKIE_VALUE = "prsess_cookie_value";
 }

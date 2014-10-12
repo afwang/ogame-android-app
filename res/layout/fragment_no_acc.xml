@@ -5,12 +5,6 @@
     android:orientation="vertical"
     android:gravity="center_horizontal" >
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/noaccount" />
-
     <EditText
         android:id="@+id/username"
         android:layout_width="match_parent"

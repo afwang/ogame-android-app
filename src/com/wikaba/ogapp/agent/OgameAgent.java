@@ -462,8 +462,8 @@ public class OgameAgent {
 	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
 	 * 		is returned. Otherwise, null is returned.
 	 */
-	public Object getOverviewData() {
-		Object overviewData = null;
+	public List<FleetEvent> getOverviewData() {
+		List<FleetEvent> overviewData = null;
 		
 		HttpURLConnection conn = null;
 		String connectionUriStr = serverUri + OVERVIEW_ENDPOINT;
@@ -813,12 +813,113 @@ public class OgameAgent {
 			subxpp = XmlPullParserFactory.newInstance().newPullParser();
 			subxpp.setInput(strReader);
 			
-			//TODO: Actually parse through the HTML and add the data to fleetResData
+			boolean parsingShips = false;
+			boolean parsingRes = false;
+			String currentShip = null;
+			String currentRes = null;
 			
-			subxpp.setInput(null);
-			strReader.close();
+			while(subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+				if(subxpp.getEventType() == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					textData = textData.replaceAll(":", "");
+					if(textData.equals("Ships")) {
+						parsingShips = true;
+						break;
+					}
+				}
+				subxpp.next();
+			}
 			
-		} catch (XmlPullParserException e) {
+			while(parsingShips && subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				if(subxpp.getEventType() == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if(textData.equals("Small Cargo:")) {
+						currentShip = FleetAndResources.SC;
+					}
+					else if(textData.equals("Large Cargo:")) {
+						currentShip = FleetAndResources.LC;
+					}
+					else if(textData.equals("Colony Ship:")) {
+						currentShip = FleetAndResources.COLONY;
+					}
+					else if(textData.equals("Light Fighter:")) {
+						currentShip = FleetAndResources.LF;
+					}
+					else if(textData.equals("Heavy Fighter:")) {
+						currentShip = FleetAndResources.HF;
+					}
+					else if(textData.equals("Cruiser:")) {
+						currentShip = FleetAndResources.CR;
+					}
+					else if(textData.equals("Battleship:")) {
+						currentShip = FleetAndResources.BS;
+					}
+					else if(textData.equals("Battlecruiser:")) {
+						currentShip = FleetAndResources.BC;
+					}
+					else if(textData.equals("Bomber:")) {
+						currentShip = FleetAndResources.BB;
+					}
+					else if(textData.equals("Destroyer:")) {
+						currentShip = FleetAndResources.DS;
+					}
+					else if(textData.equals("Deathstar:")) {
+						currentShip = FleetAndResources.RIP;
+					}
+					else if(textData.equals("Recycler:")) {
+						currentShip = FleetAndResources.RC;
+					}
+					else if(textData.equals("Espionage Probe:")) {
+						currentShip = FleetAndResources.EP;
+					}
+					else if(textData.equals("Shipment:")) {
+						currentShip = null;
+						parsingShips = false;
+						parsingRes = true;
+						break;
+					}
+					
+					while(subxpp.next() != XmlPullParser.TEXT);
+
+					String numshipstr = subxpp.getText();
+					Long numships = Long.valueOf(numshipstr);
+					
+					if(currentShip != null && currentShip.length() > 0)
+						fleetResData.put(currentShip, numships);
+				}
+			}
+			
+			while(parsingRes && subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				if(subxpp.getEventType() == subxpp.TEXT) {
+					String resType = subxpp.getText();
+					if(resType.equals("Metal:")) {
+						currentRes = FleetAndResources.METAL;
+					}
+					else if(resType.equals("Crystal:")) {
+						currentRes = FleetAndResources.CRYSTAL;
+					}
+					else if(resType.equals("Deuterium:")) {
+						currentRes = FleetAndResources.DEUT;
+					}
+					else
+						continue;
+					
+					while(subxpp.next() != XmlPullParser.TEXT);
+					
+					String amount = subxpp.getText();
+					amount.replaceAll("\\.", "");
+					Long resAmount = Long.valueOf(amount);
+					fleetResData.put(currentRes, resAmount);
+				}
+			}
+		}
+		catch (XmlPullParserException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		catch(IOException e) {
 			System.err.println(e.toString() + '\n' + e.getMessage());
 			e.printStackTrace();
 		}

@@ -14,7 +14,8 @@ public class FleetAndResources {
 	public static final String COLONY = "colony ship";
 	public static final String BC = "battlecruiser";
 	public static final String BB = "bomber";
-	public static final String DS = "deathstar";
+	public static final String DS = "destroyer";
+	public static final String RIP = "deathstar";
 	public static final String RC = "recycler";
 	public static final String EP = "espionage probe";
 	public static final String SS = "solar satellite";

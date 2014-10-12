@@ -1,5 +1,7 @@
 package com.wikaba.ogapp;
 
+import com.wikaba.ogapp.utils.DatabaseManager;
+
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -10,10 +12,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 import android.os.Build;
 
 public class HomeActivity extends ActionBarActivity {
 	static final String DEFAULT_ACC = "default_account";
+	boolean mAccountSelected;
+	long accountRowId;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -21,15 +26,19 @@ public class HomeActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_home);
 
 		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
-		long accIdToLoad = prefs.getLong(DEFAULT_ACC, -1);
-		if(accIdToLoad < 0) {
+		accountRowId = prefs.getLong(DEFAULT_ACC, -1);
+		if(accountRowId < 0) {
 			//TODO: Check if there is an account in database. If there is, load the
 			//first one returned by cursor. If no account in database, load the no-acc
 			//fragment
 			if(savedInstanceState == null) {
 				getSupportFragmentManager().beginTransaction()
-				.add(new NoAccountFragment(), null).commit();
+				.add(R.id.container, new NoAccountFragment()).commit();
 			}
+			mAccountSelected = false;
+		}
+		else {
+			mAccountSelected = true;
 		}
 	}
 
@@ -51,21 +60,27 @@ public class HomeActivity extends ActionBarActivity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
-	public static class PlaceholderFragment extends Fragment {
-
-		public PlaceholderFragment() {
+	
+	public void addAccount(String universe, String username, String password) {
+		DatabaseManager dbman = new DatabaseManager(this);
+		accountRowId = dbman.addAccount(universe, username, password);
+		dbman.close();
+		
+		if(accountRowId < 0) {
+			Toast.makeText(this, "There was a problem adding an account", Toast.LENGTH_LONG).show();
+			return;
 		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_overview,
-					container, false);
-			return rootView;
+		
+		if(!mAccountSelected) {
+			mAccountSelected = true;
+			
+			ContentFragment confrag = new ContentFragment();
+			Bundle fragargs = new Bundle();
+			fragargs.putLong(ContentFragment.ACC_ROWID, accountRowId);
+			confrag.setArguments(fragargs);
+			
+			getSupportFragmentManager().beginTransaction()
+			.replace(R.id.container, confrag).commit();
 		}
 	}
 }
