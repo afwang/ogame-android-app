@@ -10,6 +10,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class NoAccountFragment extends Fragment implements OnClickListener {
 	
@@ -43,6 +45,13 @@ public class NoAccountFragment extends Fragment implements OnClickListener {
 	public void onClick(View v) {
 		String username = usernameField.getText().toString();
 		String passwd = passwdField.getText().toString();
+		View selectedView = uniSpinner.getSelectedView();
+		if(selectedView == null) {
+			Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
+			return;
+		}
 		
+		TextView selectedText = (TextView)selectedView;
+		String universe = selectedText.getText().toString();
 	}
 }
