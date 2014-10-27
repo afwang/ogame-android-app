@@ -96,6 +96,11 @@ public class DatabaseManager implements Closeable {
 		return credentials;
 	}
 	
+	public AccountCredentials getAccount(long rowId) {
+		//TODO: Actually get account credentials and not return null;
+		return null;
+	}
+	
 	private void open() {
 		DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
 		database = dbh.getWritableDatabase();

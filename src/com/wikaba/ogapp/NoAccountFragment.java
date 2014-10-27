@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -36,6 +37,9 @@ public class NoAccountFragment extends Fragment implements OnClickListener {
 		usernameField = (EditText)root.findViewById(R.id.username);
 		passwdField = (EditText)root.findViewById(R.id.password);
 		loginButton = (Button)root.findViewById(R.id.login);
+		String[] uniNames = getResources().getStringArray(R.array.universe_names);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
+		uniSpinner.setAdapter(adapter);
 		
 		loginButton.setOnClickListener(this);
 		return root;
@@ -53,5 +57,7 @@ public class NoAccountFragment extends Fragment implements OnClickListener {
 		
 		TextView selectedText = (TextView)selectedView;
 		String universe = selectedText.getText().toString();
+		
+		act.addAccount(universe, username, passwd);
 	}
 }

@@ -5,8 +5,13 @@ import com.wikaba.ogapp.utils.DatabaseManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +24,30 @@ public class HomeActivity extends ActionBarActivity {
 	static final String DEFAULT_ACC = "default_account";
 	boolean mAccountSelected;
 	long accountRowId;
+	
+	private ServiceConnection agentServiceConn = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			AgentService.AgentServiceBinder binder = (AgentService.AgentServiceBinder)service;
+			mAgent = binder.getService();
+			mBound = true;
+			if(listeningFragment != null) {
+				listeningFragment.onServiceConnected(name, service);
+			}
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mBound = false;
+			mAgent = null;
+			if(listeningFragment != null) {
+				listeningFragment.onServiceDisconnected(name);
+			}
+		}
+	};
+	AgentService mAgent;
+	boolean mBound;
+	private ServiceConnection listeningFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -28,9 +57,6 @@ public class HomeActivity extends ActionBarActivity {
 		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
 		accountRowId = prefs.getLong(DEFAULT_ACC, -1);
 		if(accountRowId < 0) {
-			//TODO: Check if there is an account in database. If there is, load the
-			//first one returned by cursor. If no account in database, load the no-acc
-			//fragment
 			if(savedInstanceState == null) {
 				getSupportFragmentManager().beginTransaction()
 				.add(R.id.container, new NoAccountFragment()).commit();
@@ -38,8 +64,34 @@ public class HomeActivity extends ActionBarActivity {
 			mAccountSelected = false;
 		}
 		else {
+			//TODO: Load the account. use a special Content Fragment or something.
 			mAccountSelected = true;
 		}
+		
+		mBound = false;
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Intent bindingIntent = new Intent(this, AgentService.class);
+		bindService(bindingIntent, agentServiceConn, Context.BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if(accountRowId >= 0) {
+			SharedPreferences.Editor edit = getPreferences(MODE_PRIVATE).edit();
+			edit.putLong(DEFAULT_ACC, accountRowId);
+			edit.commit();
+		}
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		unbindService(agentServiceConn);
 	}
 
 	@Override
@@ -74,13 +126,21 @@ public class HomeActivity extends ActionBarActivity {
 		if(!mAccountSelected) {
 			mAccountSelected = true;
 			
-			ContentFragment confrag = new ContentFragment();
+			OverviewFragment confrag = new OverviewFragment();
 			Bundle fragargs = new Bundle();
-			fragargs.putLong(ContentFragment.ACC_ROWID, accountRowId);
+			fragargs.putLong(OverviewFragment.ACC_ROWID, accountRowId);
 			confrag.setArguments(fragargs);
 			
 			getSupportFragmentManager().beginTransaction()
 			.replace(R.id.container, confrag).commit();
 		}
+	}
+	
+	public void setListener(ServiceConnection fragment) {
+		listeningFragment = fragment;
+	}
+	
+	public void unsetListener() {
+		listeningFragment = null;
 	}
 }
