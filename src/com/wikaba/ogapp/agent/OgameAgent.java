@@ -460,7 +460,8 @@ public class OgameAgent {
 	 * Emulate a user clicking the "Overview" link in the navigation bar/column. Also parse fleet
 	 * movement data from the returned response.
 	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
-	 * 		is returned. Otherwise, null is returned.
+	 * 		is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
+	 * 		will have non-null instance variables.
 	 */
 	public List<FleetEvent> getOverviewData() {
 		List<FleetEvent> overviewData = null;

@@ -59,6 +59,7 @@ public class AgentService extends Service {
 			agent = new OgameAgent();
 			AccountCredentials creds = dbman.getAccount(rowId);
 			agent.login(creds.universe, creds.username, creds.passwd);
+			ogameSessions.put(rowId, agent);
 		}
 		return true;
 	}
