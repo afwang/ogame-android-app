@@ -21,10 +21,12 @@ import java.util.Map;
  * 	destFleet - name of the destination planet this fleet is headed towards
  * 	destCoords - coordinates of the destination planet
  * 	data_mission_type - An int indicating the type of mission. Corresponds to the
- * 		"data-mission-type" attribute.
+ * 		"data-mission-type" attribute. See IntegerMissionMap for relation between
+ * 		integers and missions.
  * 	data_arrival_time - A long indicating the arrival time of the mission, in Unix
  * 		epoch time. Corresponds to the "data-arrival-time" attribute.
  * 	data_return_flight - Boolean indicating whether this flight is a returning flight.
+ * 		True if the flight is returning. False if the flight is outgoing.
  * 	fleetResources - A map from Strings to Longs. Key strings are names of ships or
  * 		name of resource. The values are the numbers of the ship or resource named
  * 		as the key. Key Strings are used from the contract class FleetAndResources.

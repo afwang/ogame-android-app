@@ -1,23 +1,29 @@
 package com.wikaba.ogapp;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.IntegerMissionMap;
 
 import android.app.Activity;
 import android.support.v4.app.LoaderManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,13 +37,16 @@ public class OverviewFragment extends Fragment
 		implements
 			ServiceConnection,
 			LoaderManager.LoaderCallbacks<List<FleetEvent>>,
-			AbsListView.RecyclerListener {
+			AbsListView.RecyclerListener,
+			Runnable {
 	static final String ACC_ROWID = "account_row_id";
 	
 	private static final int LOADER_ID = 0;
 	
 	private ListView eventFleetView;
 	private HomeActivity act;
+	//TODO: Replace the Set with a Map<TextView, Long> (mapping from TextView to arrival time
+	//in Unix epoch time. Needed for the update handler to update the TextView
 	private Set<TextView> etaTextViews;
 	private Handler handler;
 	
@@ -71,6 +80,8 @@ public class OverviewFragment extends Fragment
 	@Override
 	public void onLoadFinished(Loader<List<FleetEvent>> loader, List<FleetEvent> events) {
 		eventFleetView.setAdapter(new EventAdapter(act, events, this));
+		final long timeInMillis = 1000;
+		handler.postDelayed(this, timeInMillis);
 	}
 
 	@Override
@@ -90,7 +101,13 @@ public class OverviewFragment extends Fragment
 	
 	@Override
 	public void onMovedToScrapHeap(View v) {
-		//TODO: Implement this to remove references to the TextView in the ListView entry
+		EventViewHolder holder = (EventViewHolder)v.getTag();
+		etaTextViews.remove(holder.eta);
+	}
+	
+	@Override
+	public void run() {
+		//TODO: Update each TextView in etaTextViews;
 	}
 	
 	private class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
@@ -194,9 +211,86 @@ public class OverviewFragment extends Fragment
 			LinearLayout combatShips = holder.combatShips;
 			LinearLayout resources = holder.resources;
 			
-			//TODO: Populate the collected views with data from event
+			long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
+			long timeLeft = event.data_arrival_time - currentTime;
+			eta.setText(DateUtils.formatElapsedTime(timeLeft));
+			originCoords.setText(event.coordsOrigin);
+			
+			Resources res = getResources();
+			outOrIn.setText(event.data_return_flight ? res.getString(R.string.overview_incoming) : res.getString(R.string.overview_outgoing));
+			
+			destCoords.setText(event.destCoords);
+			missionType.setText(IntegerMissionMap.getMission(event.data_mission_type));
+			
+			addCivilData(event, civilShips);
+			addCombatData(event, combatShips);
+			addResourceData(event, resources);
 			
 			return v;
+		}
+		
+		private void addCivilData(FleetEvent eventData, LinearLayout civilShipLayout) {
+			Map<String, Long> data = eventData.fleetResources;
+			final String[] civilShipNames = {
+					FleetAndResources.SC,
+					FleetAndResources.LC,
+					FleetAndResources.COLONY,
+					FleetAndResources.RC,
+					FleetAndResources.EP
+			};
+			
+			Long num;
+			for(String shipName : civilShipNames) {
+				num = data.get(shipName);
+				if(num != null && num.longValue() > 0) {
+					TextView shipEntry = new TextView(context);
+					shipEntry.setText(num.longValue() + ' ' + shipName);
+					civilShipLayout.addView(shipEntry);
+				}
+			}
+		}
+		
+		private void addCombatData(FleetEvent eventData, LinearLayout combatShipLayout) {
+			Map<String, Long> data = eventData.fleetResources;
+			final String[] combatShipNames = {
+					FleetAndResources.LF,
+					FleetAndResources.HF,
+					FleetAndResources.CR,
+					FleetAndResources.BS,
+					FleetAndResources.BC,
+					FleetAndResources.BB,
+					FleetAndResources.DS,
+					FleetAndResources.RIP
+			};
+			
+			Long num;
+			for(String shipName : combatShipNames) {
+				num = data.get(shipName);
+				if(num != null && num.longValue() > 0) {
+					TextView shipEntry = new TextView(context);
+					shipEntry.setText(num.longValue() + ' ' + shipName);
+					combatShipLayout.addView(shipEntry);
+				}
+			}
+		}
+		
+		private void addResourceData(FleetEvent eventData, LinearLayout resourceLayout) {
+			Map<String, Long> data = eventData.fleetResources;
+			final String[] resourceNames = {
+					FleetAndResources.METAL,
+					FleetAndResources.CRYSTAL,
+					FleetAndResources.DEUT
+			};
+			
+			Long num;
+			for(String resName : resourceNames) {
+				num = data.get(resName);
+				if(num != null && num.longValue() > 0) {
+					TextView resEntry = new TextView(context);
+					resEntry.setText(num.longValue() + ' ' + resName);
+					resourceLayout.addView(resEntry);
+				}
+			}
 		}
 	}
 	
