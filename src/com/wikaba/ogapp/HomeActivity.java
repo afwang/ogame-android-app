@@ -64,7 +64,8 @@ public class HomeActivity extends ActionBarActivity {
 			mAccountSelected = false;
 		}
 		else {
-			//TODO: Load the account. use a special Content Fragment or something.
+			getSupportFragmentManager().beginTransaction()
+			.add(R.id.container, new OverviewFragment(), null).commit();
 			mAccountSelected = true;
 		}
 		
@@ -127,10 +128,6 @@ public class HomeActivity extends ActionBarActivity {
 			mAccountSelected = true;
 			
 			OverviewFragment confrag = new OverviewFragment();
-			Bundle fragargs = new Bundle();
-			fragargs.putLong(OverviewFragment.ACC_ROWID, accountRowId);
-			confrag.setArguments(fragargs);
-			
 			getSupportFragmentManager().beginTransaction()
 			.replace(R.id.container, confrag).commit();
 		}

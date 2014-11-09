@@ -2,11 +2,11 @@ package com.wikaba.ogapp;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.Map.Entry;
 import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
@@ -45,9 +45,7 @@ public class OverviewFragment extends Fragment
 	
 	private ListView eventFleetView;
 	private HomeActivity act;
-	//TODO: Replace the Set with a Map<TextView, Long> (mapping from TextView to arrival time
-	//in Unix epoch time. Needed for the update handler to update the TextView
-	private Set<TextView> etaTextViews;
+	private Map<TextView, Long> etaTextViews;
 	private Handler handler;
 	
 	public OverviewFragment() {
@@ -65,7 +63,7 @@ public class OverviewFragment extends Fragment
 		View root = inflater.inflate(R.layout.fragment_overview, container, false);
 		
 		eventFleetView = (ListView)root.findViewById(R.id.eventFleetView);
-		etaTextViews = new HashSet<TextView>();
+		etaTextViews = new HashMap<TextView, Long>();
 		handler = new Handler();
 
 		return root;
@@ -107,7 +105,21 @@ public class OverviewFragment extends Fragment
 	
 	@Override
 	public void run() {
-		//TODO: Update each TextView in etaTextViews;
+		Iterator<Entry<TextView, Long>> entryiter = etaTextViews.entrySet().iterator();
+		while(entryiter.hasNext()) {
+			Entry<TextView, Long> anEntry = entryiter.next();
+			TextView textview = anEntry.getKey();
+			long arrivalInEpoch = anEntry.getValue().longValue();
+			long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
+			
+			long timeLeft = arrivalInEpoch - currentTime;
+			if(timeLeft <= 0) {
+				textview.setText(getResources().getString(R.string.overview_arrived));
+			}
+			else {
+				textview.setText(DateUtils.formatElapsedTime(timeLeft));
+			}
+		}
 	}
 	
 	private class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
@@ -196,10 +208,6 @@ public class OverviewFragment extends Fragment
 			else {
 				holder = (EventViewHolder)v.getTag();
 			}
-			//We have to add the text view to the Set whether we are creating a new view or recycling an old one.
-			//The recycled view might have went through the recycler listener (in which case it was removed from the
-			//Set)
-			etaTextViews.add(holder.eta);
 			
 			FleetEvent event = eventList.get(position);
 			TextView eta = holder.eta;
@@ -210,6 +218,11 @@ public class OverviewFragment extends Fragment
 			LinearLayout civilShips = holder.civilShips;
 			LinearLayout combatShips = holder.combatShips;
 			LinearLayout resources = holder.resources;
+			
+			//We have to add the text view to the Map whether we are creating a new view or recycling an old one.
+			//The recycled view might have went through the recycler listener (in which case it was removed from the
+			//Map)
+			etaTextViews.put(holder.eta, event.data_arrival_time);
 			
 			long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
 			long timeLeft = event.data_arrival_time - currentTime;

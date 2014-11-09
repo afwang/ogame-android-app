@@ -15,7 +15,7 @@
     <!-- OverviewFragment's needed strings -->
     <string name="overview_outgoing">-></string>
     <string name="overview_incoming">&lt;-</string>
-    <string name="overview_sc_name">Small Cargo</string>
+    <string name="overview_arrived">Complete!</string>
     
     <string name="antares">Antares</string>
     <string name="betelgeuse">Betelgeuse</string>
