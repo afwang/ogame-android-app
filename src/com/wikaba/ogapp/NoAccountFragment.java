@@ -27,6 +27,7 @@ public class NoAccountFragment extends Fragment implements OnClickListener {
 	
 	@Override
 	public void onAttach(Activity act) {
+		super.onAttach(act);
 		this.act = (HomeActivity)act;
 	}
 	

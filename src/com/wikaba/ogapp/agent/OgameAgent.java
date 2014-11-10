@@ -67,6 +67,7 @@ public class OgameAgent {
 		
 		boolean successfulResponse;
 		
+		universe = NameToURI.getDomain(universe);
 		serverUri = "http://" + universe;
 		
 		/*
@@ -91,6 +92,7 @@ public class OgameAgent {
 			//No cookies to set on the first HTTP request
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			connection.setRequestProperty("Content-Length", length);
+			connection.setRequestProperty("Accept-Encoding", "identity");
 			connection.setDoOutput(true);
 			connection.setRequestMethod("POST");
 			Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
@@ -100,6 +102,8 @@ public class OgameAgent {
 			writer.close();
 			
 			connection.setInstanceFollowRedirects(false);
+			
+			connection.connect();
 			response = connection.getResponseCode();
 			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
 				successfulResponse = true;
@@ -302,6 +306,9 @@ public class OgameAgent {
 			System.err.println("URI error: " + e + '\n' + e.getMessage());
 			e.printStackTrace();
 			return null;
+		}
+		finally {
+			connection.disconnect();
 		}
 		
 		Iterator<Map.Entry<String, HttpCookie>> cookieIter = cookieStore.entrySet().iterator();

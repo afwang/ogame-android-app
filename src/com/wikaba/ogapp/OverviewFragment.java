@@ -53,13 +53,12 @@ public class OverviewFragment extends Fragment
 	
 	@Override
 	public void onAttach(Activity act) {
+		super.onAttach(act);
 		this.act = (HomeActivity)act;
 	}
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		Bundle args = getArguments();
-		
 		View root = inflater.inflate(R.layout.fragment_overview, container, false);
 		
 		eventFleetView = (ListView)root.findViewById(R.id.eventFleetView);
@@ -67,6 +66,16 @@ public class OverviewFragment extends Fragment
 		handler = new Handler();
 
 		return root;
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		
+		act.setListener(this);
+		if(act.mBound) {
+			onServiceConnected(null, null);
+		}
 	}
 	
 	@Override
@@ -95,6 +104,7 @@ public class OverviewFragment extends Fragment
 	@Override
 	public void onServiceDisconnected(ComponentName name) {
 		getLoaderManager().destroyLoader(LOADER_ID);
+		act.unsetListener();
 	}
 	
 	@Override
@@ -120,14 +130,18 @@ public class OverviewFragment extends Fragment
 				textview.setText(DateUtils.formatElapsedTime(timeLeft));
 			}
 		}
+		final long timeInMillis = 1000;
+		handler.postDelayed(this, timeInMillis);
 	}
 	
-	private class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
+	private static class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
 		private List<FleetEvent> oldData;
+		private HomeActivity act;
 
-		public FleetEventLoader(Context context) {
+		public FleetEventLoader(HomeActivity context) {
 			super(context);
 			oldData = null;
+			act = context;
 		}
 		
 		@Override

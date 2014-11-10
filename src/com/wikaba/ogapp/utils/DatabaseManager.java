@@ -98,7 +98,31 @@ public class DatabaseManager implements Closeable {
 	
 	public AccountCredentials getAccount(long rowId) {
 		//TODO: Actually get account credentials and not return null;
-		return null;
+		if(database == null) {
+			open();
+		}
+		
+		String whereClause = BaseColumns._ID + "=?";
+		Cursor results = database.query(
+				AccountsContract.ACCOUNTS_TABLE,
+				null,
+				whereClause, new String[]{Long.toString(rowId)},
+				null,
+				null,
+				null
+		);
+		if(results == null || results.getCount() != 1) {
+			Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+			return null;
+		}
+		
+		//There should only be 1 row in the results.
+		results.moveToFirst();
+		AccountCredentials credentials = new AccountCredentials();
+		credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+		credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+		credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+		return credentials;
 	}
 	
 	private void open() {
