@@ -61,9 +61,9 @@ public class OgameAgent {
 	public List<HttpCookie> login(String universe, String username, String password) {
 		final int timeoutMillis = 30 * 1000;
 		HttpURLConnection connection = null;
-		URI theUri;
+		URI theUri = null;
 		String cookieHeaderStr;
-		int response;
+		int response = 0;
 		
 		boolean successfulResponse;
 		
@@ -85,26 +85,34 @@ public class OgameAgent {
 		}
 		String length = Integer.toString(parameters.length());
 		try {
-			connection = (HttpURLConnection)(new URL(uri)).openConnection();
-			theUri = new URI(uri);
-			connection.setConnectTimeout(timeoutMillis);
-			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-			//No cookies to set on the first HTTP request
-			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			connection.setRequestProperty("Content-Length", length);
-			connection.setRequestProperty("Accept-Encoding", "identity");
-			connection.setDoOutput(true);
-			connection.setRequestMethod("POST");
-			Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-			System.out.println(parameters);
-			writer.write(parameters);
-			writer.flush();
-			writer.close();
-			
-			connection.setInstanceFollowRedirects(false);
-			
-			connection.connect();
-			response = connection.getResponseCode();
+			for(boolean redo = true; redo;) {
+				try {
+					connection = (HttpURLConnection)(new URL(uri)).openConnection();
+					theUri = new URI(uri);
+					connection.setConnectTimeout(timeoutMillis);
+					connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+					//No cookies to set on the first HTTP request
+					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+					connection.setRequestProperty("Content-Length", length);
+					connection.setDoOutput(true);
+					connection.setRequestMethod("POST");
+					Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+					System.out.println(parameters);
+					writer.write(parameters);
+					writer.flush();
+					writer.close();
+					connection.setInstanceFollowRedirects(false);
+					connection.connect();
+					response = connection.getResponseCode();
+					redo = false;
+				}
+				catch(java.io.EOFException e) {
+					//Catch annoying server-side issue sending faulty HTTP responses.
+					//Just force a retry.
+					redo = true;
+				}
+			}
+				
 			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
 				successfulResponse = true;
 				System.out.println("Everything went okay! Response " + response);
@@ -230,26 +238,36 @@ public class OgameAgent {
 			/*
 			 * THIRD REQUEST (final request)
 			 */
-			System.out.println("START THIRD REQUEST");
-			connection = (HttpURLConnection)(new URL(uri)).openConnection();
-			theUri = new URI(uri);
-			connection.setConnectTimeout(timeoutMillis);
-			connection.setRequestProperty("Host", theUri.getAuthority());
-			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-			connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-			connection.setDoOutput(false);
-			connection.setDoInput(true);
-			connection.setRequestMethod("GET");
-			connection.setInstanceFollowRedirects(false);
-			
-			cookieHeaderStr = getCookieRequestHeader(theUri);
-			if(cookieHeaderStr.length() > 0)
-				connection.setRequestProperty("Cookie", cookieHeaderStr);
-			
-			connection.connect();
-			
-			response = connection.getResponseCode();
-			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+			for(boolean redo = true; redo; ) {
+				try {
+					System.out.println("START THIRD REQUEST");
+					connection = (HttpURLConnection)(new URL(uri)).openConnection();
+					theUri = new URI(uri);
+					connection.setConnectTimeout(timeoutMillis);
+					connection.setRequestProperty("Accept-Language", "en-US");
+					connection.setRequestProperty("Accept", "text/html");
+					
+					cookieHeaderStr = getCookieRequestHeader(theUri);
+					if(cookieHeaderStr.length() > 0)
+						connection.setRequestProperty("Cookie", cookieHeaderStr);
+					
+					connection.setDoOutput(false);
+					connection.setDoInput(true);
+					connection.setRequestMethod("GET");
+					connection.setInstanceFollowRedirects(false);
+					
+					connection.connect();
+					
+					response = connection.getResponseCode();
+					redo = false;
+				}
+				catch(java.io.EOFException e) {
+					//Again, to avoid the weird EOFException bug. Goddamn Ogame's programming!
+					redo = true;
+				}
+			}
+			//The last response must receive a status 200. If it isn't, we did something wrong.
+			if(response == HttpURLConnection.HTTP_OK) {
 				successfulResponse = true;
 				System.out.println("Everything went okay! Response " + response);
 				
@@ -279,7 +297,13 @@ public class OgameAgent {
 			else {
 				successfulResponse = false;
 				System.err.println("Something went wrong!");
-				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				BufferedReader errReader;
+				try {
+					errReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				}
+				catch(IOException e) {
+					errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				}
 				String line;
 				while((line = errReader.readLine()) != null) {
 					System.err.println(line);
@@ -970,14 +994,14 @@ public class OgameAgent {
 			HttpCookie cookie = cookieEntry.getValue();
 			String cookieDomain = cookie.getDomain();
 			String cookiePath = cookie.getPath();
-			if(cookieDomain.charAt(0) != '.')
+			if(cookieDomain.charAt(0) != '.' && !connDomain.equals(cookieDomain))
 				cookieDomain = '.' + cookieDomain;
 			
 			if(connDomain.endsWith(cookieDomain) && connPath.startsWith(cookiePath) && !cookie.hasExpired()) {
 				//isFirstCookie and the following if block adds the delimiting comma (,) between cookies
 				//if there are multiple cookies.
 				if(!isFirstCookie) {
-					cookieStrBuilder.append(',');
+					cookieStrBuilder.append(';');
 				}
 				cookieStrBuilder.append(cookie.toString());
 				isFirstCookie = false;
