@@ -1,7 +1,7 @@
 package com.wikaba.ogapp.agent;
 
 public class IntegerMissionMap {
-	public static final int TRANSPORT = 4;
+	public static final int TRANSPORT = 3;
 	
 	public static final String TRANSPORT_NAME = "Transport";
 	

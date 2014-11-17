@@ -47,6 +47,8 @@ public class OverviewFragment extends Fragment
 	private HomeActivity act;
 	private Map<TextView, Long> etaTextViews;
 	private Handler handler;
+	private boolean dataIsLoaded;
+	private boolean fragmentRunning;
 	
 	public OverviewFragment() {
 	}
@@ -64,6 +66,8 @@ public class OverviewFragment extends Fragment
 		eventFleetView = (ListView)root.findViewById(R.id.eventFleetView);
 		etaTextViews = new HashMap<TextView, Long>();
 		handler = new Handler();
+		dataIsLoaded = false;
+		fragmentRunning = false;
 
 		return root;
 	}
@@ -72,10 +76,24 @@ public class OverviewFragment extends Fragment
 	public void onStart() {
 		super.onStart();
 		
+		final long timeInMillis = 1000;
 		act.setListener(this);
 		if(act.mBound) {
 			onServiceConnected(null, null);
 		}
+		
+		if(dataIsLoaded) {
+			handler.postDelayed(this, timeInMillis);
+		}
+		
+		fragmentRunning = true;
+	}
+	
+	@Override
+	public void onStop() {
+		super.onStop();
+		fragmentRunning = false;
+		handler.removeCallbacks(this);
 	}
 	
 	@Override
@@ -86,9 +104,12 @@ public class OverviewFragment extends Fragment
 
 	@Override
 	public void onLoadFinished(Loader<List<FleetEvent>> loader, List<FleetEvent> events) {
-		eventFleetView.setAdapter(new EventAdapter(act, events, this));
+		eventFleetView.setAdapter(new EventAdapter(act, events));
+		eventFleetView.setRecyclerListener(this);
 		final long timeInMillis = 1000;
-		handler.postDelayed(this, timeInMillis);
+		if(fragmentRunning)
+			handler.postDelayed(this, timeInMillis);
+		dataIsLoaded = true;
 	}
 
 	@Override
@@ -170,15 +191,17 @@ public class OverviewFragment extends Fragment
 	private class EventAdapter extends BaseAdapter {
 		private Context context;
 		private List<FleetEvent> eventList;
-		private AbsListView.RecyclerListener listener;
 		
-		public EventAdapter(Context ctx, List<FleetEvent> eventList, AbsListView.RecyclerListener listener) {
+		public EventAdapter(Context ctx, List<FleetEvent> eventList) {
 			context = ctx;
 			
 			//Copy elements over to ArrayList to ensure random access to the elements in the list.
-			this.eventList = new ArrayList<FleetEvent>(eventList.size());
-			this.eventList.addAll(eventList);
-			this.listener = listener;
+			int size = 0;
+			if(eventList != null)
+				size = eventList.size();
+			this.eventList = new ArrayList<FleetEvent>(size);
+			if(eventList != null)
+				this.eventList.addAll(eventList);
 		}
 
 		@Override

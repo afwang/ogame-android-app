@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpCookie;
@@ -282,9 +283,9 @@ public class OgameAgent {
 				}
 				
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				String line;
-				while((line = reader.readLine()) != null) {
-					System.out.println(line);
+//				String line;
+				while((reader.readLine()) != null) {
+//					System.out.println(line);
 				}
 				reader.close();
 				
@@ -628,24 +629,47 @@ public class OgameAgent {
 	 * 	Null on error.
 	 */
 	private List<FleetEvent> parseOverviewResponse(InputStream inputStream) {
-		List<FleetEvent> eventList = new LinkedList<FleetEvent>(); 
+		List<FleetEvent> eventList = new LinkedList<FleetEvent>();
+		
+		String response = "";
+		try {
+			StringBuilder strb = new StringBuilder();
+			char[] buffer = new char[1024];
+			InputStreamReader isr = new InputStreamReader(inputStream);
+			while((isr.read(buffer)) > 0) {
+				strb.append(buffer);
+			}
+			response = strb.toString().replaceAll("&(?![A-Za-z]+;)", "&amp;");
+			strb = new StringBuilder(response);
+			//Removing javascript:
+			removeSection(strb, "<!-- JAVASCRIPT -->", "<!-- END JAVASCRIPT -->");
+			removeSection(strb, "<!-- #MMO:NETBAR# -->", "</script>");
+			removeSection(strb, "<!-- Start Alexa Certify Javascript -->", "</script>");
+			removeSection(strb, "The relocation allows you to move your planets", "deactivated for 24 hours.");
+			removeSection(strb, "<div id=\"mmonetbar\" class=\"mmoogame\">", "</script>");
+			response = strb.toString();
+//			System.out.println(response);
+		}
+		catch(IOException e) {
+			System.err.println("Error reading the response: " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
 		
 		try {
 			XmlPullParserFactory xppfactory = XmlPullParserFactory.newInstance();
 			XmlPullParser xpp = xppfactory.newPullParser();
-			//TODO: Does using setInput(inputStream, null) have a different effect here than using
-			//setInput(new InputStreamReader(inputStream))?
-			xpp.setInput(inputStream, null);
+			xpp.setInput(new StringReader(response));
+			xpp.defineEntityReplacementText("ndash", "-");
+			xpp.defineEntityReplacementText("nbsp", " ");
 			
 			FleetEvent lastScannedEvent = null;
 			//To make the next for loop look easier to read and understand, we get to the first instance of
 			//<tr class="eventFleet">
-			for(int eventType = xpp.getEventType(); eventType != XmlPullParser.END_DOCUMENT; eventType = xpp.next()) {
+			int eventType = xpp.getEventType();
+			while(eventType != XmlPullParser.END_DOCUMENT) {
 				String tagName = xpp.getName();
-				if(tagName == null)
-					continue;
-				
-				if(tagName.equals("tr") && hasAttrValue(xpp, "class", "eventFleet")) {
+
+				if(tagName != null && tagName.equals("tr") && hasAttrValue(xpp, "class", "eventFleet")) {
 					lastScannedEvent = new FleetEvent();
 					int attrCount = xpp.getAttributeCount();
 					for(int index = 0; index < attrCount; index++) {
@@ -666,23 +690,57 @@ public class OgameAgent {
 					
 					break;
 				}
+				try {
+					eventType = xpp.next();
+				}
+				catch(XmlPullParserException e) {
+					if(e != null) {
+						/* For some strange reason, the emulator can reach this catch block with
+						 * e set to null. (Why and how?) Might be a debugger bug
+						 */
+						System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+				catch(ArrayIndexOutOfBoundsException e) {
+					//This exception occurs near the end of the document, but it is not something that
+					//should stop the app over.
+					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
 			}
 			
 			//No events scanned. Just return.
 			if(lastScannedEvent == null)
 				return eventList;
 			
-			for(int eventType = xpp.getEventType(); eventType != XmlPullParser.END_DOCUMENT; eventType = xpp.next()) {
+			eventType = xpp.getEventType();
+			while(eventType != XmlPullParser.END_DOCUMENT) {
 				//Begin parsing for fleet events.
 				if(eventType == XmlPullParser.START_TAG) {
 					String tagName = xpp.getName();
-					if(tagName == null) {
-						continue;
-					}
+					tagName = (tagName == null) ? "" : tagName;
 					
 					if(tagName.equals("tr") && hasAttrValue(xpp, "class", "eventFleet")) {
 						eventList.add(lastScannedEvent);
 						lastScannedEvent = new FleetEvent();
+						
+						int attrCount = xpp.getAttributeCount();
+						for(int index = 0; index < attrCount; index++) {
+							String attrName = xpp.getAttributeName(index);
+							if(attrName.equals("data-mission-type")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_mission_type = Integer.valueOf(value);
+							}
+							else if(attrName.equals("data-return-flight")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_return_flight = Boolean.valueOf(value);
+							}
+							else if(attrName.equals("data-arrival-time")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_arrival_time = Long.valueOf(value);
+							}
+						}
 					}
 					else if(tagName.equals("td")) {
 						if(hasAttrValue(xpp, "class", "originFleet")) {
@@ -694,12 +752,23 @@ public class OgameAgent {
 									</span>
 								</td>
 							 */
+							tagName = xpp.getName();
+							int htmlevent = 0;
+							int counter = 0;
+							//From the response extract, we need 5 next()'s to get to the text we need.
+							//Set a hard limit just in case.
+							while((htmlevent != XmlPullParser.END_TAG || !tagName.equalsIgnoreCase("figure")) && counter < 5) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
 							
-							for(int counter = 0; counter < 4 && xpp.getEventType() != XmlPullParser.TEXT; counter++)
-								xpp.next();
-							
-							if(xpp.getEventType() == XmlPullParser.TEXT)
+							xpp.next();
+							if(xpp.getEventType() == XmlPullParser.TEXT) {
 								lastScannedEvent.originFleet = xpp.getText();
+								if(lastScannedEvent.originFleet != null)
+									lastScannedEvent.originFleet = lastScannedEvent.originFleet.trim();
+							}
 						}
 						else if(hasAttrValue(xpp, "class", "coordsOrigin")) {
 							/* Example:
@@ -709,14 +778,25 @@ public class OgameAgent {
 									</a>
 								</td>
 							 */
-							for(int counter = 0; counter < 2 && xpp.getEventType() != XmlPullParser.TEXT; counter++)
-								xpp.next();
+							tagName = xpp.getName();
 							
-							if(xpp.getEventType() == XmlPullParser.TEXT)
+							//We need 2 next()'s to get to the <a> element. Use a hard limit just in case.
+							int htmlevent = 0;
+							int counter = 0;
+							while((htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("a")) && counter < 2) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
+							
+							xpp.next();
+							if(xpp.getEventType() == XmlPullParser.TEXT) {
 								lastScannedEvent.coordsOrigin = xpp.getText();
+								if(lastScannedEvent.coordsOrigin != null)
+									lastScannedEvent.coordsOrigin = lastScannedEvent.coordsOrigin.trim();
+							}
 						}
-						else if(hasAttrValue(xpp, "class", "icon_movement")) {
-							//TODO: Handle retrieving fleet composition and resources
+						else if(hasAttrValue(xpp, "class", "icon_movement") || hasAttrValue(xpp, "class", "icon_movement_reserve")) {
 							//Have to parse another HTML snippet. This HTML is both encoded to not confuse
 							//the parser, so it must be decoded first. Then it must be put through another
 							//XmlPullParser to gather the data.
@@ -729,6 +809,14 @@ public class OgameAgent {
 							 * 	</span>
 							 * </td>
 							 */
+							tagName = xpp.getName();
+							int htmlevent = 0;
+							tagName = (tagName == null) ? "" : tagName;
+							while(htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("span")) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+							}
+							
 							Map<String, Long> fleetData = null;
 							if(xpp.getEventType() == XmlPullParser.START_TAG) {
 								int attrSize = xpp.getAttributeCount();
@@ -756,11 +844,21 @@ public class OgameAgent {
 									</span>
 								</td>
 							 */
-							for(int counter = 0; counter < 4 && xpp.getEventType() != XmlPullParser.TEXT; counter++)
-								xpp.next();
-							
-							if(xpp.getEventType() == XmlPullParser.TEXT)
+							int counter = 0;
+							int htmlevent = 0;
+							tagName = xpp.getName();
+							tagName = (tagName == null) ? "" : tagName;
+							while((htmlevent != XmlPullParser.END_TAG || !tagName.equalsIgnoreCase("figure")) && counter < 5) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
+							xpp.next();
+							if(xpp.getEventType() == XmlPullParser.TEXT) {
 								lastScannedEvent.destFleet = xpp.getText();
+								if(lastScannedEvent.destFleet != null)
+									lastScannedEvent.destFleet = lastScannedEvent.destFleet.trim();
+							}
 						}
 						else if(hasAttrValue(xpp, "class", "destCoords")) {
 							/* Example:
@@ -771,25 +869,87 @@ public class OgameAgent {
 								</td>
 							 */
 							
-							for(int counter = 0; counter < 2 && xpp.getEventType() != XmlPullParser.TEXT; counter++)
-								xpp.next();
+							int counter = 0;
+							int htmlevent = 0;
+							tagName = xpp.getName();
+							tagName = (tagName == null) ? "" : tagName;
+							while((htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("a")) && counter < 2) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
 							
-							if(xpp.getEventType() == XmlPullParser.TEXT)
+							xpp.next();
+							if(xpp.getEventType() == XmlPullParser.TEXT) {
 								lastScannedEvent.destCoords = xpp.getText();
+								if(lastScannedEvent.destCoords != null)
+									lastScannedEvent.destCoords = lastScannedEvent.destCoords.trim();
+							}
 						}
 					}
 				}
+				try {
+					eventType = xpp.next();
+				}
+				catch(XmlPullParserException e) {
+					if(e != null) {
+						/* For some strange reason, the emulator can reach this catch block with
+						 * e set to null. (Why and how?) Might be a debugger bug
+						 */
+						System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+				catch(ArrayIndexOutOfBoundsException e) {
+					//This exception occurs near the end of the document, but it is not something that
+					//should stop the app over.
+					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
 			}
-			
-		} catch (XmlPullParserException e) {
-			System.err.println(e.toString() + '\n' + e.getMessage());
-			e.printStackTrace();
+			if(lastScannedEvent != null)
+				eventList.add(lastScannedEvent);
+		}
+		catch (XmlPullParserException e) {
+			if(e != null) {
+				System.err.println(e.toString() + '\n' + e.getMessage());
+				e.printStackTrace();
+			}
+			else {
+				System.err.println("Exception reference actually is null in a catch block!");
+			}
 			return null;
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			System.err.println(e.toString() + '\n' + e.getMessage());
 			e.printStackTrace();
 		}
 		return eventList;
+	}
+	
+	/**
+	 * Convenience method for removing javascript from the response. Mainly used by parseOverviewResponse()
+	 * @param input
+	 * @param searchKey1
+	 * @param searchKey2
+	 * @return
+	 */
+	private StringBuilder removeSection(StringBuilder input, String searchKey1, String searchKey2) {
+		String searchKey = searchKey1;
+		int javascript = input.indexOf(searchKey);
+		int endjavascript;
+		if(javascript >= 0) {
+			searchKey = searchKey2;
+			endjavascript = input.indexOf(searchKey, javascript);
+			if(endjavascript >= javascript) {
+				endjavascript += searchKey.length();
+				input.delete(javascript, endjavascript);
+			}
+			else {
+				input.delete(javascript, input.length());
+			}
+		}
+		return input;
 	}
 	
 	/**
@@ -840,10 +1000,11 @@ public class OgameAgent {
 		StringReader strReader = null;
 		XmlPullParser subxpp = null;
 		try {
-			htmlEncodedData = Html.fromHtml(htmlEncodedData).toString();
+//			htmlEncodedData = Html.fromHtml(htmlEncodedData).toString();
 			strReader = new StringReader(htmlEncodedData);
 			subxpp = XmlPullParserFactory.newInstance().newPullParser();
 			subxpp.setInput(strReader);
+			subxpp.defineEntityReplacementText("nbsp", " ");
 			
 			boolean parsingShips = false;
 			boolean parsingRes = false;
@@ -859,7 +1020,13 @@ public class OgameAgent {
 						break;
 					}
 				}
-				subxpp.next();
+				try {
+					subxpp.next();
+				}
+				catch(XmlPullParserException e) {
+					System.out.println("Caught an exception. Not stopping: " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
 			}
 			
 			while(parsingShips && subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
@@ -915,10 +1082,11 @@ public class OgameAgent {
 					while(subxpp.next() != XmlPullParser.TEXT);
 
 					String numshipstr = subxpp.getText();
-					Long numships = Long.valueOf(numshipstr);
 					
-					if(currentShip != null && currentShip.length() > 0)
+					if(currentShip != null && currentShip.length() > 0) {
+						Long numships = Long.valueOf(numshipstr);
 						fleetResData.put(currentShip, numships);
+					}
 				}
 			}
 			

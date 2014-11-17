@@ -40,3 +40,14 @@ web page fails (possibly due to the 0300 server time kick?).
 
 - After building the simple and basic Ogame agent, actually build the app to present
 user with the overview page.
+
+- Fix the parser for the overview page. Recommended method: Search string for the comments,
+and delete those sections. The sections are as follows:
+	* <!-- JAVASCRIPT --> to <!-- END JAVASCRIPT -->
+	* <!-- #MMO:NETBAR# --> to </script>
+	* <!-- Start Alexa Certify Javascript --> to </script>
+	* Also delete this text: "The relocation allows you to move your planets to a different position in another preferred system far away. <br /><br />
+The actual relocation takes place 24 hours after activation. During this time you can use your planets as per normal. A countdown shows you the time remaining before the relocation.<br /><br />
+Once the countdown finishes and the planet is to be moved, none of your fleets that are stationed here will be able to be active. Nothing will be able to be built or researched either. Should a construction contract or a fleet still be active once the countdown finishes, the relocation will be cancelled.<br /><br />
+If the move is successful, 240.000 Dark Matter will be deducted from your account. The moon, buildings and all stored resources will move with planet/moon immediately. Your fleets will fly automatically to new coordinates on speed of slowest ship. The jump gate of a relocated moon will be deactivated for 24 hours."
+	* <div id="mmonetbar" class="mmoogame"> to </script>
