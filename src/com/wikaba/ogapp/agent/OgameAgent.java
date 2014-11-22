@@ -687,7 +687,11 @@ public class OgameAgent {
 							lastScannedEvent.data_arrival_time = Long.valueOf(value);
 						}
 					}
-					
+					//We must call next() here before breaking. Otherwise, the next loop
+					//will add the incomplete FleetEvent object since it will detect
+					//the same <tr...> element and think it's a new event when it's
+					//still the same first event.
+					xpp.next();
 					break;
 				}
 				try {
@@ -707,6 +711,7 @@ public class OgameAgent {
 					//should stop the app over.
 					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
 					e.printStackTrace();
+					eventType = XmlPullParser.END_DOCUMENT;
 				}
 			}
 			
@@ -905,6 +910,7 @@ public class OgameAgent {
 					//should stop the app over.
 					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
 					e.printStackTrace();
+					eventType = XmlPullParser.END_DOCUMENT;
 				}
 			}
 			if(lastScannedEvent != null)
@@ -1000,7 +1006,6 @@ public class OgameAgent {
 		StringReader strReader = null;
 		XmlPullParser subxpp = null;
 		try {
-//			htmlEncodedData = Html.fromHtml(htmlEncodedData).toString();
 			strReader = new StringReader(htmlEncodedData);
 			subxpp = XmlPullParserFactory.newInstance().newPullParser();
 			subxpp.setInput(strReader);
@@ -1011,7 +1016,8 @@ public class OgameAgent {
 			String currentShip = null;
 			String currentRes = null;
 			
-			while(subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+			int eventType = subxpp.getEventType();
+			while(eventType != XmlPullParser.END_DOCUMENT) {
 				if(subxpp.getEventType() == XmlPullParser.TEXT) {
 					String textData = subxpp.getText();
 					textData = textData.replaceAll(":", "");
@@ -1022,6 +1028,7 @@ public class OgameAgent {
 				}
 				try {
 					subxpp.next();
+					eventType = subxpp.getEventType();
 				}
 				catch(XmlPullParserException e) {
 					System.out.println("Caught an exception. Not stopping: " + e + '\n' + e.getMessage());
@@ -1029,89 +1036,122 @@ public class OgameAgent {
 				}
 			}
 			
-			while(parsingShips && subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+			while(parsingShips && eventType != XmlPullParser.END_DOCUMENT) {
 				subxpp.next();
-				if(subxpp.getEventType() == XmlPullParser.TEXT) {
+				eventType = subxpp.getEventType();
+				if(eventType == XmlPullParser.TEXT) {
 					String textData = subxpp.getText();
-					if(textData.equals("Small Cargo:")) {
-						currentShip = FleetAndResources.SC;
+					if(textData != null) {
+						textData = textData.trim();
 					}
-					else if(textData.equals("Large Cargo:")) {
-						currentShip = FleetAndResources.LC;
-					}
-					else if(textData.equals("Colony Ship:")) {
-						currentShip = FleetAndResources.COLONY;
-					}
-					else if(textData.equals("Light Fighter:")) {
-						currentShip = FleetAndResources.LF;
-					}
-					else if(textData.equals("Heavy Fighter:")) {
-						currentShip = FleetAndResources.HF;
-					}
-					else if(textData.equals("Cruiser:")) {
-						currentShip = FleetAndResources.CR;
-					}
-					else if(textData.equals("Battleship:")) {
-						currentShip = FleetAndResources.BS;
-					}
-					else if(textData.equals("Battlecruiser:")) {
-						currentShip = FleetAndResources.BC;
-					}
-					else if(textData.equals("Bomber:")) {
-						currentShip = FleetAndResources.BB;
-					}
-					else if(textData.equals("Destroyer:")) {
-						currentShip = FleetAndResources.DS;
-					}
-					else if(textData.equals("Deathstar:")) {
-						currentShip = FleetAndResources.RIP;
-					}
-					else if(textData.equals("Recycler:")) {
-						currentShip = FleetAndResources.RC;
-					}
-					else if(textData.equals("Espionage Probe:")) {
-						currentShip = FleetAndResources.EP;
-					}
-					else if(textData.equals("Shipment:")) {
-						currentShip = null;
-						parsingShips = false;
-						parsingRes = true;
-						break;
-					}
-					
-					while(subxpp.next() != XmlPullParser.TEXT);
+					if(textData != null && textData.length() > 0) {
+						if(textData.equals("Small Cargo:")) {
+							currentShip = FleetAndResources.SC;
+						}
+						else if(textData.equals("Large Cargo:")) {
+							currentShip = FleetAndResources.LC;
+						}
+						else if(textData.equals("Colony Ship:")) {
+							currentShip = FleetAndResources.COLONY;
+						}
+						else if(textData.equals("Light Fighter:")) {
+							currentShip = FleetAndResources.LF;
+						}
+						else if(textData.equals("Heavy Fighter:")) {
+							currentShip = FleetAndResources.HF;
+						}
+						else if(textData.equals("Cruiser:")) {
+							currentShip = FleetAndResources.CR;
+						}
+						else if(textData.equals("Battleship:")) {
+							currentShip = FleetAndResources.BS;
+						}
+						else if(textData.equals("Battlecruiser:")) {
+							currentShip = FleetAndResources.BC;
+						}
+						else if(textData.equals("Bomber:")) {
+							currentShip = FleetAndResources.BB;
+						}
+						else if(textData.equals("Destroyer:")) {
+							currentShip = FleetAndResources.DS;
+						}
+						else if(textData.equals("Deathstar:")) {
+							currentShip = FleetAndResources.RIP;
+						}
+						else if(textData.equals("Recycler:")) {
+							currentShip = FleetAndResources.RC;
+						}
+						else if(textData.equals("Espionage Probe:")) {
+							currentShip = FleetAndResources.EP;
+						}
+						else if(textData.equals("Shipment:")) {
+							currentShip = null;
+							parsingShips = false;
+							parsingRes = true;
+							break;
+						}
+						
+						textData = "";
+						while(textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if(eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
 
-					String numshipstr = subxpp.getText();
-					
-					if(currentShip != null && currentShip.length() > 0) {
-						Long numships = Long.valueOf(numshipstr);
-						fleetResData.put(currentShip, numships);
+						String numshipstr = textData;
+						
+						if(currentShip != null && currentShip.length() > 0) {
+							Long numships = Long.valueOf(numshipstr);
+							fleetResData.put(currentShip, numships);
+						}
 					}
 				}
 			}
 			
-			while(parsingRes && subxpp.getEventType() != XmlPullParser.END_DOCUMENT) {
+			eventType = subxpp.getEventType();
+			while(parsingRes && eventType != XmlPullParser.END_DOCUMENT) {
 				subxpp.next();
-				if(subxpp.getEventType() == subxpp.TEXT) {
-					String resType = subxpp.getText();
-					if(resType.equals("Metal:")) {
-						currentRes = FleetAndResources.METAL;
+				eventType = subxpp.getEventType();
+				if(eventType == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if(textData != null) {
+						textData = textData.trim();
 					}
-					else if(resType.equals("Crystal:")) {
-						currentRes = FleetAndResources.CRYSTAL;
+					if(textData != null && textData.length() > 0) {
+						String resType = subxpp.getText();
+						if(resType.equals("Metal:")) {
+							currentRes = FleetAndResources.METAL;
+						}
+						else if(resType.equals("Crystal:")) {
+							currentRes = FleetAndResources.CRYSTAL;
+						}
+						else if(resType.equals("Deuterium:")) {
+							currentRes = FleetAndResources.DEUT;
+						}
+						else {
+							continue;
+						}
+						
+						textData = "";
+						while(textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if(eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
+						
+						String amount = textData;
+						amount.replaceAll("\\.", "");
+						if(amount.length() > 0) {
+							Long resAmount = Long.valueOf(amount);
+							fleetResData.put(currentRes, resAmount);
+						}
 					}
-					else if(resType.equals("Deuterium:")) {
-						currentRes = FleetAndResources.DEUT;
-					}
-					else
-						continue;
-					
-					while(subxpp.next() != XmlPullParser.TEXT);
-					
-					String amount = subxpp.getText();
-					amount.replaceAll("\\.", "");
-					Long resAmount = Long.valueOf(amount);
-					fleetResData.put(currentRes, resAmount);
 				}
 			}
 		}
