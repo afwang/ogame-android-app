@@ -58,12 +58,6 @@
         android:layout_alignTop="@+id/mission_type"
         android:layout_marginRight="@dimen/fleet_event_textview_margin"
         android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
-        
-        <TextView
-            android:text="500 Colony Ship"
-            android:textSize="@dimen/fleet_event_ship_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
 
     </LinearLayout>
     
@@ -76,12 +70,6 @@
         android:layout_alignTop="@+id/mission_type"
         android:layout_marginRight="@dimen/fleet_event_textview_margin"
         android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
-
-       <TextView
-            android:text="50000 Battleship"
-            android:textSize="@dimen/fleet_event_ship_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
        
     </LinearLayout>
     
@@ -93,12 +81,6 @@
         android:layout_toRightOf="@+id/combat_ship_layout"
         android:layout_alignTop="@+id/mission_type"
         android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
-
-       <TextView
-            android:text="500000000 metal"
-            android:textSize="@dimen/fleet_event_ship_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
        
     </LinearLayout>
 

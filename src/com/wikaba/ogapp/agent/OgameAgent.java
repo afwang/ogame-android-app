@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpCookie;
@@ -26,14 +25,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-
-import android.text.Html;
 
 /**
  * This class represents 1 account on 1 universe. If the user is playing multiple accounts simultaneously,
@@ -98,7 +94,7 @@ public class OgameAgent {
 					connection.setDoOutput(true);
 					connection.setRequestMethod("POST");
 					Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-					System.out.println(parameters);
+//					System.out.println(parameters);
 					writer.write(parameters);
 					writer.flush();
 					writer.close();
@@ -119,17 +115,17 @@ public class OgameAgent {
 				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-				System.out.println("Response headers:");
-				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-				for(Map.Entry<String, List<String>> mapping : entrySet) {
-					List<String> values = mapping.getValue();
-					for(String val : values) {
-						System.out.println(mapping.getKey() + ": " + val);
-					}
-				}
+//				System.out.println("Response headers:");
+//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+//				for(Map.Entry<String, List<String>> mapping : entrySet) {
+//					List<String> values = mapping.getValue();
+//					for(String val : values) {
+//						System.out.println(mapping.getKey() + ": " + val);
+//					}
+//				}
 				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
 				for(String cookieHeader : cookieHeaders) {
-					System.out.println(cookieHeader);
+//					System.out.println(cookieHeader);
 					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
 					for(HttpCookie cookie : cookiesList) {
 						cookieStore.put(cookie.getName(), cookie);
@@ -139,15 +135,15 @@ public class OgameAgent {
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-					System.out.println("Redirected to: " + uri);
+//					System.out.println("Redirected to: " + uri);
 				}
 				
-				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				String line;
-				while((line = reader.readLine()) != null) {
-					System.out.println(line);
-				}
-				reader.close();
+//				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//				String line;
+//				while((reader.readLine()) != null) {
+//					System.out.println(line);
+//				}
+//				reader.close();
 			}
 			else {
 				successfulResponse = false;
@@ -187,20 +183,20 @@ public class OgameAgent {
 			response = connection.getResponseCode();
 			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
 				successfulResponse = true;
-				System.out.println("Everything went okay! Response " + response);
+//				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-				System.out.println("Response headers:");
-				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-				for(Map.Entry<String, List<String>> mapping : entrySet) {
-					List<String> values = mapping.getValue();
-					for(String val : values) {
-						System.out.println(mapping.getKey() + ": " + val);
-					}
-				}
+//				System.out.println("Response headers:");
+//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+//				for(Map.Entry<String, List<String>> mapping : entrySet) {
+//					List<String> values = mapping.getValue();
+//					for(String val : values) {
+//						System.out.println(mapping.getKey() + ": " + val);
+//					}
+//				}
 				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
 				for(String cookieHeader : cookieHeaders) {
-					System.out.println(cookieHeader);
+//					System.out.println(cookieHeader);
 					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
 					for(HttpCookie cookie : cookiesList) {
 						cookieStore.put(cookie.getName(), cookie);
@@ -210,15 +206,15 @@ public class OgameAgent {
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-					System.out.println("Redirected to: " + uri);
+//					System.out.println("Redirected to: " + uri);
 				}
 				
-				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				String line;
-				while((line = reader.readLine()) != null) {
-					System.out.println(line);
-				}
-				reader.close();
+//				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//				String line;
+//				while((reader.readLine()) != null) {
+//					System.out.println(line);
+//				}
+//				reader.close();
 			}
 			else {
 				successfulResponse = false;
@@ -273,14 +269,14 @@ public class OgameAgent {
 				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-				System.out.println("Response headers:");
-				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-				for(Map.Entry<String, List<String>> mapping : entrySet) {
-					List<String> values = mapping.getValue();
-					for(String val : values) {
-						System.out.println(mapping.getKey() + ": " + val);
-					}
-				}
+//				System.out.println("Response headers:");
+//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
+//				for(Map.Entry<String, List<String>> mapping : entrySet) {
+//					List<String> values = mapping.getValue();
+//					for(String val : values) {
+//						System.out.println(mapping.getKey() + ": " + val);
+//					}
+//				}
 				
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 //				String line;
@@ -292,7 +288,7 @@ public class OgameAgent {
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-					System.out.println("Redirected to: " + uri);
+//					System.out.println("Redirected to: " + uri);
 				}
 			}
 			else {
@@ -920,9 +916,6 @@ public class OgameAgent {
 			if(e != null) {
 				System.err.println(e.toString() + '\n' + e.getMessage());
 				e.printStackTrace();
-			}
-			else {
-				System.err.println("Exception reference actually is null in a catch block!");
 			}
 			return null;
 		}

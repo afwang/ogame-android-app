@@ -24,6 +24,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.format.DateUtils;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -294,7 +295,15 @@ public class OverviewFragment extends Fragment
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
 					TextView shipEntry = new TextView(context);
-					shipEntry.setText(num.longValue() + ' ' + shipName);
+					Resources res = context.getResources();
+					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					StringBuilder textBuilder = new StringBuilder();
+					textBuilder.append(num.longValue())
+					.append(' ')
+					.append(shipName);
+					String shipStr = textBuilder.toString();
+					shipEntry.setText(shipStr);
 					civilShipLayout.addView(shipEntry);
 				}
 			}
@@ -318,7 +327,15 @@ public class OverviewFragment extends Fragment
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
 					TextView shipEntry = new TextView(context);
-					shipEntry.setText(num.longValue() + ' ' + shipName);
+					Resources res = context.getResources();
+					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					StringBuilder textBuilder = new StringBuilder();
+					textBuilder.append(num.longValue())
+					.append(' ')
+					.append(shipName);
+					String shipStr = textBuilder.toString();
+					shipEntry.setText(shipStr);
 					combatShipLayout.addView(shipEntry);
 				}
 			}
@@ -335,9 +352,17 @@ public class OverviewFragment extends Fragment
 			Long num;
 			for(String resName : resourceNames) {
 				num = data.get(resName);
-				if(num != null && num.longValue() > 0) {
+				if(num != null) {
 					TextView resEntry = new TextView(context);
-					resEntry.setText(num.longValue() + ' ' + resName);
+					Resources res = context.getResources();
+					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+					resEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					StringBuilder textBuilder = new StringBuilder();
+					textBuilder.append(num.longValue())
+					.append(' ')
+					.append(resName);
+					String resStr = textBuilder.toString();
+					resEntry.setText(resStr);
 					resourceLayout.addView(resEntry);
 				}
 			}

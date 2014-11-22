@@ -12,7 +12,7 @@ public class IntegerMissionMap {
 	 * @return
 	 */
 	public static String getMission(int missionCode) {
-		String missionName = null;
+		String missionName = "INVALID NAME";
 		
 		switch(missionCode) {
 		case TRANSPORT:
