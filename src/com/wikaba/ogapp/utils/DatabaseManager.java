@@ -1,6 +1,13 @@
 package com.wikaba.ogapp.utils;
 
+/**
+ * This class is (should be) thread-safe.
+ */
+
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -13,17 +20,26 @@ import android.util.Log;
 public class DatabaseManager implements Closeable {
 	public static final String LOG_TAG = "DatabaseManager";
 	
+	private static final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+	
 	private static final int VERSION = 1;
 	private static final String DB_NAME = "ogameapp.db";
 	
 	private Context context;
-	private SQLiteDatabase database;
+	private volatile SQLiteDatabase database;
 	
 	public DatabaseManager(Context ctx) {
 		this.context = ctx;
 		database = null;
 	}
 	
+	/**
+	 * Insert a new account to the database.
+	 * @param universe
+	 * @param username
+	 * @param passwd
+	 * @return ID of the row inserted or modified.
+	 */
 	public long addAccount(String universe, String username, String passwd) {
 		if(database == null) {
 			open();
@@ -32,108 +48,213 @@ public class DatabaseManager implements Closeable {
 		ContentValues cv = new ContentValues();
 		
 		//check if universe and username already entered into DB. Replace if true.
+		long id = -1;
 		String whereClause = AccountsContract.UNIVERSE + "=? and " + AccountsContract.USERNAME + "=?";
-		Cursor alreadyExists = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause,
-				new String[] {universe, username},
-				null,
-				null,
-				null
-		);
-		if(alreadyExists.getCount() > 0) {
-			//There exists a row entry containing the same universe and username.
-			//Replace.
-			alreadyExists.moveToFirst();
-			long rowid = alreadyExists.getLong(alreadyExists.getColumnIndex(BaseColumns._ID));
-			cv.put(BaseColumns._ID, rowid);
+		rwlock.writeLock().lock();
+		try {
+			Cursor alreadyExists = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause,
+					new String[] {universe, username},
+					null,
+					null,
+					null
+			);
+			if(alreadyExists.getCount() > 0) {
+				//There exists a row entry containing the same universe and username.
+				//Replace.
+				alreadyExists.moveToFirst();
+				long rowid = alreadyExists.getLong(alreadyExists.getColumnIndex(BaseColumns._ID));
+				cv.put(BaseColumns._ID, rowid);
+			}
+			
+			cv.put(AccountsContract.UNIVERSE, universe);
+			cv.put(AccountsContract.USERNAME, username);
+			cv.put(AccountsContract.PASSWORD, passwd);
+			id = database.insert(AccountsContract.ACCOUNTS_TABLE, null, cv);
 		}
-		
-		cv.put(AccountsContract.UNIVERSE, universe);
-		cv.put(AccountsContract.USERNAME, username);
-		cv.put(AccountsContract.PASSWORD, passwd);
-		long id = database.insert(AccountsContract.ACCOUNTS_TABLE, null, cv);
+		finally {
+			rwlock.writeLock().unlock();
+		}
 		return id;
 	}
 	
+	/**
+	 * Remove the specified account from the database.
+	 * on the main thread.
+	 * @param universe
+	 * @param username
+	 * @return true if an account was removed from the database.
+	 */
 	public boolean removeAccount(String universe, String username) {
-		if(database == null) {
-			open();
-		}
+
 		String whereClause = AccountsContract.USERNAME + "=? and " + AccountsContract.UNIVERSE + "=?";
-		int numDeleted = database.delete(AccountsContract.ACCOUNTS_TABLE, whereClause, new String[] {username, universe});
+		int numDeleted = -1;
+		
+		rwlock.writeLock().lock();
+		try {
+			if(database == null) {
+				open();
+			}
+			numDeleted = database.delete(AccountsContract.ACCOUNTS_TABLE, whereClause, new String[] {username, universe});
+		}
+		finally {
+			rwlock.writeLock().unlock();
+		}
 		return numDeleted > 0;
 	}
 	
+	/**
+	 * Get the AccountCredentials of an account.
+	 * @param universe - the universe of the account
+	 * @param username - the username of the account
+	 * @return AccountCredentials containing universe, username, and password of the account.
+	 */
 	public AccountCredentials getAccount(String universe, String username) {
-		if(database == null) {
-			open();
-		}
 		
 		String whereClause = AccountsContract.UNIVERSE + "=? and " + AccountsContract.USERNAME + "=?";
-		Cursor results = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause,
-				new String[] {universe, username},
-				null,
-				null,
-				null
-		);
-		
-		if(results == null || results.getCount() != 1) {
-			Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
-			return null;
+		AccountCredentials credentials = null;
+		rwlock.readLock().lock();
+		try {
+			if(database == null) {
+				open();
+			}
+			
+			Cursor results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause,
+					new String[] {universe, username},
+					null,
+					null,
+					null
+			);
+			
+			if(results == null || results.getCount() != 1) {
+				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+			}
+			else {
+				//There should only be 1 row in the results.
+				results.moveToFirst();
+				credentials = new AccountCredentials();
+				credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+				credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+				credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+			}
 		}
-		
-		//There should only be 1 row in the results.
-		results.moveToFirst();
-		AccountCredentials credentials = new AccountCredentials();
-		credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
-		credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
-		credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+		finally {
+			rwlock.readLock().unlock();
+		}
 		return credentials;
 	}
 	
+	/**
+	 * This thread only reads from the database. It can be called from any thread.
+	 * @param rowId - the ID of the row in the database to retrieve
+	 * @return AccountCredentials object containing the universe, username, and password of the account
+	 * 		associated with rowId. Return null if account does not exist.
+	 */
 	public AccountCredentials getAccount(long rowId) {
-		//TODO: Actually get account credentials and not return null;
-		if(database == null) {
-			open();
-		}
-		
 		String whereClause = BaseColumns._ID + "=?";
-		Cursor results = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause, new String[]{Long.toString(rowId)},
-				null,
-				null,
-				null
-		);
-		if(results == null || results.getCount() != 1) {
-			Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
-			return null;
+		AccountCredentials credentials = null;
+		rwlock.readLock().lock();
+		try {
+			if(database == null) {
+				open();
+			}
+			
+			Cursor results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause, new String[]{Long.toString(rowId)},
+					null,
+					null,
+					null
+			);
+			if(results == null || results.getCount() != 1) {
+				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+			}
+			else {
+				//There should only be 1 row in the results.
+				results.moveToFirst();
+				credentials = new AccountCredentials();
+				credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+				credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+				credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+			}
 		}
-		
-		//There should only be 1 row in the results.
-		results.moveToFirst();
-		AccountCredentials credentials = new AccountCredentials();
-		credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
-		credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
-		credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+		finally {
+			rwlock.readLock().unlock();
+		}
 		return credentials;
 	}
 	
-	private void open() {
-		DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
-		database = dbh.getWritableDatabase();
+	/**
+	 * Retrieve and return all account info stored in the database.
+	 * This method does not return passwords.
+	 * @return ArrayList of all account credentials with the password
+	 * 		field set to the empty string. Returns null on error.
+	 */
+	public ArrayList<AccountCredentials> getAllAccounts() {
+		ArrayList<AccountCredentials> allAccs = null;
+		rwlock.readLock().lock();
+		try {
+			if(database == null) {
+				open();
+			}
+			
+			Cursor results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					new String[] {BaseColumns._ID, AccountsContract.UNIVERSE, AccountsContract.USERNAME},
+					null,
+					null,
+					null,
+					null,
+					null
+			);
+			if(results == null || results.getCount() <= 0) {
+				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+				allAccs = new ArrayList<AccountCredentials>();
+			}
+			else {
+				results.moveToFirst();
+				allAccs = new ArrayList<AccountCredentials>(results.getCount());
+				do {
+					AccountCredentials cred = new AccountCredentials();
+					cred.id = results.getLong(results.getColumnIndex(BaseColumns._ID));
+					cred.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+					cred.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+					allAccs.add(cred);
+				} while(results.moveToNext());
+			}
+		}
+		finally {
+			rwlock.readLock().unlock();
+		}
+		
+		return allAccs;
+	}
+	
+	private synchronized void open() {
+		if(database == null) {
+			DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
+			database = dbh.getWritableDatabase();
+		}
 	}
 	
 	@Override
 	public void close() {
-		if(database != null)
-			database.close();
+		rwlock.writeLock().lock();
+		try {
+			if(database != null) {
+				database.close();
+				database = null;
+			}
+		}
+		finally {
+			rwlock.writeLock().unlock();
+		}
 	}
 
 	private class DBHelper extends SQLiteOpenHelper {

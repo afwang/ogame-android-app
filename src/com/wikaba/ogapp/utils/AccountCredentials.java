@@ -6,6 +6,7 @@ package com.wikaba.ogapp.utils;
  *
  */
 public class AccountCredentials {
+	public long id;
 	public String universe;
 	public String username;
 	public String passwd;
@@ -16,6 +17,7 @@ public class AccountCredentials {
 	public String prCookieValue;
 	
 	public AccountCredentials() {
+		id = -1;
 		universe = "";
 		username = "";
 		passwd = "";

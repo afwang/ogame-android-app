@@ -1,10 +1,9 @@
 package com.wikaba.ogapp;
 
+import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.DatabaseManager;
 
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,13 +11,9 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
-import android.os.Build;
 
 public class HomeActivity extends ActionBarActivity {
 	static final String DEFAULT_ACC = "default_account";
@@ -56,7 +51,10 @@ public class HomeActivity extends ActionBarActivity {
 
 		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
 		accountRowId = prefs.getLong(DEFAULT_ACC, -1);
-		if(accountRowId < 0) {
+		DatabaseManager dbman = new DatabaseManager(this);
+		AccountCredentials accountExists = dbman.getAccount(accountRowId);
+		dbman.close();
+		if(accountRowId < 0 || accountExists == null) {
 			if(savedInstanceState == null) {
 				getSupportFragmentManager().beginTransaction()
 				.add(R.id.container, new NoAccountFragment()).commit();
@@ -124,13 +122,7 @@ public class HomeActivity extends ActionBarActivity {
 			return;
 		}
 		
-		if(!mAccountSelected) {
-			mAccountSelected = true;
-			
-			OverviewFragment confrag = new OverviewFragment();
-			getSupportFragmentManager().beginTransaction()
-			.replace(R.id.container, confrag).commit();
-		}
+		goToOverview();
 	}
 	
 	public void setListener(ServiceConnection fragment) {
@@ -139,5 +131,17 @@ public class HomeActivity extends ActionBarActivity {
 	
 	public void unsetListener() {
 		listeningFragment = null;
+	}
+	
+	public void goToAccountSelector() {
+		NoAccountFragment f = new NoAccountFragment();
+		getSupportFragmentManager().beginTransaction()
+		.replace(R.id.container, f).commit();
+	}
+	
+	public void goToOverview() {
+		OverviewFragment confrag = new OverviewFragment();
+		getSupportFragmentManager().beginTransaction()
+		.replace(R.id.container, confrag).commit();
 	}
 }

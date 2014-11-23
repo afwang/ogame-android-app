@@ -26,6 +26,9 @@ import android.support.v4.content.Loader;
 import android.text.format.DateUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -69,6 +72,7 @@ public class OverviewFragment extends Fragment
 		handler = new Handler();
 		dataIsLoaded = false;
 		fragmentRunning = false;
+		setHasOptionsMenu(true);
 
 		return root;
 	}
@@ -95,6 +99,29 @@ public class OverviewFragment extends Fragment
 		super.onStop();
 		fragmentRunning = false;
 		handler.removeCallbacks(this);
+		act.unsetListener();
+	}
+	
+	@Override
+	public void onDetach() {
+		super.onDetach();
+		act = null;
+	}
+	
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		inflater.inflate(R.menu.overview, menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int itemId = item.getItemId();
+		if(itemId == R.id.switch_accounts) {
+			
+			return true;
+		}
+		
+		return super.onOptionsItemSelected(item);
 	}
 	
 	@Override
@@ -172,6 +199,12 @@ public class OverviewFragment extends Fragment
 				deliverResult(oldData);
 			
 			this.forceLoad();
+		}
+		
+		@Override
+		public void deliverResult(List<FleetEvent> data) {
+			oldData = data;
+			super.deliverResult(data);
 		}
 		
 		@Override
@@ -281,6 +314,9 @@ public class OverviewFragment extends Fragment
 		}
 		
 		private void addCivilData(FleetEvent eventData, LinearLayout civilShipLayout) {
+			//TODO: Optimize this method. We should recycle the old views in the layout
+			//instead of removing all views and creating new TextView objects
+			civilShipLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] civilShipNames = {
 					FleetAndResources.SC,
@@ -310,6 +346,9 @@ public class OverviewFragment extends Fragment
 		}
 		
 		private void addCombatData(FleetEvent eventData, LinearLayout combatShipLayout) {
+			//TODO: Optimize this method. We should recycle the old views in the layout
+			//instead of removing all views and creating new TextView objects
+			combatShipLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] combatShipNames = {
 					FleetAndResources.LF,
@@ -342,6 +381,9 @@ public class OverviewFragment extends Fragment
 		}
 		
 		private void addResourceData(FleetEvent eventData, LinearLayout resourceLayout) {
+			//TODO: Optimize this method. We should recycle the old views in the layout
+			//instead of removing all views and creating new TextView objects
+			resourceLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] resourceNames = {
 					FleetAndResources.METAL,

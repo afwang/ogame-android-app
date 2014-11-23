@@ -1,10 +1,6 @@
 package com.wikaba.ogapp;
 
-import java.io.FileDescriptor;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.utils.AccountCredentials;
@@ -14,9 +10,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Parcel;
-import android.os.RemoteException;
 import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
@@ -45,6 +38,16 @@ public class AgentService extends Service {
 		}
 		
 		return mBinder;
+	}
+	
+	@Override
+	public boolean onUnbind(Intent intent) {
+		if(dbman != null) {
+			dbman.close();
+			dbman = null;
+		}
+		
+		return false;
 	}
 	
 	/**
