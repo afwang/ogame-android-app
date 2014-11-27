@@ -9,8 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="@dimen/fleet_event_textview_margin"
-        android:text="ETA" />
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
 
     <TextView
         android:id="@+id/origin_coords"
@@ -19,8 +18,7 @@
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/eta"
         android:layout_marginLeft="@dimen/fleet_event_textview_margin"
-        android:layout_marginRight="@dimen/fleet_event_textview_margin"
-        android:text="x:xxx:xx" />
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
 
     <TextView
         android:id="@+id/outgoing_or_incoming"
@@ -28,8 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@+id/origin_coords"
         android:layout_marginLeft="@dimen/fleet_event_textview_margin"
-        android:layout_marginRight="@dimen/fleet_event_textview_margin"
-        android:text="->" />
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
 
     <TextView
         android:id="@+id/dest_coords"
@@ -37,8 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/outgoing_or_incoming"
-        android:layout_marginLeft="@dimen/fleet_event_textview_margin"
-        android:text="x:xxx:xx" />
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin" />
 
     <TextView
         android:id="@+id/mission_type"

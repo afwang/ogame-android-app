@@ -1,7 +1,9 @@
 package com.wikaba.ogapp;
 
+import java.util.ArrayList;
 import java.util.List;
 import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.DatabaseManager;
@@ -82,7 +84,31 @@ public class AgentService extends Service {
 			return null;
 		}
 		
-		return agent.getOverviewData();
+		List<FleetEvent> events = new ArrayList<FleetEvent>();
+		boolean tryAgain = false;
+		do {
+			try {
+				events = agent.getOverviewData();
+				break;
+			} catch (LoggedOutException e) {
+				//Log in and try again!
+				if(!tryAgain) {
+					tryAgain = true;
+					ogameSessions.remove(rowId);
+					agent = null;
+					if(loginToAccount(rowId)) {
+						agent = ogameSessions.get(rowId);
+					}
+					else {
+						return null;
+					}
+				}
+				else {
+					break;
+				}
+			}
+		} while(tryAgain);
+		return events;
 	}
 	
 	public class AgentServiceBinder extends Binder{

@@ -70,6 +70,9 @@ public class NoAccountFragment extends Fragment
 		getLoaderManager().initLoader(ALL_ACCS_LOADER_ID, null, this);
 		
 		loginButton.setOnClickListener(this);
+		
+		registerForContextMenu(existingAccs);
+		
 		return root;
 	}
 	
@@ -84,7 +87,6 @@ public class NoAccountFragment extends Fragment
 	public boolean onContextItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
 		if(itemId == R.id.remove) {
-			//TODO: remove the account;
 			AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
 			int rowPosition = info.position;
 			AccountCredentials creds = allAccounts.get(rowPosition);

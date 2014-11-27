@@ -10,7 +10,7 @@ import java.util.HashMap;
  *
  */
 public class NameToURI {
-	private static final HashMap<String, String> nameMap = new HashMap<String, String>();
+	protected static final HashMap<String, String> nameMap = new HashMap<String, String>();
 	private static boolean initializedYet = false;
 	
 	/*
@@ -18,8 +18,30 @@ public class NameToURI {
 	 */
 	private static void init() {
 		initializedYet = true;
-		//TODO: Populate the map with the relations.
+
+		nameMap.put("Antares", "s127-en.ogame.gameforge.com");
+		nameMap.put("Andromeda", "s101-en.ogame.gameforge.com");
+		nameMap.put("Betelgeuse", "s128-en.ogame.gameforge.com");
+		nameMap.put("Electra", "s105-en.ogame.gameforge.com");
+		nameMap.put("Jupiter", "s110-en.ogame.gameforge.com");
+		nameMap.put("Nekkar", "s114-en.ogame.gameforge.com");
+		nameMap.put("Orion", "s115-en.ogame.gameforge.com");
+		nameMap.put("Pegasus", "s116-en.ogame.gameforge.com");
+		nameMap.put("Quantum", "s117-en.ogame.gameforge.com");
+		nameMap.put("Rigel", "s118-en.ogame.gameforge.com");
+		nameMap.put("Sirius", "s119-en.ogame.gameforge.com");
+		nameMap.put("Taurus", "s120-en.ogame.gameforge.com");
+		nameMap.put("Ursa", "s121-en.ogame.gameforge.com");
+		nameMap.put("Vega", "s122-en.ogame.gameforge.com");
+		nameMap.put("Wasat", "s123-en.ogame.gameforge.com");
+		nameMap.put("Xalynth", "s124-en.ogame.gameforge.com");
+		nameMap.put("Yakini", "s125-en.ogame.gameforge.com");
 		nameMap.put("Zagadra", "s126-en.ogame.gameforge.com");
+		nameMap.put("Universe 1", "s1-en.ogame.gameforge.com");
+		nameMap.put("Universe 20", "s20-en.ogame.gameforge.com");
+		nameMap.put("Universe 30", "s30-en.ogame.gameforge.com");
+		nameMap.put("Universe 35", "s35-en.ogame.gameforge.com");
+		nameMap.put("Universe 44", "s44-en.ogame.gameforge.com");
 	}
 	
 	/**

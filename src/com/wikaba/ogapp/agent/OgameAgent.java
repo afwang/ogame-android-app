@@ -94,7 +94,6 @@ public class OgameAgent {
 					connection.setDoOutput(true);
 					connection.setRequestMethod("POST");
 					Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-//					System.out.println(parameters);
 					writer.write(parameters);
 					writer.flush();
 					writer.close();
@@ -115,17 +114,8 @@ public class OgameAgent {
 				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-//				System.out.println("Response headers:");
-//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-//				for(Map.Entry<String, List<String>> mapping : entrySet) {
-//					List<String> values = mapping.getValue();
-//					for(String val : values) {
-//						System.out.println(mapping.getKey() + ": " + val);
-//					}
-//				}
 				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
 				for(String cookieHeader : cookieHeaders) {
-//					System.out.println(cookieHeader);
 					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
 					for(HttpCookie cookie : cookiesList) {
 						cookieStore.put(cookie.getName(), cookie);
@@ -135,15 +125,7 @@ public class OgameAgent {
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-//					System.out.println("Redirected to: " + uri);
 				}
-				
-//				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//				String line;
-//				while((reader.readLine()) != null) {
-//					System.out.println(line);
-//				}
-//				reader.close();
 			}
 			else {
 				successfulResponse = false;
@@ -491,7 +473,7 @@ public class OgameAgent {
 	 * 		is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
 	 * 		will have non-null instance variables.
 	 */
-	public List<FleetEvent> getOverviewData() {
+	public List<FleetEvent> getOverviewData() throws LoggedOutException {
 		List<FleetEvent> overviewData = null;
 		
 		HttpURLConnection conn = null;
@@ -522,18 +504,23 @@ public class OgameAgent {
 			return null;
 		}
 		
+		InputStream responseStream = null;
 		try {
+			conn.setInstanceFollowRedirects(false);
 			conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 			int responseCode = goToOverview(conn, connUri);
 			
-			if(responseCode < 0)
+			if(responseCode < 0) {
 				return null;
+			}
 			
-			InputStream responseStream;
 			boolean isError;
 			if(responseCode >= 400) {
 				responseStream = conn.getErrorStream();
 				isError = true;
+			}
+			else if(responseCode == 302) {
+				throw new LoggedOutException("Agent's cookies are no longer valid");
 			}
 			else {
 				responseStream = conn.getInputStream();
@@ -563,6 +550,13 @@ public class OgameAgent {
 		finally {
 			if(conn != null) {
 				conn.disconnect();
+			}
+			if(responseStream != null) {
+				try {
+					responseStream.close();
+				}
+				catch(IOException e) {
+				}
 			}
 		}
 		return overviewData;
@@ -910,8 +904,9 @@ public class OgameAgent {
 					eventType = XmlPullParser.END_DOCUMENT;
 				}
 			}
-			if(lastScannedEvent != null)
+			if(lastScannedEvent != null) {
 				eventList.add(lastScannedEvent);
+			}
 		}
 		catch (XmlPullParserException e) {
 			if(e != null) {

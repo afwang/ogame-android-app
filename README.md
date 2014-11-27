@@ -33,9 +33,11 @@ I want to separate the task of acquiring data from the task of updating the UI.
 To do list
 ==========
 
-- Present a loading dialogue when the page is being loaded.
-
-- Add code to return null, negative numbers, 0, errors, or whatever when retrieving a
-web page fails (possibly due to the 0300 server time kick?).
-
 - Store the session cookies inside a database so the user does not have to log in again
+
+- Add remaining number of missions to the IntegerMissionMap class.
+
+- Possibly phase out use of IntegerMissionMap to get mission names (register a custom Mapper
+to relate each mission to the name using Android's built-in resource resolver)
+
+- Fix potential bugs caused by change in screen orientation during loading

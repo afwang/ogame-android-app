@@ -35,6 +35,7 @@ import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class OverviewFragment extends Fragment
@@ -48,6 +49,7 @@ public class OverviewFragment extends Fragment
 	private static final int LOADER_ID = 0;
 	
 	private ListView eventFleetView;
+	private ProgressBar progressWheel;
 	private HomeActivity act;
 	private Map<TextView, Long> etaTextViews;
 	private Handler handler;
@@ -68,6 +70,7 @@ public class OverviewFragment extends Fragment
 		View root = inflater.inflate(R.layout.fragment_overview, container, false);
 		
 		eventFleetView = (ListView)root.findViewById(R.id.eventFleetView);
+		progressWheel = (ProgressBar)root.findViewById(R.id.progressBar1);
 		etaTextViews = new HashMap<TextView, Long>();
 		handler = new Handler();
 		dataIsLoaded = false;
@@ -126,12 +129,17 @@ public class OverviewFragment extends Fragment
 	
 	@Override
 	public Loader<List<FleetEvent>> onCreateLoader(int arg0, Bundle arg1) {
+		eventFleetView.setVisibility(View.GONE);
+		progressWheel.setVisibility(View.VISIBLE);
 		FleetEventLoader loader = new FleetEventLoader(act);
 		return loader;
 	}
 
 	@Override
 	public void onLoadFinished(Loader<List<FleetEvent>> loader, List<FleetEvent> events) {
+		eventFleetView.setVisibility(View.VISIBLE);
+		progressWheel.setVisibility(View.GONE);
+		
 		eventFleetView.setAdapter(new EventAdapter(act, events));
 		eventFleetView.setRecyclerListener(this);
 		final long timeInMillis = 1000;
