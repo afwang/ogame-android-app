@@ -117,7 +117,7 @@ public class OverviewFragment extends Fragment
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
 		if(itemId == R.id.switch_accounts) {
-			
+			act.goToAccountSelector();
 			return true;
 		}
 		

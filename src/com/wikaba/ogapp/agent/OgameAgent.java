@@ -561,8 +561,9 @@ public class OgameAgent {
 			e.printStackTrace();
 		}
 		finally {
-			if(conn != null)
+			if(conn != null) {
 				conn.disconnect();
+			}
 		}
 		return overviewData;
 	}
@@ -1095,7 +1096,7 @@ public class OgameAgent {
 						}
 
 						String numshipstr = textData;
-						
+						numshipstr = numshipstr.replaceAll("\\.", "");
 						if(currentShip != null && currentShip.length() > 0) {
 							Long numships = Long.valueOf(numshipstr);
 							fleetResData.put(currentShip, numships);
@@ -1139,7 +1140,7 @@ public class OgameAgent {
 						}
 						
 						String amount = textData;
-						amount.replaceAll("\\.", "");
+						amount = amount.replaceAll("\\.", "");
 						if(amount.length() > 0) {
 							Long resAmount = Long.valueOf(amount);
 							fleetResData.put(currentRes, resAmount);
