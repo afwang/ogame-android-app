@@ -33,6 +33,10 @@ I want to separate the task of acquiring data from the task of updating the UI.
 To do list
 ==========
 
+- Add thank you page of some sort to thank makers of images used for icon, from
+https://openclipart.org/detail/121903/full-moon-by-merlin2525, and
+https://openclipart.org/detail/189057/android-another-by-roshellin-189057
+
 - Store the session cookies inside a database so the user does not have to log in again
 
 - Add remaining number of missions to the IntegerMissionMap class.
