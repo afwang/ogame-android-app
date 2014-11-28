@@ -52,17 +52,26 @@ public class HomeActivity extends ActionBarActivity {
 		DatabaseManager dbman = new DatabaseManager(this);
 		AccountCredentials accountExists = dbman.getAccount(accountRowId);
 		dbman.close();
-		if(accountRowId < 0 || accountExists == null) {
-			if(savedInstanceState == null) {
-				getSupportFragmentManager().beginTransaction()
-				.add(R.id.container, new NoAccountFragment()).commit();
+		if(savedInstanceState == null) {
+			if(accountRowId < 0 || accountExists == null) {
+				if(savedInstanceState == null) {
+					getSupportFragmentManager().beginTransaction()
+					.add(R.id.container, new NoAccountFragment()).commit();
+				}
+				mAccountSelected = false;
 			}
-			mAccountSelected = false;
-		}
-		else {
-			getSupportFragmentManager().beginTransaction()
-			.add(R.id.container, new OverviewFragment(), null).commit();
-			mAccountSelected = true;
+			else {
+				Bundle args = new Bundle();
+				args.putString(OverviewFragment.UNIVERSE_KEY, accountExists.universe);
+				args.putString(OverviewFragment.USERNAME_KEY, accountExists.username);
+				
+				OverviewFragment frag = new OverviewFragment();
+				frag.setArguments(args);
+				
+				getSupportFragmentManager().beginTransaction()
+				.add(R.id.container, frag, null).commit();
+				mAccountSelected = true;
+			}
 		}
 		
 		mBound = false;
@@ -119,7 +128,16 @@ public class HomeActivity extends ActionBarActivity {
 	}
 	
 	public void goToOverview() {
+		DatabaseManager dbman = new DatabaseManager(this);
+		AccountCredentials accountExists = dbman.getAccount(accountRowId);
+		dbman.close();
+		
+		Bundle args = new Bundle();
+		args.putString(OverviewFragment.UNIVERSE_KEY, accountExists.universe);
+		args.putString(OverviewFragment.USERNAME_KEY, accountExists.username);
 		OverviewFragment confrag = new OverviewFragment();
+		confrag.setArguments(args);
+		
 		getSupportFragmentManager().beginTransaction()
 		.replace(R.id.container, confrag).commit();
 	}

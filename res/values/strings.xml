@@ -20,6 +20,28 @@
     <string name="overview_outgoing">-></string>
     <string name="overview_incoming">&lt;-</string>
     <string name="overview_arrived">Complete!</string>
+    <string name="no_events">No events</string>
+    <string name="error_msg">Error loading events!</string>
+    <string name="reload_button">Refresh</string>
+    <string name="reload_in_progress">Reload in progress</string>
+    <!-- Ship and resource strings -->
+    <string name="metal">m</string>
+    <string name="crystal">c</string>
+    <string name="deuterium">d</string>
+    <string name="lightfighter">L. Fighter</string>
+    <string name="heavyfighter">H. Fighter</string>
+    <string name="cruiser">Cruiser</string>
+    <string name="battleship">Battleship</string>
+    <string name="smallcargo">S. Cargo</string>
+    <string name="largecargo">L. Cargo</string>
+    <string name="colony">Colony</string>
+    <string name="battlecruiser">B.cruiser</string>
+    <string name="bomber">Bomber</string>
+    <string name="destroyer">Destroyer</string>
+    <string name="deathstar">Death Star</string>
+    <string name="recycler">Recycler</string>
+    <string name="probe">Esp. Probe</string>
+    <string name="satellite">S. satellite</string>
     
     <string name="antares">Antares</string>
     <string name="betelgeuse">Betelgeuse</string>

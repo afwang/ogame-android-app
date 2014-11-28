@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
+import com.wikaba.ogapp.utils.NameBridge;
 
 import android.app.Activity;
 import android.support.v4.app.LoaderManager;
@@ -33,29 +34,36 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class OverviewFragment extends Fragment
 		implements
 			ServiceConnection,
 			LoaderManager.LoaderCallbacks<List<FleetEvent>>,
 			AbsListView.RecyclerListener,
-			Runnable {
+			Runnable,
+			View.OnClickListener {
+	
+	static final String USERNAME_KEY = "com.wikaba.ogapp.OverviewFragment.USERNAME";
+	static final String UNIVERSE_KEY = "com.wikaba.ogapp.OverviewFragment.UNIVERSE";
 	static final String ACC_ROWID = "account_row_id";
 	
 	private static final int LOADER_ID = 0;
 	
 	private ListView eventFleetView;
 	private ProgressBar progressWheel;
+	private TextView noEventsText;
+	private Button reload;
 	private HomeActivity act;
 	private Map<TextView, Long> etaTextViews;
 	private Handler handler;
 	private boolean dataIsLoaded;
 	private boolean fragmentRunning;
-	
 	public OverviewFragment() {
 	}
 	
@@ -71,11 +79,32 @@ public class OverviewFragment extends Fragment
 		
 		eventFleetView = (ListView)root.findViewById(R.id.eventFleetView);
 		progressWheel = (ProgressBar)root.findViewById(R.id.progressBar1);
+		noEventsText = (TextView)root.findViewById(R.id.no_events);
+		reload = (Button)root.findViewById(R.id.refresh_button);
 		etaTextViews = new HashMap<TextView, Long>();
 		handler = new Handler();
 		dataIsLoaded = false;
 		fragmentRunning = false;
 		setHasOptionsMenu(true);
+		
+		reload.setOnClickListener(this);
+
+		if(savedInstanceState == null) {
+			TextView header = (TextView)root.findViewById(R.id.name_universe);
+			Bundle args = this.getArguments();
+			String username;
+			String universe;
+			if(args != null) {
+				username = args.getString(USERNAME_KEY);
+				universe = args.getString(UNIVERSE_KEY);
+			}
+			else {
+				username = "ERROR";
+				universe = "ERROR";
+			}
+			
+			header.setText(universe + ", " + username);
+		}
 
 		return root;
 	}
@@ -137,10 +166,28 @@ public class OverviewFragment extends Fragment
 
 	@Override
 	public void onLoadFinished(Loader<List<FleetEvent>> loader, List<FleetEvent> events) {
-		eventFleetView.setVisibility(View.VISIBLE);
 		progressWheel.setVisibility(View.GONE);
+		reload.setVisibility(View.VISIBLE);
 		
-		eventFleetView.setAdapter(new EventAdapter(act, events));
+		Resources res = getResources();
+		if(events == null) {
+			noEventsText.setText(res.getString(R.string.error_msg));
+			events = new ArrayList<FleetEvent>();
+		}
+		else {
+			noEventsText.setText(res.getString(R.string.no_events));
+		}
+		
+		if(events.size() > 0) {
+			eventFleetView.setVisibility(View.VISIBLE);
+			noEventsText.setVisibility(View.GONE);
+		}
+		else {
+			eventFleetView.setVisibility(View.GONE);
+			noEventsText.setVisibility(View.VISIBLE);
+		}
+		
+		eventFleetView.setAdapter(new EventAdapter(act, events, etaTextViews));
 		eventFleetView.setRecyclerListener(this);
 		final long timeInMillis = 1000;
 		if(fragmentRunning)
@@ -191,6 +238,21 @@ public class OverviewFragment extends Fragment
 		handler.postDelayed(this, timeInMillis);
 	}
 	
+	@Override
+	public void onClick(View v) {
+		if(v == reload) {
+			eventFleetView.setVisibility(View.GONE);
+			noEventsText.setVisibility(View.GONE);
+			progressWheel.setVisibility(View.VISIBLE);
+			reload.setVisibility(View.INVISIBLE);
+			if(act.mBound) {
+				getLoaderManager().destroyLoader(LOADER_ID);
+				getLoaderManager().initLoader(LOADER_ID, null, this);
+			}
+			Toast.makeText(act, R.string.reload_in_progress, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
 	private static class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
 		private List<FleetEvent> oldData;
 		private HomeActivity act;
@@ -221,6 +283,10 @@ public class OverviewFragment extends Fragment
 		
 		@Override
 		protected void onReset() {
+			if(oldData != null) {
+				oldData.clear();
+				oldData = null;
+			}
 		}
 
 		@Override
@@ -230,11 +296,14 @@ public class OverviewFragment extends Fragment
 		}
 	}
 	
-	private class EventAdapter extends BaseAdapter {
+	private static class EventAdapter extends BaseAdapter {
 		private Context context;
 		private List<FleetEvent> eventList;
+		private Map<TextView, Long> textViews;
+		private NameBridge bridge;
+		private Resources res;
 		
-		public EventAdapter(Context ctx, List<FleetEvent> eventList) {
+		public EventAdapter(Context ctx, List<FleetEvent> eventList, Map<TextView, Long> textViews) {
 			context = ctx;
 			
 			//Copy elements over to ArrayList to ensure random access to the elements in the list.
@@ -244,6 +313,14 @@ public class OverviewFragment extends Fragment
 			this.eventList = new ArrayList<FleetEvent>(size);
 			if(eventList != null)
 				this.eventList.addAll(eventList);
+			
+			if(textViews == null) {
+				throw new IllegalArgumentException("Third argument passed to EventAdapter constructor should not be null");
+			}
+			this.textViews = textViews;
+			
+			res = context.getResources();
+			bridge = new NameBridge(res);
 		}
 
 		@Override
@@ -301,14 +378,14 @@ public class OverviewFragment extends Fragment
 			//We have to add the text view to the Map whether we are creating a new view or recycling an old one.
 			//The recycled view might have went through the recycler listener (in which case it was removed from the
 			//Map)
-			etaTextViews.put(holder.eta, event.data_arrival_time);
+			textViews.put(holder.eta, event.data_arrival_time);
 			
 			long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
 			long timeLeft = event.data_arrival_time - currentTime;
 			eta.setText(DateUtils.formatElapsedTime(timeLeft));
 			originCoords.setText(event.coordsOrigin);
 			
-			Resources res = getResources();
+			Resources res = context.getResources();
 			outOrIn.setText(event.data_return_flight ? res.getString(R.string.overview_incoming) : res.getString(R.string.overview_outgoing));
 			
 			destCoords.setText(event.destCoords);
@@ -339,9 +416,11 @@ public class OverviewFragment extends Fragment
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
 					TextView shipEntry = new TextView(context);
-					Resources res = context.getResources();
+					
+					shipName = bridge.getName(shipName);
 					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
 					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')
@@ -374,9 +453,11 @@ public class OverviewFragment extends Fragment
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
 					TextView shipEntry = new TextView(context);
-					Resources res = context.getResources();
+					
+					shipName = bridge.getName(shipName);
 					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
 					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')
@@ -404,9 +485,11 @@ public class OverviewFragment extends Fragment
 				num = data.get(resName);
 				if(num != null) {
 					TextView resEntry = new TextView(context);
-					Resources res = context.getResources();
+					
+					resName = bridge.getName(resName);
 					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
 					resEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+					
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')

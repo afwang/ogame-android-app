@@ -41,9 +41,6 @@ public class DatabaseManager implements Closeable {
 	 * @return ID of the row inserted or modified.
 	 */
 	public long addAccount(String universe, String username, String passwd) {
-		if(database == null) {
-			open();
-		}
 		
 		ContentValues cv = new ContentValues();
 		
@@ -52,6 +49,10 @@ public class DatabaseManager implements Closeable {
 		String whereClause = AccountsContract.UNIVERSE + "=? and " + AccountsContract.USERNAME + "=?";
 		rwlock.writeLock().lock();
 		try {
+			if(database == null) {
+				open();
+			}
+			
 			Cursor alreadyExists = database.query(
 					AccountsContract.ACCOUNTS_TABLE,
 					null,
