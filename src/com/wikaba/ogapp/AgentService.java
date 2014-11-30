@@ -1,5 +1,4 @@
 /*
-
     Copyright 2014 Alexander Wang
     
     This file is part of Ogame on Android.
