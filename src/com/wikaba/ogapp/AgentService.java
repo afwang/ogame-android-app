@@ -19,6 +19,7 @@
 
 package com.wikaba.ogapp;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
 import com.wikaba.ogapp.agent.FleetEvent;
@@ -87,7 +88,14 @@ public class AgentService extends Service {
 		if(agent == null) {
 			agent = new OgameAgent();
 			AccountCredentials creds = dbman.getAccount(rowId);
-			agent.login(creds.universe, creds.username, creds.passwd);
+			if(creds == null) {
+				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
+				Log.e(LOGTAG, "The rowId passed in was " + rowId);
+			}
+			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+			if(cookies == null) {
+				return false;
+			}
 			ogameSessions.put(rowId, agent);
 		}
 		return true;

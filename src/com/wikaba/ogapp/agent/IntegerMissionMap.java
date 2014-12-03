@@ -25,12 +25,14 @@ public class IntegerMissionMap {
 	public static final int DEPLOYMENT = 4;
 	public static final int ESPIONAGE = 6;
 	public static final int HARVEST = 8;
+	public static final int MOON_DESTRUCTION = 9;
 	
 	public static final String ATTACK_NAME = "Attack";
 	public static final String TRANSPORT_NAME = "Transport";
 	public static final String DEPLOYMENT_NAME = "Deployment";
 	public static final String ESPIONAGE_NAME = "Espionage";
 	public static final String HARVEST_NAME = "Harvest";
+	public static final String MOON_DESTRUCTION_NAME = "Moon Destruction";
 	
 	/**
 	 * Returns the mission name associated with the integer code. This is needed since
@@ -56,6 +58,9 @@ public class IntegerMissionMap {
 			break;
 		case HARVEST:
 			missionName = HARVEST_NAME;
+			break;
+		case MOON_DESTRUCTION:
+			missionName = MOON_DESTRUCTION_NAME;
 			break;
 		default:
 			missionName = "INVALID NAME: " + missionCode;

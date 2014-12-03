@@ -193,7 +193,12 @@ public class DatabaseManager implements Closeable {
 					null
 			);
 			if(results == null || results.getCount() != 1) {
-				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+				if(results == null) {
+					Log.e(LOG_TAG, "Results cursor from database query is null.");
+				}
+				else {
+					Log.e(LOG_TAG, "The number of results returned from database query is " + results.getCount() + '!');
+				}
 			}
 			else {
 				//There should only be 1 row in the results.

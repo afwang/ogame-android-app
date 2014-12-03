@@ -192,6 +192,7 @@ public class OverviewFragment extends Fragment
 		if(events == null) {
 			noEventsText.setText(res.getString(R.string.error_msg));
 			events = new ArrayList<FleetEvent>();
+			Toast.makeText(act, R.string.login_error, Toast.LENGTH_LONG).show();
 		}
 		else {
 			noEventsText.setText(res.getString(R.string.no_events));
@@ -265,8 +266,7 @@ public class OverviewFragment extends Fragment
 			progressWheel.setVisibility(View.VISIBLE);
 			reload.setVisibility(View.INVISIBLE);
 			if(act.mBound) {
-				getLoaderManager().destroyLoader(LOADER_ID);
-				getLoaderManager().initLoader(LOADER_ID, null, this);
+				getLoaderManager().getLoader(LOADER_ID).onContentChanged();
 			}
 			Toast.makeText(act, R.string.reload_in_progress, Toast.LENGTH_SHORT).show();
 		}
@@ -287,7 +287,9 @@ public class OverviewFragment extends Fragment
 			if(oldData != null)
 				deliverResult(oldData);
 			
-			this.forceLoad();
+			if(oldData == null || takeContentChanged()) {
+				this.forceLoad();
+			}
 		}
 		
 		@Override
@@ -310,7 +312,10 @@ public class OverviewFragment extends Fragment
 
 		@Override
 		public List<FleetEvent> loadInBackground() {
-			act.mAgent.loginToAccount(act.accountRowId);
+			boolean loggedIn = act.mAgent.loginToAccount(act.accountRowId);
+			if(!loggedIn) {
+				return null;
+			}
 			return act.mAgent.getFleetEvents(act.accountRowId);
 		}
 	}

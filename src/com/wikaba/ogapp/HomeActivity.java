@@ -27,14 +27,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.widget.Toast;
 
 public class HomeActivity extends ActionBarActivity {
-	static final String DEFAULT_ACC = "default_account";
-	boolean mAccountSelected;
+	private static final String ROWID_KEY = "com.wikaba.ogapp.HomeActivity.accountRowId";
 	long accountRowId;
 	
 	private ServiceConnection agentServiceConn = new ServiceConnection() {
@@ -65,34 +63,14 @@ public class HomeActivity extends ActionBarActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-
-		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
-		accountRowId = prefs.getLong(DEFAULT_ACC, -1);
-		DatabaseManager dbman = new DatabaseManager(this);
-		AccountCredentials accountExists = dbman.getAccount(accountRowId);
-		dbman.close();
-		if(savedInstanceState == null) {
-			if(accountRowId < 0 || accountExists == null) {
-				if(savedInstanceState == null) {
-					getSupportFragmentManager().beginTransaction()
-					.add(R.id.container, new NoAccountFragment()).commit();
-				}
-				mAccountSelected = false;
-			}
-			else {
-				Bundle args = new Bundle();
-				args.putString(OverviewFragment.UNIVERSE_KEY, accountExists.universe);
-				args.putString(OverviewFragment.USERNAME_KEY, accountExists.username);
-				
-				OverviewFragment frag = new OverviewFragment();
-				frag.setArguments(args);
-				
-				getSupportFragmentManager().beginTransaction()
-				.add(R.id.container, frag, null).commit();
-				mAccountSelected = true;
-			}
-		}
 		
+		if(savedInstanceState == null) {
+			getSupportFragmentManager().beginTransaction()
+			.add(R.id.container, new NoAccountFragment()).commit();
+		}
+		else {
+			accountRowId = savedInstanceState.getLong(ROWID_KEY, 0);
+		}
 		mBound = false;
 	}
 	
@@ -106,11 +84,12 @@ public class HomeActivity extends ActionBarActivity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if(accountRowId >= 0) {
-			SharedPreferences.Editor edit = getPreferences(MODE_PRIVATE).edit();
-			edit.putLong(DEFAULT_ACC, accountRowId);
-			edit.commit();
-		}
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putLong(ROWID_KEY, accountRowId);
 	}
 	
 	@Override

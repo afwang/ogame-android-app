@@ -72,7 +72,7 @@ public class OgameAgent {
 	 * Submits user credentials to Ogame. Parses and returns data from HTTP response
 	 * @param universe - The name of the universe to log in to.
 	 * @param username - Username of the account on universe to log in to.
-	 * @return list of cookies set for this session.
+	 * @return list of cookies set for this session. Null if login failed.
 	 */
 	public List<HttpCookie> login(String universe, String username, String password) {
 		final int timeoutMillis = 30 * 1000;
@@ -187,15 +187,11 @@ public class OgameAgent {
 //				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-//				System.out.println("Response headers:");
-//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-//				for(Map.Entry<String, List<String>> mapping : entrySet) {
-//					List<String> values = mapping.getValue();
-//					for(String val : values) {
-//						System.out.println(mapping.getKey() + ": " + val);
-//					}
-//				}
 				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
+				if(cookieHeaders == null) {
+					cookieStore.clear();
+					return null;
+				}
 				for(String cookieHeader : cookieHeaders) {
 //					System.out.println(cookieHeader);
 					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());

@@ -234,7 +234,9 @@ public class NoAccountFragment extends Fragment
 		public View getView(int position, View convertView, ViewGroup parent) {
 			TextView v = null;
 			if(convertView == null) {
-				v = new TextView(ctx);
+				LayoutInflater inflater = (LayoutInflater)ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				v = (TextView)inflater.inflate(R.layout.account_text_view, parent, false);
+				
 			}
 			else {
 				v = (TextView)convertView;

@@ -40,6 +40,7 @@
     <string name="overview_arrived">Complete!</string>
     <string name="no_events">No events</string>
     <string name="error_msg">Error loading events!</string>
+    <string name="login_error">Check login username, password, and universe</string>
     <string name="reload_button">Refresh</string>
     <string name="reload_in_progress">Reload in progress</string>
     <!-- Ship and resource strings -->
