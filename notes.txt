@@ -4,7 +4,7 @@ to make the dynamic countdown timer).
 See line 562 of the Overview page source for an example of how the arrival time is listed.
 
 The event details are encoded in HTML as attribute name-value pairs in
-the <tr...> tags. See line 571 of the Overview page sourcefor an example.
+the <tr...> tags. See line 571 of the Overview page source for an example.
 All fleet events are have a class attribute set as "eventFleet." It is unknown
 if this is also the case for missile launches.
 
@@ -26,3 +26,12 @@ for the following items in the following order:
 	   
 We repeat the above steps for each <tr class="eventFleet"> we find, and we can
 build a list of events to return.
+
+As of right now, it is known that espionage missions (both friendly and hostile)
+have an ID number of 6. It is unknown if all hostile missions have the same number
+as their friendly counterparts. In order to determine whether missions are friendly
+or hostile, we can check the <td...> element that comes immediately after the 
+<tr...> element that contains the event type, timings, and return-flight flag. This
+<td...> element has a "class" attribute that contains the token "hostile" if the
+fleet is hostile. It has a "class attribute" that contains the token "friendly" if
+the fleet is friendly.
