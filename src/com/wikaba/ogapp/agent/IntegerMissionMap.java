@@ -26,6 +26,7 @@ public class IntegerMissionMap {
 	public static final int ESPIONAGE = 6;
 	public static final int HARVEST = 8;
 	public static final int MOON_DESTRUCTION = 9;
+	public static final int EXPEDITION = 15;
 	
 	public static final String ATTACK_NAME = "Attack";
 	public static final String TRANSPORT_NAME = "Transport";
@@ -33,6 +34,7 @@ public class IntegerMissionMap {
 	public static final String ESPIONAGE_NAME = "Espionage";
 	public static final String HARVEST_NAME = "Harvest";
 	public static final String MOON_DESTRUCTION_NAME = "Moon Destruction";
+	public static final String EXPEDITION_NAME = "Expedition";
 	
 	/**
 	 * Returns the mission name associated with the integer code. This is needed since
