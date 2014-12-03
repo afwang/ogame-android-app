@@ -45,3 +45,7 @@ https://openclipart.org/detail/189057/android-another-by-roshellin-189057
 to relate each mission to the name using Android's built-in resource resolver)
 
 - Fix potential bugs caused by change in screen orientation during loading
+
+- Extract names for planets. Add names to the TextViews on overview.
+
+- Add color to missions based on mission type, return status, and hostile/friendly status
