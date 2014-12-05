@@ -68,12 +68,14 @@ public class OverviewFragment extends Fragment
 			Runnable,
 			View.OnClickListener {
 	
+	private static final String HEADER_KEY = "com.wikaba.ogapp.OverviewFragment.HEADER";
 	static final String USERNAME_KEY = "com.wikaba.ogapp.OverviewFragment.USERNAME";
 	static final String UNIVERSE_KEY = "com.wikaba.ogapp.OverviewFragment.UNIVERSE";
 	static final String ACC_ROWID = "account_row_id";
 	
 	private static final int LOADER_ID = 0;
 	
+	private TextView header;
 	private ListView eventFleetView;
 	private ProgressBar progressWheel;
 	private TextView noEventsText;
@@ -100,6 +102,7 @@ public class OverviewFragment extends Fragment
 		progressWheel = (ProgressBar)root.findViewById(R.id.progressBar1);
 		noEventsText = (TextView)root.findViewById(R.id.no_events);
 		reload = (Button)root.findViewById(R.id.refresh_button);
+		header = (TextView)root.findViewById(R.id.name_universe);
 		etaTextViews = new HashMap<TextView, Long>();
 		handler = new Handler();
 		dataIsLoaded = false;
@@ -109,7 +112,6 @@ public class OverviewFragment extends Fragment
 		reload.setOnClickListener(this);
 
 		if(savedInstanceState == null) {
-			TextView header = (TextView)root.findViewById(R.id.name_universe);
 			Bundle args = this.getArguments();
 			String username;
 			String universe;
@@ -123,6 +125,13 @@ public class OverviewFragment extends Fragment
 			}
 			
 			header.setText(universe + ", " + username);
+		}
+		else {
+			String headerText = savedInstanceState.getString(HEADER_KEY);
+			if(headerText == null) {
+				headerText = "";
+			}
+			header.setText(headerText);
 		}
 
 		return root;
@@ -143,6 +152,12 @@ public class OverviewFragment extends Fragment
 		}
 		
 		fragmentRunning = true;
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		String uniText = header.getText().toString();
+		outState.putString(HEADER_KEY, uniText);
 	}
 	
 	@Override
