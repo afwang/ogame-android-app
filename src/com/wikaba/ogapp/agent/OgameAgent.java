@@ -29,6 +29,9 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -38,14 +41,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
-
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -61,12 +60,7 @@ public class OgameAgent {
 	public static final String LOGIN_URL = "http://en.ogame.gameforge.com/main/login";
 	public static final String OVERVIEW_ENDPOINT = "/game/index.php?page=overview";
 	
-	private Map<String, HttpCookie> cookieStore;
 	private String serverUri;
-	
-	public OgameAgent() {
-		cookieStore = new HashMap<String, HttpCookie>();
-	}
 	
 	/**
 	 * Submits user credentials to Ogame. Parses and returns data from HTTP response
@@ -75,10 +69,12 @@ public class OgameAgent {
 	 * @return list of cookies set for this session. Null if login failed.
 	 */
 	public List<HttpCookie> login(String universe, String username, String password) {
+		if(!checkCookieHandler()) {
+			CookieHandler.setDefault(new CustomCookieManager());
+		}
+		
 		final int timeoutMillis = 30 * 1000;
 		HttpURLConnection connection = null;
-		URI theUri = null;
-		String cookieHeaderStr;
 		int response = 0;
 		
 		boolean successfulResponse;
@@ -104,10 +100,8 @@ public class OgameAgent {
 			for(boolean redo = true; redo;) {
 				try {
 					connection = (HttpURLConnection)(new URL(uri)).openConnection();
-					theUri = new URI(uri);
 					connection.setConnectTimeout(timeoutMillis);
 					connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-					//No cookies to set on the first HTTP request
 					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 					connection.setRequestProperty("Content-Length", length);
 					connection.setDoOutput(true);
@@ -133,14 +127,6 @@ public class OgameAgent {
 				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
-				for(String cookieHeader : cookieHeaders) {
-					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
-					for(HttpCookie cookie : cookiesList) {
-						cookieStore.put(cookie.getName(), cookie);
-					}
-				}
-				
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
@@ -168,50 +154,24 @@ public class OgameAgent {
 			 */
 			System.out.println("START SECOND REQUEST");
 			connection = (HttpURLConnection)(new URL(uri)).openConnection();
-			theUri = new URI(uri);
 			connection.setConnectTimeout(timeoutMillis);
 			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 			connection.setDoOutput(false);
 			connection.setRequestMethod("GET");
 			connection.setInstanceFollowRedirects(false);
-
-			cookieHeaderStr = getCookieRequestHeader(theUri);			
-			if(cookieHeaderStr.length() > 0)
-				connection.setRequestProperty("Cookie", cookieHeaderStr);
 			
 			connection.connect();
 			
 			response = connection.getResponseCode();
 			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
 				successfulResponse = true;
-//				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-				List<String> cookieHeaders = responseHeaders.get("Set-Cookie");
-				if(cookieHeaders == null) {
-					cookieStore.clear();
-					return null;
-				}
-				for(String cookieHeader : cookieHeaders) {
-//					System.out.println(cookieHeader);
-					List<HttpCookie> cookiesList = parseCookies(cookieHeader, theUri.getAuthority(), theUri.getPath());
-					for(HttpCookie cookie : cookiesList) {
-						cookieStore.put(cookie.getName(), cookie);
-					}
-				}
 				
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-//					System.out.println("Redirected to: " + uri);
 				}
-				
-//				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//				String line;
-//				while((reader.readLine()) != null) {
-//					System.out.println(line);
-//				}
-//				reader.close();
 			}
 			else {
 				successfulResponse = false;
@@ -236,15 +196,9 @@ public class OgameAgent {
 				try {
 					System.out.println("START THIRD REQUEST");
 					connection = (HttpURLConnection)(new URL(uri)).openConnection();
-					theUri = new URI(uri);
 					connection.setConnectTimeout(timeoutMillis);
 					connection.setRequestProperty("Accept-Language", "en-US");
-					connection.setRequestProperty("Accept", "text/html");
-					
-					cookieHeaderStr = getCookieRequestHeader(theUri);
-					if(cookieHeaderStr.length() > 0)
-						connection.setRequestProperty("Cookie", cookieHeaderStr);
-					
+					connection.setRequestProperty("Accept", "text/html");					
 					connection.setDoOutput(false);
 					connection.setDoInput(true);
 					connection.setRequestMethod("GET");
@@ -266,26 +220,14 @@ public class OgameAgent {
 				System.out.println("Everything went okay! Response " + response);
 				
 				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-//				System.out.println("Response headers:");
-//				Set<Map.Entry<String, List<String>>> entrySet = responseHeaders.entrySet();
-//				for(Map.Entry<String, List<String>> mapping : entrySet) {
-//					List<String> values = mapping.getValue();
-//					for(String val : values) {
-//						System.out.println(mapping.getKey() + ": " + val);
-//					}
-//				}
 				
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//				String line;
-				while((reader.readLine()) != null) {
-//					System.out.println(line);
-				}
+				while((reader.readLine()) != null);
 				reader.close();
 				
 				List<String> locationHeader = responseHeaders.get("Location");
 				if(locationHeader != null && locationHeader.size() > 0) {
 					uri = locationHeader.get(0);
-//					System.out.println("Redirected to: " + uri);
 				}
 			}
 			else {
@@ -320,167 +262,25 @@ public class OgameAgent {
 			e.printStackTrace();
 			return null;
 		}
-		catch (URISyntaxException e) {
-			System.err.println("URI error: " + e + '\n' + e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
 		finally {
 			connection.disconnect();
 		}
 		
-		Iterator<Map.Entry<String, HttpCookie>> cookieIter = cookieStore.entrySet().iterator();
-		List<HttpCookie> cookieList = new LinkedList<HttpCookie>();
-		while(cookieIter.hasNext()) {
-			Map.Entry<String, HttpCookie> entry = cookieIter.next();
-			HttpCookie theCookie = entry.getValue();
-			cookieList.add(theCookie);
+		CookieHandler handler = CookieHandler.getDefault();
+		List<HttpCookie> cookies = null;
+		if(handler instanceof CookieManager) {
+			CookieStore store = ((CookieManager)handler).getCookieStore();
+			if(store == null) {
+				return new ArrayList<HttpCookie>();
+			}
+			cookies = store.getCookies();
 		}
-		return cookieList;
+		else {
+			cookies = new ArrayList<HttpCookie>();
+		}
+		return cookies;
 	}
 	
-	/**
-	 * We have to implement our own cookie parser because Java's HttpCookie.parse() method throws an Exception when
-	 * it should not throw that Exception.
-	 * 
-	 * Pre-condition: defaultDomain and defaultPath must not be empty strings. defaultDomain must be a valid domain.
-	 * defaultPath must be a valid path.
-	 * 
-	 * Post-condition: The list of cookies returned will properly contain the data encoded in the Set-Cookie header, cookieStr.
-	 * The cookies will have a valid domain and path set, defaulting to defaultDomain and defaultPath if the domain and path are
-	 * not set in the header.
-	 * 
-	 * @param cookieStr - The header value from one Set-Cookie header field without the "Set-Cookie" portion. May contain multiple multiple cookies.
-	 * @param defaultDomain - default domain to set for cookies that do not have the "domain" attribute set in the header
-	 * @param defaultPath - default path to set for cookies that do not have the "path" attribute set in the header
-	 * @return A list of HttpCookie objects representing the cookies in cookieStr
-	 */
-	private List<HttpCookie> parseCookies(String cookieStr, String defaultDomain, String defaultPath) {
-		HttpCookie cookie = null;
-		String[] cookieTokens = cookieStr.split(";");
-		
-		String name = null;
-		String value = null;
-		String expiration = null;
-		String path = null;
-		String domain = null;
-		
-		for(String tok : cookieTokens) {
-			String[] tokpieces = tok.split("=");
-			if(tokpieces.length == 2) {
-				tokpieces[0] = tokpieces[0].trim();
-				tokpieces[1] = tokpieces[1].trim();
-				
-				if(tokpieces[0].equalsIgnoreCase("expires")) {
-					expiration = tokpieces[1];
-				}
-				else if(tokpieces[0].equalsIgnoreCase("path")) {
-					path = tokpieces[1];
-				}
-				else if(tokpieces[0].equalsIgnoreCase("domain")) {
-					domain = tokpieces[1];
-				}
-				else { //name of the cookie
-					name = tokpieces[0];
-					value = tokpieces[1];
-				}
-			}
-		}
-		
-		if(name == null)
-			return null;
-		
-		cookie = new HttpCookie(name, value);
-		cookie.setVersion(0);
-		if(expiration != null) {
-			//sample format: Tue, 15-Jan-2013 21:47:38 GMT
-			//another sample from Ogame itself: Sat, 01-Nov-2014 21:22:40 GMT
-			//All non-numerical strings are 3 letters long.
-			String[] weekdaySplit = expiration.split(",");
-			//weekday does not need to be parsed. We don't use that to calculate the time.
-//			String weekday = weekdaySplit[0];
-			expiration = weekdaySplit[1].trim();
-			
-			String[] dateSplit = expiration.split("-");
-			String dom = dateSplit[0];
-			String month = dateSplit[1];
-			String[] yearSplit = dateSplit[2].split(" ");
-			String year = yearSplit[0];
-			
-			String[] timeSplit = yearSplit[1].split(":");
-			String hour = timeSplit[0];
-			String minute = timeSplit[1];
-			String seconds = timeSplit[2];
-			
-			//should just be GMT. Do not need to parse this.
-//			String zone = yearSplit[2];
-			
-			TimeZone gmtZone = TimeZone.getTimeZone("GMT");
-			Calendar cal = Calendar.getInstance(gmtZone);
-			int iyear = Integer.valueOf(year);
-			int imonth = 0;
-			if(month.equals("Jan")) {
-				imonth = Calendar.JANUARY;
-			}
-			else if(month.equals("Feb")) {
-				imonth = Calendar.FEBRUARY;
-			}
-			else if(month.equals("Mar")) {
-				imonth = Calendar.MARCH;
-			}
-			else if(month.equals("Apr")) {
-				imonth = Calendar.APRIL;
-			}
-			else if(month.equals("May")) {
-				imonth = Calendar.MAY;
-			}
-			else if(month.equals("Jun")) {
-				imonth = Calendar.JUNE;
-			}
-			else if(month.equals("Jul")) {
-				imonth = Calendar.JULY;
-			}
-			else if(month.equals("Aug")) {
-				imonth = Calendar.AUGUST;
-			}
-			else if(month.equals("Sep")) {
-				imonth = Calendar.SEPTEMBER;
-			}
-			else if(month.equals("Oct")) {
-				imonth = Calendar.OCTOBER;
-			}
-			else if(month.equals("Nov")) {
-				imonth = Calendar.NOVEMBER;
-			}
-			else if(month.equals("Dec")) {
-				imonth = Calendar.DECEMBER;
-			}
-			int iday = Integer.valueOf(dom);
-			int ihour = Integer.valueOf(hour);
-			int iminute = Integer.valueOf(minute);
-			int iseconds = Integer.valueOf(seconds);
-			cal.set(iyear, imonth, iday, ihour, iminute, iseconds);
-			long timeInMillis = cal.getTimeInMillis();
-			long currentTimeInMillis = Calendar.getInstance().getTimeInMillis();
-			cookie.setMaxAge((timeInMillis - currentTimeInMillis) / 1000);
-		}
-		if(path != null) {
-			cookie.setPath(path);
-		}
-		else {
-			cookie.setPath(defaultPath);
-		}
-		if(domain != null) {
-			cookie.setDomain(domain);
-		}
-		else {
-			cookie.setDomain(defaultDomain);
-		}
-		ArrayList<HttpCookie> cookieList = new ArrayList<HttpCookie>();
-		cookieList.add(cookie);
-		return cookieList;
-	}
-
 	/**
 	 * Emulate a user clicking the "Overview" link in the navigation bar/column. Also parse fleet
 	 * movement data from the returned response.
@@ -489,6 +289,10 @@ public class OgameAgent {
 	 * 		will have non-null instance variables.
 	 */
 	public List<FleetEvent> getOverviewData() throws LoggedOutException {
+		if(!checkCookieHandler()) {
+			CookieHandler.setDefault(new CustomCookieManager());
+		}
+		
 		List<FleetEvent> overviewData = null;
 		
 		HttpURLConnection conn = null;
@@ -555,7 +359,6 @@ public class OgameAgent {
 				List<FleetEvent> events = parseOverviewResponse(responseStream);
 				overviewData = events;
 			}
-			responseStream.close();
 		}
 		catch(IOException e) {
 			System.err.println("Could not read response stream");
@@ -600,9 +403,6 @@ public class OgameAgent {
 		try {
 			connection.setRequestMethod("GET");
 			connection.setDoInput(true);
-			String cookieHeader = getCookieRequestHeader(connectionUri);
-			if(cookieHeader.length() > 0)
-				connection.setRequestProperty("Cookie", cookieHeader);
 			
 			connection.connect();
 			responseCode = connection.getResponseCode();
@@ -904,12 +704,10 @@ public class OgameAgent {
 				}
 				catch(XmlPullParserException e) {
 					if(e != null) {
-						/* For some strange reason, the emulator can reach this catch block with
-						 * e set to null. (Why and how?) Might be a debugger bug
-						 */
 						System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
 						e.printStackTrace();
 					}
+					eventType = XmlPullParser.END_DOCUMENT;
 				}
 				catch(ArrayIndexOutOfBoundsException e) {
 					//This exception occurs near the end of the document, but it is not something that
@@ -1186,40 +984,16 @@ public class OgameAgent {
 	}
 	
 	/**
-	 * Checks the cookie store and builds the Cookie HTTP request header, without the "Cookie: "
-	 * portion.
-	 * @param connection - This URI is used to determine which cookies from the cookie store are
-	 * added to the header.
-	 * @return cookie request header
+	 * Check if the default CookieHandler is our CustomCookieManager.
+	 * @return true if the default CookieHandler is CustomCookieManager. False otherwise
 	 */
-	private String getCookieRequestHeader(URI connection) {
-		StringBuilder cookieStrBuilder = new StringBuilder();
-		Iterator<Map.Entry<String, HttpCookie>> cookieMapIter = cookieStore.entrySet().iterator();
-		
-		String connDomain = connection.getAuthority();
-		String connPath = connection.getPath();
-		
-		boolean isFirstCookie = true;
-		
-		while (cookieMapIter.hasNext()) {
-			Map.Entry<String, HttpCookie> cookieEntry = cookieMapIter.next();
-			HttpCookie cookie = cookieEntry.getValue();
-			String cookieDomain = cookie.getDomain();
-			String cookiePath = cookie.getPath();
-			if(cookieDomain.charAt(0) != '.' && !connDomain.equals(cookieDomain))
-				cookieDomain = '.' + cookieDomain;
-			
-			if(connDomain.endsWith(cookieDomain) && connPath.startsWith(cookiePath) && !cookie.hasExpired()) {
-				//isFirstCookie and the following if block adds the delimiting comma (,) between cookies
-				//if there are multiple cookies.
-				if(!isFirstCookie) {
-					cookieStrBuilder.append(';');
-				}
-				cookieStrBuilder.append(cookie.toString());
-				isFirstCookie = false;
-			}
+	private boolean checkCookieHandler() {
+		CookieHandler handler = CookieHandler.getDefault();
+		if(handler instanceof CustomCookieManager) {
+			return true;
 		}
-		
-		return cookieStrBuilder.toString();
+		else {
+			return false;
+		}
 	}
 }
