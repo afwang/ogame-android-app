@@ -19,16 +19,9 @@
 
 package com.wikaba.ogapp;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.wikaba.ogapp.agent.FleetEvent;
-import com.wikaba.ogapp.agent.LoggedOutException;
-import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.utils.AccountCredentials;
-import com.wikaba.ogapp.utils.DatabaseManager;
 
 import android.app.Service;
 import android.content.Intent;
@@ -37,11 +30,17 @@ import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
+import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.LoggedOutException;
+import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.utils.AccountCredentials;
+import com.wikaba.ogapp.utils.DatabaseManager;
+
 public class AgentService extends Service {
 	static final String LOGTAG = "AgentService";
 	
 	private IBinder mBinder;
-	private android.util.LongSparseArray<OgameAgent> ogameSessions;
+	private LongSparseArray<OgameAgent> ogameSessions;
 	private volatile DatabaseManager dbman;
 	
 	public AgentService() {
@@ -54,7 +53,7 @@ public class AgentService extends Service {
 		}
 		
 		if(ogameSessions == null) {
-			ogameSessions = new android.util.LongSparseArray<OgameAgent>();
+			ogameSessions = new LongSparseArray<OgameAgent>();
 		}
 		
 		onRebind(intent);
