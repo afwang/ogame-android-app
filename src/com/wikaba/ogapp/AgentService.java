@@ -22,6 +22,8 @@ package com.wikaba.ogapp;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
@@ -39,7 +41,7 @@ public class AgentService extends Service {
 	static final String LOGTAG = "AgentService";
 	
 	private IBinder mBinder;
-	private LongSparseArray<OgameAgent> ogameSessions;
+	private android.util.LongSparseArray<OgameAgent> ogameSessions;
 	private volatile DatabaseManager dbman;
 	
 	public AgentService() {
@@ -52,7 +54,7 @@ public class AgentService extends Service {
 		}
 		
 		if(ogameSessions == null) {
-			ogameSessions = new LongSparseArray<OgameAgent>();
+			ogameSessions = new android.util.LongSparseArray<OgameAgent>();
 		}
 		
 		onRebind(intent);
@@ -92,7 +94,8 @@ public class AgentService extends Service {
 				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
 				Log.e(LOGTAG, "The rowId passed in was " + rowId);
 			}
-			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+//			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+			Map<String, String> cookies = agent.login(creds.universe, creds.username, creds.passwd);
 			if(cookies == null) {
 				return false;
 			}
