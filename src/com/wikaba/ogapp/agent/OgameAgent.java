@@ -20,17 +20,43 @@
 package com.wikaba.ogapp.agent;
 
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.lang.reflect.Field;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookieStore;
+import java.net.HttpCookie;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
+import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-
+import org.jsoup.nodes.Element;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * This class represents 1 account on 1 universe. If the user is playing multiple accounts simultaneously,
@@ -40,67 +66,228 @@ import org.jsoup.select.Elements;
  *
  */
 public class OgameAgent {
-	public static final String ogameBaseUrl = "http://en.ogame.gameforge.com/";
-	public static final String LOGIN_URL = ogameBaseUrl + "main/login";
+	public static final String LOGIN_URL = "http://en.ogame.gameforge.com/main/login";
 	public static final String OVERVIEW_ENDPOINT = "/game/index.php?page=overview";
-	public static final String ogameEventDataUrlEnd = "/game/index.php?page=eventList";
 	
-	private Map<String, String> cookieStore;
 	private String serverUri;
-	
-	public OgameAgent() {
-		cookieStore = new HashMap<String, String>();
-	}
 	
 	/**
 	 * Submits user credentials to Ogame. Parses and returns data from HTTP response
 	 * @param universe - The name of the universe to log in to.
 	 * @param username - Username of the account on universe to log in to.
-	 * @return list of cookies set for this session.
+	 * @return list of cookies set for this session. Null if login failed.
 	 */
-	public Map<String, String> login(String universe, String username, String password)
-	{
-		final int timeoutMillis = 30 * 1000;
+	public List<HttpCookie> login(String universe, String username, String password) {
+		if(!checkCookieHandler()) {
+			CookieHandler.setDefault(new CustomCookieManager());
+		}
 		
-		Connection.Response ogameOverviewResponse;
-		try
-		{
-			serverUri = NameToURI.getDomain(universe);
+		final int timeoutMillis = 30 * 1000;
+		HttpURLConnection connection = null;
+		int response = 0;
+		
+		boolean successfulResponse;
+		
+		universe = NameToURI.getDomain(universe);
+		serverUri = "http://" + universe;
+		
+		/*
+		 * FIRST REQUEST
+		 */
+		System.out.println("START FIRST REQUEST (login)");
+		String uri = LOGIN_URL;
+		String parameters;
+		try {
+			parameters = "kid=&uni=" + URLEncoder.encode(universe, "UTF-8") + "&login=" + URLEncoder.encode(username, "UTF-8") + "&pass=" + URLEncoder.encode(password, "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			System.out.println("Error: " + e1 + '\n' + e1.getMessage());
+			e1.printStackTrace();
+			return null;
+		}
+		String length = Integer.toString(parameters.length());
+		try {
+			for(boolean redo = true; redo;) {
+				try {
+					connection = (HttpURLConnection)(new URL(uri)).openConnection();
+					connection.setConnectTimeout(timeoutMillis);
+					connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+					connection.setRequestProperty("Content-Length", length);
+					connection.setDoOutput(true);
+					connection.setRequestMethod("POST");
+					Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+					writer.write(parameters);
+					writer.flush();
+					writer.close();
+					connection.setInstanceFollowRedirects(false);
+					connection.connect();
+					response = connection.getResponseCode();
+					redo = false;
+				}
+				catch(java.io.EOFException e) {
+					//Catch annoying server-side issue sending faulty HTTP responses.
+					//Just force a retry.
+					redo = true;
+				}
+			}
+				
+			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+				successfulResponse = true;
+				System.out.println("Everything went okay! Response " + response);
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+				}
+			}
+			else {
+				successfulResponse = false;
+				System.err.println("Something went wrong!");
+				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				String line;
+				while((line = errReader.readLine()) != null) {
+					System.err.println(line);
+				}
+				errReader.close();
+			}
+			connection.disconnect();
+			System.out.println("END FIRST REQUEST (login)");
 			
-			// Get overview Page
-			ogameOverviewResponse = Jsoup.connect(LOGIN_URL)
-					.data("kid", "")
-					.data("uni", serverUri)
-					.data("login", username)
-					.data("pass", password)
-					.timeout(timeoutMillis)
-					.method(Connection.Method.POST)
-					.execute();
-
-			if(connectionSuccessful(ogameOverviewResponse.statusCode()))
-			{
-				// return account cookies
-				cookieStore = ogameOverviewResponse.cookies();
-				System.out.println("Logged in successfully.");
-
-				return cookieStore;
+			if(!successfulResponse) {
+				return null;
 			}
 			
-			throw new Exception("Could not login.");
+			/*
+			 * SECOND REQUEST
+			 */
+			System.out.println("START SECOND REQUEST");
+			connection = (HttpURLConnection)(new URL(uri)).openConnection();
+			connection.setConnectTimeout(timeoutMillis);
+			connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			connection.setDoOutput(false);
+			connection.setRequestMethod("GET");
+			connection.setInstanceFollowRedirects(false);
+			
+			connection.connect();
+			
+			response = connection.getResponseCode();
+			if(response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+				successfulResponse = true;
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+				}
+			}
+			else {
+				successfulResponse = false;
+				System.err.println("Something went wrong!");
+				BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				String line;
+				while((line = errReader.readLine()) != null) {
+					System.err.println(line);
+				}
+				errReader.close();
+			}
+			connection.disconnect();
+			System.out.println("END SECOND REQUEST");
+			if(!successfulResponse) {
+				return null;
+			}
+			
+			/*
+			 * THIRD REQUEST (final request)
+			 */
+			for(boolean redo = true; redo; ) {
+				try {
+					System.out.println("START THIRD REQUEST");
+					connection = (HttpURLConnection)(new URL(uri)).openConnection();
+					connection.setConnectTimeout(timeoutMillis);
+					connection.setRequestProperty("Accept-Language", "en-US");
+					connection.setRequestProperty("Accept", "text/html");					
+					connection.setDoOutput(false);
+					connection.setDoInput(true);
+					connection.setRequestMethod("GET");
+					connection.setInstanceFollowRedirects(false);
+					
+					connection.connect();
+					
+					response = connection.getResponseCode();
+					redo = false;
+				}
+				catch(java.io.EOFException e) {
+					//Again, to avoid the weird EOFException bug. Goddamn Ogame's programming!
+					redo = true;
+				}
+			}
+			//The last response must receive a status 200. If it isn't, we did something wrong.
+			if(response == HttpURLConnection.HTTP_OK) {
+				successfulResponse = true;
+				System.out.println("Everything went okay! Response " + response);
+				
+				Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+				
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				while((reader.readLine()) != null);
+				reader.close();
+				
+				List<String> locationHeader = responseHeaders.get("Location");
+				if(locationHeader != null && locationHeader.size() > 0) {
+					uri = locationHeader.get(0);
+				}
+			}
+			else {
+				successfulResponse = false;
+				System.err.println("Something went wrong!");
+				BufferedReader errReader;
+				try {
+					errReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				}
+				catch(IOException e) {
+					errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
+				}
+				String line;
+				while((line = errReader.readLine()) != null) {
+					System.err.println(line);
+				}
+				errReader.close();
+			}
+			connection.disconnect();
+			System.out.println("END THIRD REQUEST");
+			if(!successfulResponse) {
+				return null;
+			}
 		}
-		catch(java.io.EOFException e)
-		{
-			// attempt to retry method
-			System.out.println("Caught EOFException, retrying login ");
-			return this.login(universe, username, password);
+		catch(MalformedURLException e) {
+			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
 		}
-		catch (Exception e)
-		{
-			System.out.print("Couldn't login and see overview page: " + e);
-//			throw e;
+		catch(IOException e) {
+			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
 		}
-
-		return null;
+		finally {
+			connection.disconnect();
+		}
+		
+		CookieHandler handler = CookieHandler.getDefault();
+		List<HttpCookie> cookies = null;
+		if(handler instanceof CookieManager) {
+			CookieStore store = ((CookieManager)handler).getCookieStore();
+			if(store == null) {
+				return new ArrayList<HttpCookie>();
+			}
+			cookies = store.getCookies();
+		}
+		else {
+			cookies = new ArrayList<HttpCookie>();
+		}
+		return cookies;
 	}
 	
 	/**
@@ -110,47 +297,192 @@ public class OgameAgent {
 	 * 		is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
 	 * 		will have non-null instance variables.
 	 */
-	public List<FleetEvent> getOverviewData() throws LoggedOutException
-	{
-		String ogameEventDataUrl = "http://" + serverUri + ogameEventDataUrlEnd;
-		Connection.Response eventDataResponse;
-		try
-		{
-			eventDataResponse = Jsoup.connect(ogameEventDataUrl)
-					.cookies(cookieStore)
-					.method(Connection.Method.GET)
-					.execute();
+	public List<FleetEvent> getOverviewData() throws LoggedOutException {
+		if(!checkCookieHandler()) {
+			CookieHandler.setDefault(new CustomCookieManager());
+		}
+		
+		List<FleetEvent> overviewData = null;
+		
+		HttpURLConnection conn = null;
+		String connectionUriStr = serverUri + OVERVIEW_ENDPOINT;
+		URI connUri;
+		try {
+			connUri = new URI(connectionUriStr);
+		}
+		catch(URISyntaxException e) {
+			System.err.println("URI syntax is wrong: " + connectionUriStr);
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+		
+		try {
+			URL connectionUrl = new URL(connectionUriStr);
+			conn = (HttpURLConnection)connectionUrl.openConnection();
+		}
+		catch(MalformedURLException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+		catch(IOException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+		
+		InputStream responseStream = null;
+		try {
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			int responseCode = goToOverview(conn, connUri);
 			
-			if(connectionSuccessful(eventDataResponse.statusCode()))
-			{
-				System.out.println(eventDataResponse.parse().getElementsByClass("eventFleet").size());
-				return parseFleetAndResData(eventDataResponse.parse().getElementsByClass("eventFleet"));
+			if(responseCode < 0) {
+				return null;
 			}
 			
-			// if the connection didn't work
-			throw new Exception("Couldn't connect to eventDataUrl.");
+			boolean isError;
+			if(responseCode >= 400) {
+				responseStream = conn.getErrorStream();
+				isError = true;
+			}
+			else if(responseCode == 302) {
+				throw new LoggedOutException("Agent's cookies are no longer valid");
+			}
+			else {
+				responseStream = conn.getInputStream();
+				isError = false;
+			}
+			
+			if(isError) {
+				BufferedReader isr = new BufferedReader(new InputStreamReader(responseStream));
+				String line;
+				while((line = isr.readLine()) != null) {
+					System.err.println(line);
+				}
+				isr.close();
+				return null;
+			}
+			else {
+				List<FleetEvent> events = parseOverviewResponse(responseStream);
+				overviewData = events;
+			}
 		}
-		catch (Exception e)
-		{
-			System.out.print(e);
-//			throw e;
+		catch(IOException e) {
+			System.err.println("Could not read response stream");
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
 		}
-		return null;
+		finally {
+			if(conn != null) {
+				conn.disconnect();
+			}
+			if(responseStream != null) {
+				try {
+					responseStream.close();
+				}
+				catch(IOException e) {
+				}
+			}
+		}
+		return overviewData;
 	}
 	
-	private static List<FleetEvent> parseFleetAndResData(Elements eventFleets)
-	{
-		System.out.println("parseFleetAndResData called.");
+	/**
+	 * Sets the required headers and cookies for the request specified by connection.
+	 * Connects to the URL specified by connection.
+	 * 
+	 * Pre-condition: Parameter connection must be a valid connection request, and it 
+	 * should not have had connect() called on it.
+	 * 
+	 * Post-condition: Parameter connection now has either an input or error stream to read from.
+	 * Use the return value of this method to determine which stream to read from. Method
+	 * disconnect() has also not been called on connection, so the caller of this method should
+	 * handle calling disconnect on the connection.
+	 * 
+	 * @param connection - an HttpURLConnection to connect to.
+	 * @param connectionUri - used to determine which cookies to include with the HTTP request.
+	 * @return the HTTP response's status code if a connection was made. -1 if setting up the connection failed
+	 * 	-2 if the connection could not be made.
+	 */
+	private int goToOverview(HttpURLConnection connection, URI connectionUri) {
+		int responseCode = 0;
+		
+		try {
+			connection.setRequestMethod("GET");
+			connection.setDoInput(true);
+			
+			connection.connect();
+			responseCode = connection.getResponseCode();
+		}
+		catch(ProtocolException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			responseCode = -1;
+		}
+		catch(IOException e) {
+			System.err.println("Could not open connection");
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			responseCode = -2;
+		}
+		
+		return responseCode;
+	}
+
+	/**
+	 * Uses an XMLPullParser to parse an HTML file presented as an InputStream for fleet events.
+	 * 
+	 * Pre-condition: inputStream must not be closed.
+	 * 
+	 * Post-condition: inputStream remains unclosed. The caller must close it themselves.
+	 * 
+	 * @param inputStream - Input stream from HttpURLConnection after a successful connection.
+	 * 	inputStream contains the HTML response from the Ogame server.
+	 * @return list of mission events parsed from HTML InputStream. Returns empty list if no events.
+	 * 	Null on error.
+	 */
+	private List<FleetEvent> parseOverviewResponse(InputStream inputStream) {
+		
+		String response = "";
+		try {
+			StringBuilder strb = new StringBuilder();
+			char[] buffer = new char[1024];
+			InputStreamReader isr = new InputStreamReader(inputStream);
+			while((isr.read(buffer)) > 0) {
+				strb.append(buffer);
+			}
+			response = strb.toString().replaceAll("&(?![A-Za-z]+;)", "&amp;");
+//			strb = new StringBuilder(response);
+			//Removing javascript:
+//			removeSection(strb, "<!-- JAVASCRIPT -->", "<!-- END JAVASCRIPT -->");
+//			removeSection(strb, "<!-- #MMO:NETBAR# -->", "</script>");
+//			removeSection(strb, "<!-- Start Alexa Certify Javascript -->", "</script>");
+//			removeSection(strb, "The relocation allows you to move your planets", "deactivated for 24 hours.");
+//			removeSection(strb, "<div id=\"mmonetbar\" class=\"mmoogame\">", "</script>");
+//			response = strb.toString();
+//			System.out.println(response);
+		}
+		catch(IOException e) {
+			System.err.println("Error reading the response: " + e + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+
 		List<FleetEvent> eventList = new LinkedList<FleetEvent>();
 		
-		for(int i=0;i<eventFleets.size();i++)
-		{
+		//TODO: Need to submit URI for base URI
+		Document doc = Jsoup.parse(response);
+		
+		Elements fleetEventsRaw = doc.getElementsByClass("eventFleet");
+		Iterator<Element> eleIter = fleetEventsRaw.iterator();
+		while(eleIter.hasNext()) {
+			Element thisEventRow = eleIter.next();
 			FleetEvent thisEvent = new FleetEvent();
-			Element thisEventRow = eventFleets.get(i);
 			
 			// Get tr attributes like the mission type, return flight, or arrival time
-			for(org.jsoup.nodes.Attribute thisAttribute : thisEventRow.attributes())
-			{
+			Attributes attrs = thisEventRow.attributes();
+			for(Attribute thisAttribute : attrs) {
 				String key = thisAttribute.getKey();
 				String value = thisAttribute.getValue();
 				
@@ -164,14 +496,13 @@ public class OgameAgent {
 					thisEvent.data_arrival_time = Long.valueOf(value);
 				}
 			}
-
+			
 			// Get rest of information from the td's
-			for(Element thisElement : thisEventRow.getElementsByTag("td"))
-			{
+			Elements tds = thisEventRow.getElementsByTag("td");
+			for(Element thisElement : tds) {
 				String tdClass = thisElement.className();
 				
-				if(tdClass.equals("coordsOrigin"))
-				{
+				if(tdClass.equals("coordsOrigin")) {
 					thisEvent.coordsOrigin = thisElement.text();
 				}
 				else if(tdClass.equals("destFleet")) {
@@ -189,12 +520,10 @@ public class OgameAgent {
 					Elements fleetData = Jsoup.parseBodyFragment(thisElement.getElementsByTag("span").attr("title")).body().select("tr");
 
 					// Loop through tr's found
-					for (Element shipOrResource : fleetData)
-					{
+					for(Element shipOrResource : fleetData) {
 						String fleetInfoText = shipOrResource.getElementsByTag("td").text().trim();
 						
-						if(fleetInfoText.isEmpty() || fleetInfoText.length() <= 7)
-						{
+						if(fleetInfoText.isEmpty()) {
 							continue;
 						}
 
@@ -203,48 +532,291 @@ public class OgameAgent {
 						fleetInfo[1] = fleetInfo[1].trim();
 
 						// Loop through FleetAndResources.class fields and if we find a match for a tr's text add an entry to the fleetRresources
-						try
-						{
+						try {
 							FleetAndResources instance = new FleetAndResources();
-							for(Field field : FleetAndResources.class.getFields())
-							{
+							for(Field field : FleetAndResources.class.getFields()) {
 								String fleetOrResourceValue = FleetAndResources.class.getField(field.getName()).get(instance).toString();
-								if(fleetOrResourceValue.equals(fleetInfo[0]))
-								{
+								if(fleetOrResourceValue.equals(fleetInfo[0])) {
 									// TODO: Is it possible we might have multiple fleets?
 									thisEvent.fleetResources.put(fleetOrResourceValue, Long.valueOf(fleetInfo[1]));
 								}
 							}
 						}
-						catch (NoSuchFieldException nsfe)
-						{
+						catch (NoSuchFieldException nsfe) {
 							System.out.println("Caught NoSuchFieldException: " + nsfe);
 						}
-						catch (IllegalAccessException iae)
-						{
+						catch (IllegalAccessException iae) {
 							System.out.println("Caught IllegalAccessException: " + iae);
 						}
 					}
-				}
-				else if(tdClass.equals("detailsFleet")) {
-					System.out.println("Found a detailsFleet, not sure if I need to look at it or not.");
 				}
 			}
 			
 			eventList.add(thisEvent);
 		}
-		System.out.println("Done Parsing events: " + eventList.size());
+		
 		return eventList;
 	}
-
-	private static boolean connectionSuccessful(int statusCode)
-	{
-		if(statusCode == 200 || (statusCode >= 300 && statusCode < 400))
-		{
-			return true;
+	
+	/**
+	 * Convenience method for removing javascript from the response. Mainly used by parseOverviewResponse()
+	 * @param input
+	 * @param searchKey1
+	 * @param searchKey2
+	 * @return
+	 */
+	private StringBuilder removeSection(StringBuilder input, String searchKey1, String searchKey2) {
+		String searchKey = searchKey1;
+		int javascript = input.indexOf(searchKey);
+		int endjavascript;
+		if(javascript >= 0) {
+			searchKey = searchKey2;
+			endjavascript = input.indexOf(searchKey, javascript);
+			if(endjavascript >= javascript) {
+				endjavascript += searchKey.length();
+				input.delete(javascript, endjavascript);
+			}
+			else {
+				input.delete(javascript, input.length());
+			}
+		}
+		return input;
+	}
+	
+	/**
+	 * Pre-condition: The current state of the XmlPullParser xpp is at a START_TAG
+	 * @param xpp
+	 * @param attrName
+	 * @param attrValue
+	 * @return
+	 */
+	private boolean hasAttrValue(XmlPullParser xpp, String attrName, String attrValue) {
+		//Scan attributes for "class" attribute.
+		int attrsize = xpp.getAttributeCount();
+		int index;
+		boolean attrFound = false;
+		for(index = 0; index < attrsize; index++) {
+			String currentAttrName = xpp.getAttributeName(index);
+			if(currentAttrName.equals(attrName)) {
+				attrFound = true;
+				break;
+			}
 		}
 		
-		System.out.println("connection not successful");
+		if(!attrFound)
+			return false;
+		else {
+			String currentAttrValue = xpp.getAttributeValue(index);
+			if(currentAttrValue.equals(attrValue)) {
+				return true;
+			}
+		}
+		
 		return false;
+	}
+	
+	/**
+	 * Unescapes the HTML-escaped data in the parameter string htmlEncodedData.
+	 * The string is then parsed with an XmlPullParser to extract fleet and resource
+	 * data. The data is inserted into a Map<String, Long> object. This Map is then
+	 * returned.
+	 * 
+	 * @param htmlEncodedData - HTML-escaped string containing the details of the fleet breakdown and composition
+	 * @return a Map<String, Long> object containing fleet and resource composition. Keys are listed in
+	 * 	class FleetAndResources
+	 */
+	private Map<String, Long> parseFleetResComposition(String htmlEncodedData) {
+		Map<String, Long> fleetResData = new HashMap<String, Long>();
+		
+		StringReader strReader = null;
+		XmlPullParser subxpp = null;
+		try {
+			strReader = new StringReader(htmlEncodedData);
+			subxpp = XmlPullParserFactory.newInstance().newPullParser();
+			subxpp.setInput(strReader);
+			subxpp.defineEntityReplacementText("nbsp", " ");
+			
+			boolean parsingShips = false;
+			boolean parsingRes = false;
+			String currentShip = null;
+			String currentRes = null;
+			
+			int eventType = subxpp.getEventType();
+			while(eventType != XmlPullParser.END_DOCUMENT) {
+				if(subxpp.getEventType() == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					textData = textData.replaceAll(":", "");
+					if(textData.equals("Ships")) {
+						parsingShips = true;
+						break;
+					}
+				}
+				try {
+					subxpp.next();
+					eventType = subxpp.getEventType();
+				}
+				catch(XmlPullParserException e) {
+					System.out.println("Caught an exception. Not stopping: " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+			
+			while(parsingShips && eventType != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				eventType = subxpp.getEventType();
+				if(eventType == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if(textData != null) {
+						textData = textData.trim();
+					}
+					if(textData != null && textData.length() > 0) {
+						if(textData.equals("Small Cargo:")) {
+							currentShip = FleetAndResources.SC;
+						}
+						else if(textData.equals("Large Cargo:")) {
+							currentShip = FleetAndResources.LC;
+						}
+						else if(textData.equals("Colony Ship:")) {
+							currentShip = FleetAndResources.COLONY;
+						}
+						else if(textData.equals("Light Fighter:")) {
+							currentShip = FleetAndResources.LF;
+						}
+						else if(textData.equals("Heavy Fighter:")) {
+							currentShip = FleetAndResources.HF;
+						}
+						else if(textData.equals("Cruiser:")) {
+							currentShip = FleetAndResources.CR;
+						}
+						else if(textData.equals("Battleship:")) {
+							currentShip = FleetAndResources.BS;
+						}
+						else if(textData.equals("Battlecruiser:")) {
+							currentShip = FleetAndResources.BC;
+						}
+						else if(textData.equals("Bomber:")) {
+							currentShip = FleetAndResources.BB;
+						}
+						else if(textData.equals("Destroyer:")) {
+							currentShip = FleetAndResources.DS;
+						}
+						else if(textData.equals("Deathstar:")) {
+							currentShip = FleetAndResources.RIP;
+						}
+						else if(textData.equals("Recycler:")) {
+							currentShip = FleetAndResources.RC;
+						}
+						else if(textData.equals("Espionage Probe:")) {
+							currentShip = FleetAndResources.EP;
+						}
+						else if(textData.equals("Shipment:")) {
+							currentShip = null;
+							parsingShips = false;
+							parsingRes = true;
+							break;
+						}
+						
+						textData = "";
+						while(textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if(eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
+
+						String numshipstr = textData;
+						numshipstr = numshipstr.replaceAll("\\.", "");
+						if(currentShip != null && currentShip.length() > 0) {
+							Long numships = Long.valueOf(numshipstr);
+							fleetResData.put(currentShip, numships);
+						}
+					}
+				}
+			}
+			
+			eventType = subxpp.getEventType();
+			while(parsingRes && eventType != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				eventType = subxpp.getEventType();
+				if(eventType == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if(textData != null) {
+						textData = textData.trim();
+					}
+					if(textData != null && textData.length() > 0) {
+						String resType = subxpp.getText();
+						if(resType.equals("Metal:")) {
+							currentRes = FleetAndResources.METAL;
+						}
+						else if(resType.equals("Crystal:")) {
+							currentRes = FleetAndResources.CRYSTAL;
+						}
+						else if(resType.equals("Deuterium:")) {
+							currentRes = FleetAndResources.DEUT;
+						}
+						else {
+							continue;
+						}
+						
+						textData = "";
+						while(textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if(eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
+						
+						String amount = textData;
+						amount = amount.replaceAll("\\.", "");
+						if(amount.length() > 0) {
+							Long resAmount = Long.valueOf(amount);
+							fleetResData.put(currentRes, resAmount);
+						}
+					}
+				}
+			}
+		}
+		catch (XmlPullParserException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		catch(IOException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			if(subxpp != null) {
+				try {
+					subxpp.setInput(null);
+				}
+				catch(XmlPullParserException e) {
+					System.err.println(e.toString() + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+			
+			if(strReader != null)
+				strReader.close();
+		}
+		
+		return fleetResData;
+	}
+	
+	/**
+	 * Check if the default CookieHandler is our CustomCookieManager.
+	 * @return true if the default CookieHandler is CustomCookieManager. False otherwise
+	 */
+	private boolean checkCookieHandler() {
+		CookieHandler handler = CookieHandler.getDefault();
+		if(handler instanceof CustomCookieManager) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 }

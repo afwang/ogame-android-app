@@ -19,10 +19,9 @@
 
 package com.wikaba.ogapp;
 
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
@@ -93,8 +92,7 @@ public class AgentService extends Service {
 				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
 				Log.e(LOGTAG, "The rowId passed in was " + rowId);
 			}
-//			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
-			Map<String, String> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
 			if(cookies == null) {
 				return false;
 			}
