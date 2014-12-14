@@ -19,14 +19,9 @@
 
 package com.wikaba.ogapp;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
-import com.wikaba.ogapp.agent.FleetEvent;
-import com.wikaba.ogapp.agent.LoggedOutException;
-import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.utils.AccountCredentials;
-import com.wikaba.ogapp.utils.DatabaseManager;
+import java.util.Map;
 
 import android.app.Service;
 import android.content.Intent;
@@ -34,6 +29,12 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
 import android.util.Log;
+
+import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.LoggedOutException;
+import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.utils.AccountCredentials;
+import com.wikaba.ogapp.utils.DatabaseManager;
 
 public class AgentService extends Service {
 	static final String LOGTAG = "AgentService";
@@ -92,7 +93,8 @@ public class AgentService extends Service {
 				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
 				Log.e(LOGTAG, "The rowId passed in was " + rowId);
 			}
-			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+//			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
+			Map<String, String> cookies = agent.login(creds.universe, creds.username, creds.passwd);
 			if(cookies == null) {
 				return false;
 			}
