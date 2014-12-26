@@ -302,7 +302,8 @@ public class OverviewFragment extends Fragment
 			if(oldData != null)
 				deliverResult(oldData);
 			
-			if(oldData == null || takeContentChanged()) {
+			boolean contentChanged = takeContentChanged();
+			if(oldData == null || contentChanged) {
 				this.forceLoad();
 			}
 		}

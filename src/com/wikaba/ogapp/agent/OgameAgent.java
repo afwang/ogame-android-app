@@ -487,13 +487,13 @@ public class OgameAgent {
 				String value = thisAttribute.getValue();
 				
 				if(key.equals("data-mission-type")) {
-					thisEvent.data_mission_type = Integer.valueOf(value);
+					thisEvent.data_mission_type = Integer.parseInt(value);
 				}
 				else if(key.equals("data-return-flight")) {
-					thisEvent.data_return_flight = Boolean.valueOf(value);
+					thisEvent.data_return_flight = Boolean.parseBoolean(value);
 				}
 				else if(key.equals("data-arrival-time")) {
-					thisEvent.data_arrival_time = Long.valueOf(value);
+					thisEvent.data_arrival_time = Long.parseLong(value);
 				}
 			}
 			
@@ -528,15 +528,18 @@ public class OgameAgent {
 						}
 
 						String[] fleetInfo = fleetInfoText.split(":");
+						if(fleetInfo == null || fleetInfo.length < 2) {
+							continue;
+						}
 						fleetInfo[0] = fleetInfo[0].trim();
-						fleetInfo[1] = fleetInfo[1].trim();
+						fleetInfo[1] = fleetInfo[1].trim().replaceAll("\\.", "");
 
 						// Loop through FleetAndResources.class fields and if we find a match for a tr's text add an entry to the fleetRresources
 						try {
 							FleetAndResources instance = new FleetAndResources();
 							for(Field field : FleetAndResources.class.getFields()) {
 								String fleetOrResourceValue = FleetAndResources.class.getField(field.getName()).get(instance).toString();
-								if(fleetOrResourceValue.equals(fleetInfo[0])) {
+								if(fleetOrResourceValue.equalsIgnoreCase(fleetInfo[0])) {
 									// TODO: Is it possible we might have multiple fleets?
 									thisEvent.fleetResources.put(fleetOrResourceValue, Long.valueOf(fleetInfo[1]));
 								}
