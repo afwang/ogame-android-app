@@ -24,6 +24,7 @@ package com.wikaba.ogapp.utils;
  */
 
 import java.io.Closeable;
+import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -41,7 +42,7 @@ public class DatabaseManager implements Closeable {
 	
 	private static final ReadWriteLock rwlock = new ReentrantReadWriteLock();
 	
-	private static final int VERSION = 1;
+	private static final int VERSION = 2;
 	private static final String DB_NAME = "ogameapp.db";
 	
 	private Context context;
@@ -259,6 +260,15 @@ public class DatabaseManager implements Closeable {
 		}
 		
 		return allAccs;
+	}
+	
+	/**
+	 * Retrieve all cookies from the cookies table in the database.
+	 * @return ArrayList of HttpCookie objects. 
+	 */
+	public ArrayList<HttpCookie> getCookies() {
+		ArrayList<HttpCookie> cookies = null;
+		return cookies;
 	}
 	
 	private synchronized void open() {
