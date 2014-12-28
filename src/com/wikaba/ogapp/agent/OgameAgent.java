@@ -68,6 +68,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 public class OgameAgent {
 	public static final String LOGIN_URL = "http://en.ogame.gameforge.com/main/login";
 	public static final String OVERVIEW_ENDPOINT = "/game/index.php?page=overview";
+	public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 	
 	private String serverUri;
 	
@@ -292,7 +293,7 @@ public class OgameAgent {
 	
 	/**
 	 * Emulate a user clicking the "Overview" link in the navigation bar/column. Also parse fleet
-	 * movement data from the returned response.
+	 * movement data from the returned response (if available).
 	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
 	 * 		is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
 	 * 		will have non-null instance variables.
@@ -306,25 +307,10 @@ public class OgameAgent {
 		
 		HttpURLConnection conn = null;
 		String connectionUriStr = serverUri + OVERVIEW_ENDPOINT;
-		URI connUri;
-		try {
-			connUri = new URI(connectionUriStr);
-		}
-		catch(URISyntaxException e) {
-			System.err.println("URI syntax is wrong: " + connectionUriStr);
-			System.err.println(e.toString() + '\n' + e.getMessage());
-			e.printStackTrace();
-			return null;
-		}
 		
 		try {
 			URL connectionUrl = new URL(connectionUriStr);
 			conn = (HttpURLConnection)connectionUrl.openConnection();
-		}
-		catch(MalformedURLException e) {
-			System.err.println(e.toString() + '\n' + e.getMessage());
-			e.printStackTrace();
-			return null;
 		}
 		catch(IOException e) {
 			System.err.println(e.toString() + '\n' + e.getMessage());
@@ -335,24 +321,29 @@ public class OgameAgent {
 		InputStream responseStream = null;
 		try {
 			conn.setInstanceFollowRedirects(false);
-			conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-			int responseCode = goToOverview(conn, connUri);
 			
+			int responseCode = makeGETReq(conn);
+
 			if(responseCode < 0) {
 				return null;
 			}
 			
 			boolean isError;
-			if(responseCode >= 400) {
+			if(responseCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
 				responseStream = conn.getErrorStream();
 				isError = true;
 			}
-			else if(responseCode == 302) {
+			else if(responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
 				throw new LoggedOutException("Agent's cookies are no longer valid");
 			}
 			else {
+				if(responseCode == HttpURLConnection.HTTP_OK) {
+					isError = false;
+				}
+				else {
+					isError = true;
+				}
 				responseStream = conn.getInputStream();
-				isError = false;
 			}
 			
 			if(isError) {
@@ -362,10 +353,9 @@ public class OgameAgent {
 					System.err.println(line);
 				}
 				isr.close();
-				return null;
 			}
 			else {
-				List<FleetEvent> events = parseOverviewResponse(responseStream);
+				List<FleetEvent> events = parseEvents(responseStream);
 				overviewData = events;
 			}
 		}
@@ -386,7 +376,85 @@ public class OgameAgent {
 				}
 			}
 		}
+		
+		if(overviewData != null && overviewData.size() == 0) {
+			overviewData = getFleetEvents();
+		}
+		
 		return overviewData;
+	}
+	
+	/**
+	 * Parse fleet movement data from the returned response from EVENTLIST_ENDPOINT.
+	 * 
+	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
+	 * 		is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
+	 * 		will have non-null instance variables.
+	 */
+	public List<FleetEvent> getFleetEvents() throws LoggedOutException {
+		HttpURLConnection conn = null;
+		InputStream responseStream = null;
+		List<FleetEvent> events = null;
+		
+		try {
+			URL connection = new URL(serverUri + EVENTLIST_ENDPOINT);
+			conn = (HttpURLConnection)connection.openConnection();
+			
+			conn.setInstanceFollowRedirects(false);
+			
+			int responseCode = makeGETReq(conn);
+
+			if(responseCode < 0) {
+				return null;
+			}
+			
+			boolean isError;
+			if(responseCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
+				responseStream = conn.getErrorStream();
+				isError = true;
+			}
+			else if(responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+				throw new LoggedOutException("Agent's cookies are no longer valid");
+			}
+			else {
+				if(responseCode == HttpURLConnection.HTTP_OK) {
+					isError = false;
+				}
+				else {
+					isError = true;
+				}
+				responseStream = conn.getInputStream();
+			}
+			
+			if(isError) {
+				BufferedReader isr = new BufferedReader(new InputStreamReader(responseStream));
+				String line;
+				while((line = isr.readLine()) != null) {
+					System.err.println(line);
+				}
+				isr.close();
+			}
+			else {
+				events = parseEvents(responseStream);
+			}
+		}
+		catch (IOException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			if(conn != null) {
+				conn.disconnect();
+			}
+			if(responseStream != null) {
+				try {
+					responseStream.close();
+				}
+				catch(IOException e) {
+				}
+			}
+		}
+		return events;
 	}
 	
 	/**
@@ -402,14 +470,14 @@ public class OgameAgent {
 	 * handle calling disconnect on the connection.
 	 * 
 	 * @param connection - an HttpURLConnection to connect to.
-	 * @param connectionUri - used to determine which cookies to include with the HTTP request.
 	 * @return the HTTP response's status code if a connection was made. -1 if setting up the connection failed
 	 * 	-2 if the connection could not be made.
 	 */
-	private int goToOverview(HttpURLConnection connection, URI connectionUri) {
+	private int makeGETReq(HttpURLConnection connection) {
 		int responseCode = 0;
 		
 		try {
+			connection.setRequestProperty("Accept-Language", "en-US");
 			connection.setRequestMethod("GET");
 			connection.setDoInput(true);
 			
@@ -432,7 +500,7 @@ public class OgameAgent {
 	}
 
 	/**
-	 * Uses an XMLPullParser to parse an HTML file presented as an InputStream for fleet events.
+	 * Uses JSoup to parse an HTML file presented as an InputStream for fleet events.
 	 * 
 	 * Pre-condition: inputStream must not be closed.
 	 * 
@@ -443,7 +511,7 @@ public class OgameAgent {
 	 * @return list of mission events parsed from HTML InputStream. Returns empty list if no events.
 	 * 	Null on error.
 	 */
-	private List<FleetEvent> parseOverviewResponse(InputStream inputStream) {
+	private List<FleetEvent> parseEvents(InputStream inputStream) {
 		
 		String response = "";
 		try {

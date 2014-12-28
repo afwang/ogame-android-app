@@ -19,6 +19,8 @@
 
 package com.wikaba.ogapp;
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
+import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
@@ -54,6 +57,8 @@ public class AgentService extends Service {
 		if(ogameSessions == null) {
 			ogameSessions = new LongSparseArray<OgameAgent>();
 		}
+
+		CookieHandler.setDefault(new CustomCookieManager());
 		
 		onRebind(intent);
 		
@@ -69,6 +74,8 @@ public class AgentService extends Service {
 	
 	@Override
 	public boolean onUnbind(Intent intent) {
+		CustomCookieManager cookieman = (CustomCookieManager)CookieHandler.getDefault();
+		//TODO: Save cookies from cookieman
 		if(dbman != null) {
 			dbman.close();
 			dbman = null;
