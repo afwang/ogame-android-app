@@ -20,9 +20,10 @@
 package com.wikaba.ogapp;
 
 import java.net.CookieHandler;
-import java.net.CookieManager;
+import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import android.app.Service;
 import android.content.Intent;
@@ -49,39 +50,51 @@ public class AgentService extends Service {
 	}
 
 	@Override
-	public IBinder onBind(Intent intent) {
-		if(mBinder == null) {
-			mBinder = new AgentServiceBinder();
-		}
-		
+	public void onCreate() {
+		super.onCreate();
 		if(ogameSessions == null) {
 			ogameSessions = new LongSparseArray<OgameAgent>();
 		}
 
-		CookieHandler.setDefault(new CustomCookieManager());
-		
-		onRebind(intent);
-		
+		if(dbman == null) {
+			dbman = new DatabaseManager(this);
+		}
+
+		CustomCookieManager cookieman = new CustomCookieManager();
+		CookieStore cookiestore = cookieman.getCookieStore();
+
+		//Retrieve all cookies from database.
+		//Warning: This is currently done on the main thread.
+		ArrayList<HttpCookie> cookieList = dbman.getCookies();
+		for(Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
+			HttpCookie cookie = cookieIter.next();
+			cookiestore.add(null, cookie);
+		}
+
+		CookieHandler.setDefault(cookieman);
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		if(mBinder == null) {
+			mBinder = new AgentServiceBinder();
+		}
 		return mBinder;
 	}
 	
 	@Override
-	public void onRebind(Intent intent) {
-		if(dbman == null) {
-			dbman = new DatabaseManager(this);
-		}
-	}
-	
-	@Override
-	public boolean onUnbind(Intent intent) {
+	public void onDestroy() {
+		super.onDestroy();
+
 		CustomCookieManager cookieman = (CustomCookieManager)CookieHandler.getDefault();
-		//TODO: Save cookies from cookieman
+		CookieStore cookiestore = cookieman.getCookieStore();
+		List<HttpCookie> cookies = cookiestore.getCookies();
+		dbman.saveCookies(cookies);
+
 		if(dbman != null) {
 			dbman.close();
 			dbman = null;
 		}
-		
-		return true;
 	}
 	
 	/**

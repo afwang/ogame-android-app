@@ -20,14 +20,17 @@
 package com.wikaba.ogapp.utils;
 
 /**
- * This class is (should be) thread-safe.
+ * This class is not thread-safe. Concurrent access to the database
+ * should be done with multiple DatabaseManager objects. This sort of behavior
+ * is not pleasant, so this class may change in the future.
  */
 
 import java.io.Closeable;
 import java.net.HttpCookie;
 import java.util.ArrayList;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -68,22 +71,30 @@ public class DatabaseManager implements Closeable {
 		if(database == null) {
 			open();
 		}
-		
-		Cursor alreadyExists = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause,
-				new String[] {universe, username},
-				null,
-				null,
-				null
-		);
-		if(alreadyExists.getCount() > 0) {
-			//There exists a row entry containing the same universe and username.
-			//Replace.
-			alreadyExists.moveToFirst();
-			long rowid = alreadyExists.getLong(alreadyExists.getColumnIndex(BaseColumns._ID));
-			cv.put(BaseColumns._ID, rowid);
+
+		Cursor alreadyExists = null;
+		try {
+			alreadyExists = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause,
+					new String[] {universe, username},
+					null,
+					null,
+					null
+			);
+			if(alreadyExists.getCount() > 0) {
+				//There exists a row entry containing the same universe and username.
+				//Replace.
+				alreadyExists.moveToFirst();
+				long rowid = alreadyExists.getLong(alreadyExists.getColumnIndex(BaseColumns._ID));
+				cv.put(BaseColumns._ID, rowid);
+			}
+		}
+		finally {
+			if(alreadyExists != null) {
+				alreadyExists.close();
+			}
 		}
 		
 		cv.put(AccountsContract.UNIVERSE, universe);
@@ -125,28 +136,37 @@ public class DatabaseManager implements Closeable {
 		if(database == null) {
 			open();
 		}
-		
-		Cursor results = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause,
-				new String[] {universe, username},
-				null,
-				null,
-				null
-		);
-		
-		if(results == null || results.getCount() != 1) {
-			Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+
+		Cursor results = null;
+		try {
+			results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause,
+					new String[] {universe, username},
+					null,
+					null,
+					null
+			);
+
+			if(results == null || results.getCount() != 1) {
+				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+			}
+			else {
+				//There should only be 1 row in the results.
+				results.moveToFirst();
+				credentials = new AccountCredentials();
+				credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+				credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+				credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+			}
 		}
-		else {
-			//There should only be 1 row in the results.
-			results.moveToFirst();
-			credentials = new AccountCredentials();
-			credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
-			credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
-			credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+		finally {
+			if(results != null) {
+				results.close();
+			}
 		}
+
 		return credentials;
 	}
 	
@@ -162,31 +182,40 @@ public class DatabaseManager implements Closeable {
 		if(database == null) {
 			open();
 		}
-		
-		Cursor results = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				null,
-				whereClause, new String[]{Long.toString(rowId)},
-				null,
-				null,
-				null
-		);
-		if(results == null || results.getCount() != 1) {
-			if(results == null) {
-				Log.e(LOG_TAG, "Results cursor from database query is null.");
+
+		Cursor results = null;
+		try {
+			results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					null,
+					whereClause, new String[]{Long.toString(rowId)},
+					null,
+					null,
+					null
+			);
+			if(results == null || results.getCount() != 1) {
+				if(results == null) {
+					Log.e(LOG_TAG, "Results cursor from database query is null.");
+				}
+				else {
+					Log.e(LOG_TAG, "The number of results returned from database query is " + results.getCount() + '!');
+				}
 			}
 			else {
-				Log.e(LOG_TAG, "The number of results returned from database query is " + results.getCount() + '!');
+				//There should only be 1 row in the results.
+				results.moveToFirst();
+				credentials = new AccountCredentials();
+				credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+				credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+				credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
 			}
 		}
-		else {
-			//There should only be 1 row in the results.
-			results.moveToFirst();
-			credentials = new AccountCredentials();
-			credentials.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
-			credentials.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
-			credentials.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
+		finally {
+			if(results != null) {
+				results.close();
+			}
 		}
+
 		return credentials;
 	}
 	
@@ -201,44 +230,190 @@ public class DatabaseManager implements Closeable {
 		if(database == null) {
 			open();
 		}
+
+		Cursor results = null;
 		
-		Cursor results = database.query(
-				AccountsContract.ACCOUNTS_TABLE,
-				new String[] {BaseColumns._ID, AccountsContract.UNIVERSE, AccountsContract.USERNAME},
-				null,
-				null,
-				null,
-				null,
-				null
-		);
-		if(results == null || results.getCount() <= 0) {
-			Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
-			allAccs = new ArrayList<AccountCredentials>();
+		try {
+			results = database.query(
+					AccountsContract.ACCOUNTS_TABLE,
+					new String[] {BaseColumns._ID, AccountsContract.UNIVERSE, AccountsContract.USERNAME},
+					null,
+					null,
+					null,
+					null,
+					null
+			);
+			if(results == null || results.getCount() <= 0) {
+				Log.e(LOG_TAG, "The number of results returned from database query is not 1!");
+				allAccs = new ArrayList<AccountCredentials>();
+			}
+			else {
+				results.moveToFirst();
+				allAccs = new ArrayList<AccountCredentials>(results.getCount());
+				do {
+					AccountCredentials cred = new AccountCredentials();
+					cred.id = results.getLong(results.getColumnIndex(BaseColumns._ID));
+					cred.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
+					cred.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+					allAccs.add(cred);
+				} while(results.moveToNext());
+			}
 		}
-		else {
-			results.moveToFirst();
-			allAccs = new ArrayList<AccountCredentials>(results.getCount());
-			do {
-				AccountCredentials cred = new AccountCredentials();
-				cred.id = results.getLong(results.getColumnIndex(BaseColumns._ID));
-				cred.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
-				cred.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
-				allAccs.add(cred);
-			} while(results.moveToNext());
+		finally {
+			if(results != null) {
+				results.close();
+			}
 		}
 		
+		results.close();
+
 		return allAccs;
 	}
 	
 	/**
 	 * Retrieve all cookies from the cookies table in the database.
-	 * @return ArrayList of HttpCookie objects. 
+	 * @return ArrayList of HttpCookie objects. This list is guaranteed to have
+	 * 		cookies with a non-null, non-empty domain and path. 
 	 */
 	public ArrayList<HttpCookie> getCookies() {
 		ArrayList<HttpCookie> cookies = null;
+		if(database == null) {
+			DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
+			database = dbh.getWritableDatabase();
+		}
+
+		Cursor all = null;
+		try {
+			all = database.query(
+					CookiesContract.COOKIES_TABLE,
+					null,
+					null,
+					null,
+					null,
+					null,
+					null
+			);
+
+			int nameIndex = all.getColumnIndex(CookiesContract.NAME);
+			int valueIndex = all.getColumnIndex(CookiesContract.VALUE);
+			int expireIndex = all.getColumnIndex(CookiesContract.EXPIRATION);
+			int domainIndex = all.getColumnIndex(CookiesContract.DOMAIN);
+			int pathIndex = all.getColumnIndex(CookiesContract.PATH);
+			int secureIndex = all.getColumnIndex(CookiesContract.SECURE);
+
+			cookies = new ArrayList<HttpCookie>(all.getCount());
+
+			all.moveToFirst();
+			HttpCookie cookie;
+			do {
+				String name = all.getString(nameIndex);
+				String value = all.getString(valueIndex);
+
+				long expiration = 0;
+				try {
+					expiration = all.getLong(expireIndex);
+				}
+				catch(Exception e) {
+				}
+
+				String domain = all.getString(domainIndex);
+				String path = all.getString(pathIndex);
+
+				int secureFlag = 0;
+				try {
+					secureFlag = all.getInt(secureIndex);
+				}
+				catch(Exception e) {
+				}
+
+				//Currently no use or need to use the HTTP-only flag in cookies for now
+				cookie = new HttpCookie(name, value);
+
+				long currentTimeInSeconds = Calendar.getInstance().getTimeInMillis() / 1000;
+				if(currentTimeInSeconds < expiration) {
+					long maxAge = expiration - currentTimeInSeconds;
+					cookie.setMaxAge(maxAge);
+				}
+
+				if(secureFlag != 0) {
+					cookie.setSecure(true);
+				}
+
+				if(domain != null && domain.length() > 0) {
+					cookie.setDomain(domain);
+					if(path != null && path.length() > 0) {
+						cookie.setPath(path);
+					}
+					else {
+						cookie.setPath("/");
+					}
+					cookies.add(cookie);
+				}
+			} while(all.moveToNext());
+		}
+		finally {
+			if(all != null) {
+				all.close();
+			}
+		}
 		return cookies;
 	}
 	
+	/**
+	 * Drop the entire cookies table and then save parameter cookie list into the
+	 * empty table.
+	 * @param cookies
+	 */
+	public void saveCookies(List<HttpCookie> cookies) {
+		if(cookies == null) {
+			return;
+		}
+
+		if(database == null) {
+			DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
+			database = dbh.getWritableDatabase();
+		}
+
+		database.delete(CookiesContract.COOKIES_TABLE, null, null);
+		database.beginTransaction();
+		try {
+			Iterator<HttpCookie> cookieIter = cookies.iterator();
+			while(cookieIter.hasNext()) {
+				HttpCookie cookie = cookieIter.next();
+				String name = cookie.getName();
+				String value = cookie.getValue();
+				long maxAgeDelta = cookie.getMaxAge();
+				long expiration = Calendar.getInstance().getTimeInMillis() / 1000;
+				expiration += maxAgeDelta;
+				String domain = cookie.getDomain();
+				String path = cookie.getPath();
+				boolean secureFlag = cookie.getSecure();
+
+				if(domain != null && domain.length() > 0) {
+					if(path != null && path.length() == 0) {
+						path = "/";
+					}
+					ContentValues cv = new ContentValues();
+					cv.put(CookiesContract.NAME, name);
+					cv.put(CookiesContract.VALUE, value);
+					cv.put(CookiesContract.EXPIRATION, Long.valueOf(expiration));
+					cv.put(CookiesContract.DOMAIN, domain);
+					cv.put(CookiesContract.PATH, path);
+					int secureInt = (secureFlag ? 1 : 0);
+					cv.put(CookiesContract.SECURE, Integer.valueOf(secureInt));
+					//No support for HTTP-only flag yet
+					int httpInt = 0;
+					cv.put(CookiesContract.HTTP_ONLY, Integer.valueOf(httpInt));
+					database.insert(CookiesContract.COOKIES_TABLE, null, cv);
+				}
+			}
+			database.setTransactionSuccessful();
+		}
+		finally {
+			database.endTransaction();
+		}
+	}
+
 	private synchronized void open() {
 		if(database == null) {
 			DBHelper dbh = new DBHelper(context, DB_NAME, VERSION);
@@ -267,7 +442,7 @@ public class DatabaseManager implements Closeable {
 				"CREATE TABLE if not exists " + CookiesContract.COOKIES_TABLE
 				+ " (" + CookiesContract.NAME + " text PRIMARY KEY ON CONFLICT REPLACE, "
 				+ CookiesContract.VALUE + " text NOT NULL ON CONFLICT IGNORE, "
-				+ CookiesContract.EXPIRATION + " integer, "
+				+ CookiesContract.EXPIRATION + " integer DEFAULT 0, "
 				+ CookiesContract.DOMAIN + " text NOT NULL ON CONFLICT IGNORE, "
 				+ CookiesContract.PATH + " text DEFAULT '/', "
 				+ CookiesContract.SECURE + " integer DEFAULT 0, "

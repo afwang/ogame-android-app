@@ -62,8 +62,6 @@ public class CustomCookieManager extends CookieManager {
 		}
 	}
 	
-	//TODO: Include a method to add a bunch of saved-cookies.
-
 	/**
 	 * We have to implement our own cookie parser because Java's HttpCookie.parse() method throws an
 	 * IllegalArgumentException, which goes against specification. See: http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6790677
