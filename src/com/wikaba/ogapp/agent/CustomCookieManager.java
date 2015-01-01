@@ -62,6 +62,14 @@ public class CustomCookieManager extends CookieManager {
 		}
 	}
 	
+	@Override
+	public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders) throws IOException {
+		System.out.println(requestHeaders);
+		super.get(uri, requestHeaders);
+		System.out.println(requestHeaders);
+		return requestHeaders;
+	}
+	
 	/**
 	 * We have to implement our own cookie parser because Java's HttpCookie.parse() method throws an
 	 * IllegalArgumentException, which goes against specification. See: http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6790677

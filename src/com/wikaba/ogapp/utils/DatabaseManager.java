@@ -303,53 +303,55 @@ public class DatabaseManager implements Closeable {
 
 			cookies = new ArrayList<HttpCookie>(all.getCount());
 
-			all.moveToFirst();
+			boolean cursorHasResults = all.moveToFirst();
 			HttpCookie cookie;
-			do {
-				String name = all.getString(nameIndex);
-				String value = all.getString(valueIndex);
+			if(cursorHasResults) {
+				do {
+					String name = all.getString(nameIndex);
+					String value = all.getString(valueIndex);
 
-				long expiration = 0;
-				try {
-					expiration = all.getLong(expireIndex);
-				}
-				catch(Exception e) {
-				}
-
-				String domain = all.getString(domainIndex);
-				String path = all.getString(pathIndex);
-
-				int secureFlag = 0;
-				try {
-					secureFlag = all.getInt(secureIndex);
-				}
-				catch(Exception e) {
-				}
-
-				//Currently no use or need to use the HTTP-only flag in cookies for now
-				cookie = new HttpCookie(name, value);
-
-				long currentTimeInSeconds = Calendar.getInstance().getTimeInMillis() / 1000;
-				if(currentTimeInSeconds < expiration) {
-					long maxAge = expiration - currentTimeInSeconds;
-					cookie.setMaxAge(maxAge);
-				}
-
-				if(secureFlag != 0) {
-					cookie.setSecure(true);
-				}
-
-				if(domain != null && domain.length() > 0) {
-					cookie.setDomain(domain);
-					if(path != null && path.length() > 0) {
-						cookie.setPath(path);
+					long expiration = 0;
+					try {
+						expiration = all.getLong(expireIndex);
 					}
-					else {
-						cookie.setPath("/");
+					catch(Exception e) {
 					}
-					cookies.add(cookie);
-				}
-			} while(all.moveToNext());
+
+					String domain = all.getString(domainIndex);
+					String path = all.getString(pathIndex);
+
+					int secureFlag = 0;
+					try {
+						secureFlag = all.getInt(secureIndex);
+					}
+					catch(Exception e) {
+					}
+
+					//Currently no use or need to use the HTTP-only flag in cookies for now
+					cookie = new HttpCookie(name, value);
+
+					long currentTimeInSeconds = Calendar.getInstance().getTimeInMillis() / 1000;
+					if(currentTimeInSeconds < expiration) {
+						long maxAge = expiration - currentTimeInSeconds;
+						cookie.setMaxAge(maxAge);
+					}
+
+					if(secureFlag != 0) {
+						cookie.setSecure(true);
+					}
+
+					if(domain != null && domain.length() > 0) {
+						cookie.setDomain(domain);
+						if(path != null && path.length() > 0) {
+							cookie.setPath(path);
+						}
+						else {
+							cookie.setPath("/");
+						}
+						cookies.add(cookie);
+					}
+				} while(all.moveToNext());
+			}
 		}
 		finally {
 			if(all != null) {
@@ -446,8 +448,7 @@ public class DatabaseManager implements Closeable {
 				+ CookiesContract.DOMAIN + " text NOT NULL ON CONFLICT IGNORE, "
 				+ CookiesContract.PATH + " text DEFAULT '/', "
 				+ CookiesContract.SECURE + " integer DEFAULT 0, "
-				+ CookiesContract.HTTP_ONLY + " integer DEFAULT 0) "
-				+ "WITHOUT ROWID;";
+				+ CookiesContract.HTTP_ONLY + " integer DEFAULT 0);";
 
 		public DBHelper(Context ctx, String name, int version) {
 			super(ctx, DB_NAME, null, VERSION);
