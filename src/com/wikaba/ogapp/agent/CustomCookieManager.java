@@ -48,7 +48,7 @@ public class CustomCookieManager extends CookieManager {
 			for(String cookieHeader : cookieHeaders) {
 				List<HttpCookie> cookiesList = parseCookies(cookieHeader, uri.getAuthority(), uri.getPath());
 				for(HttpCookie cookie : cookiesList) {
-					cookieStore.add(uri, cookie);
+					cookieStore.add(null, cookie);
 				}
 			}
 		}
@@ -60,14 +60,6 @@ public class CustomCookieManager extends CookieManager {
 				}
 			}
 		}
-	}
-	
-	@Override
-	public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders) throws IOException {
-		System.out.println(requestHeaders);
-		super.get(uri, requestHeaders);
-		System.out.println(requestHeaders);
-		return requestHeaders;
 	}
 	
 	/**
