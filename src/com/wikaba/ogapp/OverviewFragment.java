@@ -328,10 +328,6 @@ public class OverviewFragment extends Fragment
 
 		@Override
 		public List<FleetEvent> loadInBackground() {
-			boolean loggedIn = act.mAgent.loginToAccount(act.accountRowId);
-			if(!loggedIn) {
-				return null;
-			}
 			return act.mAgent.getFleetEvents(act.accountRowId);
 		}
 	}

@@ -72,25 +72,27 @@ public class OgameAgent {
 	
 	private String serverUri;
 	
+	public OgameAgent(String universe) {
+		serverUri = "http://" + NameToURI.getDomain(universe);
+	}
+	
 	/**
-	 * Submits user credentials to Ogame. Parses and returns data from HTTP response
-	 * @param universe - The name of the universe to log in to.
-	 * @param username - Username of the account on universe to log in to.
-	 * @return list of cookies set for this session. Null if login failed.
+	 * Submits user credentials to Ogame to obtain set of cookies (handled
+	 * by system's CookieHandler.
+	 * 
+	 * This method's purpose is to add the cookies into the current
+	 * session's CookieStore
+	 * @param universe - Unvierse of the account
+	 * @param username - Username of the account
+	 * @param password - Password of the account
+	 * @return true on successful login, false on failure
 	 */
-	public List<HttpCookie> login(String universe, String username, String password) {
-		if(!checkCookieHandler()) {
-			CookieHandler.setDefault(new CustomCookieManager());
-		}
-		
+	public boolean login(String universe, String username, String password) {
 		final int timeoutMillis = 30 * 1000;
 		HttpURLConnection connection = null;
 		int response = 0;
-		
-		boolean successfulResponse;
-		
 		universe = NameToURI.getDomain(universe);
-		serverUri = "http://" + universe;
+		boolean successfulResponse;
 		
 		/*
 		 * FIRST REQUEST
@@ -103,7 +105,7 @@ public class OgameAgent {
 		} catch (UnsupportedEncodingException e1) {
 			System.out.println("Error: " + e1 + '\n' + e1.getMessage());
 			e1.printStackTrace();
-			return null;
+			return false;
 		}
 		String length = Integer.toString(parameters.length());
 		try {
@@ -111,7 +113,7 @@ public class OgameAgent {
 				try {
 					connection = (HttpURLConnection)(new URL(uri)).openConnection();
 					connection.setConnectTimeout(timeoutMillis);
-					connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+					connection.setRequestProperty("Accept-Language", "en-US");
 					connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 					connection.setRequestProperty("Content-Length", length);
 					connection.setDoOutput(true);
@@ -156,7 +158,7 @@ public class OgameAgent {
 			System.out.println("END FIRST REQUEST (login)");
 			
 			if(!successfulResponse) {
-				return null;
+				return false;
 			}
 			
 			/*
@@ -196,7 +198,7 @@ public class OgameAgent {
 			connection.disconnect();
 			System.out.println("END SECOND REQUEST");
 			if(!successfulResponse) {
-				return null;
+				return false;
 			}
 			
 			/*
@@ -259,36 +261,24 @@ public class OgameAgent {
 			connection.disconnect();
 			System.out.println("END THIRD REQUEST");
 			if(!successfulResponse) {
-				return null;
+				return false;
 			}
 		}
 		catch(MalformedURLException e) {
 			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
 			e.printStackTrace();
-			return null;
+			return false;
 		}
 		catch(IOException e) {
 			System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
 			e.printStackTrace();
-			return null;
+			return false;
 		}
 		finally {
 			connection.disconnect();
 		}
 		
-		CookieHandler handler = CookieHandler.getDefault();
-		List<HttpCookie> cookies = null;
-		if(handler instanceof CookieManager) {
-			CookieStore store = ((CookieManager)handler).getCookieStore();
-			if(store == null) {
-				return new ArrayList<HttpCookie>();
-			}
-			cookies = store.getCookies();
-		}
-		else {
-			cookies = new ArrayList<HttpCookie>();
-		}
-		return cookies;
+		return true;
 	}
 	
 	/**

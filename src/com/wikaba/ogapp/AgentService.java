@@ -106,17 +106,15 @@ public class AgentService extends Service {
 	public boolean loginToAccount(long rowId) {
 		OgameAgent agent = ogameSessions.get(rowId);
 		if(agent == null) {
-			agent = new OgameAgent();
 			AccountCredentials creds = dbman.getAccount(rowId);
 			if(creds == null) {
 				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
 				Log.e(LOGTAG, "The rowId passed in was " + rowId);
 			}
-			List<HttpCookie> cookies = agent.login(creds.universe, creds.username, creds.passwd);
-			if(cookies == null) {
-				return false;
+			else {
+				agent = new OgameAgent(creds.universe);
+				ogameSessions.put(rowId, agent);
 			}
-			ogameSessions.put(rowId, agent);
 		}
 		return true;
 	}
@@ -132,34 +130,36 @@ public class AgentService extends Service {
 	public List<FleetEvent> getFleetEvents(long rowId) {
 		OgameAgent agent = ogameSessions.get(rowId);
 		if(agent == null) {
-			Log.e(LOGTAG, "Please call loginToAccount before calling getFleetEvents");
+			loginToAccount(rowId);
+			agent = ogameSessions.get(rowId);
+		}
+		
+		if(agent == null) {
 			return null;
 		}
 		
-		List<FleetEvent> events = new ArrayList<FleetEvent>();
-		boolean tryAgain = false;
-		do {
+		List<FleetEvent> events = null;
+		final int retryAttempts = 3;
+		for(int attempts = 0; attempts < retryAttempts; attempts++) {
 			try {
 				events = agent.getOverviewData();
 				break;
-			} catch (LoggedOutException e) {
+			}
+			catch (LoggedOutException e) {
 				//Log in and try again!
-				if(!tryAgain) {
-					tryAgain = true;
-					ogameSessions.remove(rowId);
-					agent = null;
-					if(loginToAccount(rowId)) {
-						agent = ogameSessions.get(rowId);
-					}
-					else {
-						return null;
-					}
+				AccountCredentials creds = null;
+				if(dbman != null) {
+					creds = dbman.getAccount(rowId);
+				}
+
+				if(creds != null) {
+					agent.login(creds.universe, creds.username, creds.passwd);
 				}
 				else {
-					break;
+					return null;
 				}
 			}
-		} while(tryAgain);
+		}
 		return events;
 	}
 	
