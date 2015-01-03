@@ -48,6 +48,9 @@ public class CustomCookieManager extends CookieManager {
 			for(String cookieHeader : cookieHeaders) {
 				List<HttpCookie> cookiesList = parseCookies(cookieHeader, uri.getAuthority(), uri.getPath());
 				for(HttpCookie cookie : cookiesList) {
+//					System.out.println("Adding cookie to store: " + cookie.getName() + '=' + cookie.getValue()
+//							+ "; expiration=" + (cookie.getMaxAge() + Calendar.getInstance().getTimeInMillis() / 1000)
+//							+ "; domain=" + cookie.getDomain() + "; path =" + cookie.getPath());
 					cookieStore.add(null, cookie);
 				}
 			}
@@ -56,7 +59,10 @@ public class CustomCookieManager extends CookieManager {
 			for(String cookieHeader : cookieHeaders2) {
 				List<HttpCookie> cookiesList = parseCookies(cookieHeader, uri.getAuthority(), uri.getPath());
 				for(HttpCookie cookie: cookiesList) {
-					cookieStore.add(uri, cookie);
+//					System.out.println("Adding cookie to store: " + cookie.getName() + '=' + cookie.getValue()
+//							+ "; expiration=" + (cookie.getMaxAge() + Calendar.getInstance().getTimeInMillis() / 1000)
+//							+ "; domain=" + cookie.getDomain() + "; path =" + cookie.getPath());
+					cookieStore.add(null, cookie);
 				}
 			}
 		}

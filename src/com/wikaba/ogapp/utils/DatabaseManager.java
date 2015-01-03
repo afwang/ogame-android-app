@@ -329,6 +329,7 @@ public class DatabaseManager implements Closeable {
 
 					//Currently no use or need to use the HTTP-only flag in cookies for now
 					cookie = new HttpCookie(name, value);
+					cookie.setVersion(0);
 
 					long currentTimeInSeconds = Calendar.getInstance().getTimeInMillis() / 1000;
 					if(currentTimeInSeconds < expiration) {
@@ -349,6 +350,7 @@ public class DatabaseManager implements Closeable {
 							cookie.setPath("/");
 						}
 						cookies.add(cookie);
+//						System.out.println("Load cookie: " + name + '=' + value + "; expiration=" + expiration + "; domain=" + domain + "; path=" + path);
 					}
 				} while(all.moveToNext());
 			}
@@ -407,6 +409,7 @@ public class DatabaseManager implements Closeable {
 					int httpInt = 0;
 					cv.put(CookiesContract.HTTP_ONLY, Integer.valueOf(httpInt));
 					database.insert(CookiesContract.COOKIES_TABLE, null, cv);
+//					System.out.println("Save Cookie: " + name + '=' + value + "; expiration=" + expiration + "; domain=" + domain + "; path=" + path);
 				}
 			}
 			database.setTransactionSuccessful();
