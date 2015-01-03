@@ -24,6 +24,7 @@ public class IntegerMissionMap {
 	public static final int TRANSPORT = 3;
 	public static final int DEPLOYMENT = 4;
 	public static final int ESPIONAGE = 6;
+	public static final int COLONIZE = 7;
 	public static final int HARVEST = 8;
 	public static final int MOON_DESTRUCTION = 9;
 	public static final int EXPEDITION = 15;
@@ -32,6 +33,7 @@ public class IntegerMissionMap {
 	public static final String TRANSPORT_NAME = "Transport";
 	public static final String DEPLOYMENT_NAME = "Deployment";
 	public static final String ESPIONAGE_NAME = "Espionage";
+	public static final String COLONIZE_NAME = "Colonize";
 	public static final String HARVEST_NAME = "Harvest";
 	public static final String MOON_DESTRUCTION_NAME = "Moon Destruction";
 	public static final String EXPEDITION_NAME = "Expedition";
@@ -57,6 +59,9 @@ public class IntegerMissionMap {
 			break;
 		case ESPIONAGE:
 			missionName = ESPIONAGE_NAME;
+			break;
+		case COLONIZE:
+			missionName = COLONIZE_NAME;
 			break;
 		case HARVEST:
 			missionName = HARVEST_NAME;
