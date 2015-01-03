@@ -445,7 +445,8 @@ public class DatabaseManager implements Closeable {
 		
 		private static final String CREATE_COOKIES_TABLE =
 				"CREATE TABLE if not exists " + CookiesContract.COOKIES_TABLE
-				+ " (" + CookiesContract.NAME + " text PRIMARY KEY ON CONFLICT REPLACE, "
+				+ " (" + BaseColumns._ID + " integer PRIMARY KEY ON CONFLICT REPLACE AUTOINCREMENT, "
+				+ CookiesContract.NAME + " text NOT NULL ON CONFLICT IGNORE, "
 				+ CookiesContract.VALUE + " text NOT NULL ON CONFLICT IGNORE, "
 				+ CookiesContract.EXPIRATION + " integer DEFAULT 0, "
 				+ CookiesContract.DOMAIN + " text NOT NULL ON CONFLICT IGNORE, "
