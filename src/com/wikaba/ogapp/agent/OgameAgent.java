@@ -30,7 +30,6 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.Field;
-import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -76,7 +75,7 @@ public class OgameAgent {
 	 * 
 	 * This method's purpose is to add the cookies into the current
 	 * session's CookieStore
-	 * @param universe - Unvierse of the account
+	 * @param universe - Universe of the account
 	 * @param username - Username of the account
 	 * @param password - Password of the account
 	 * @return true on successful login, false on failure
@@ -283,10 +282,6 @@ public class OgameAgent {
 	 * 		will have non-null instance variables.
 	 */
 	public List<FleetEvent> getOverviewData() throws LoggedOutException {
-		if(!checkCookieHandler()) {
-			CookieHandler.setDefault(new CustomCookieManager());
-		}
-		
 		List<FleetEvent> overviewData = null;
 		
 		HttpURLConnection conn = null;
@@ -859,19 +854,5 @@ public class OgameAgent {
 		}
 		
 		return fleetResData;
-	}
-	
-	/**
-	 * Check if the default CookieHandler is our CustomCookieManager.
-	 * @return true if the default CookieHandler is CustomCookieManager. False otherwise
-	 */
-	private boolean checkCookieHandler() {
-		CookieHandler handler = CookieHandler.getDefault();
-		if(handler instanceof CustomCookieManager) {
-			return true;
-		}
-		else {
-			return false;
-		}
 	}
 }
