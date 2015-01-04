@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
+import com.wikaba.ogapp.utils.AndroidMissionMap;
 import com.wikaba.ogapp.utils.NameBridge;
 
 import android.app.Activity;
@@ -336,7 +337,7 @@ public class OverviewFragment extends Fragment
 		private Context context;
 		private List<FleetEvent> eventList;
 		private Map<TextView, Long> textViews;
-		private NameBridge bridge;
+		private IntegerMissionMap bridge;
 		private Resources res;
 		
 		public EventAdapter(Context ctx, List<FleetEvent> eventList, Map<TextView, Long> textViews) {
@@ -351,18 +352,19 @@ public class OverviewFragment extends Fragment
 				this.eventList.addAll(eventList);
 			
 			if(textViews == null) {
-				throw new IllegalArgumentException("Third argument passed to EventAdapter constructor should not be null");
+				throw new IllegalArgumentException("Third argument should not be null");
 			}
 			this.textViews = textViews;
 			
 			res = context.getResources();
-			bridge = new NameBridge(res);
+			bridge = new IntegerMissionMap(new AndroidMissionMap(res));
 		}
 
 		@Override
 		public int getCount() {
-			if(eventList != null)
+			if(eventList != null) {
 				return eventList.size();
+			}
 			return 0;
 		}
 

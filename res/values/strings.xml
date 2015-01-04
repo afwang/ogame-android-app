@@ -109,5 +109,15 @@
         <item>@string/uni35</item>
         <item>@string/uni44</item>
     </string-array>
+    
+    <!--  Mission names -->
+    <string name="mission_attack">Attack</string>
+    <string name="mission_transport">Transport</string>
+    <string name="mission_deploy">Deployment</string>
+    <string name="mission_espionage">Espionage</string>
+    <string name="mission_colonize">Colonize</string>
+    <string name="mission_harvest">Harvest</string>
+    <string name="mission_moon_destruction">Moon dest.</string>
+    <string name="mission_expedition">Expedition</string>
 
 </resources>

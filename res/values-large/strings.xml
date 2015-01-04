@@ -36,4 +36,14 @@
     <string name="recycler">Recycler</string>
     <string name="probe">Espionage Probe</string>
     <string name="satellite">Solar satellite</string>
+    
+    <!-- Mission names -->
+    <string name="mission_attack">Attack</string>
+    <string name="mission_transport">Transport</string>
+    <string name="mission_deploy">Deployment</string>
+    <string name="mission_espionage">Espionage</string>
+    <string name="mission_colonize">Colonization</string>
+    <string name="mission_harvest">Harvest</string>
+    <string name="mission_moon_destruction">Moon destruction</string>
+    <string name="mission_expedition">Expedition</string>
 </resources>
