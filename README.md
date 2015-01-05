@@ -37,14 +37,13 @@ To do list
 https://openclipart.org/detail/121903/full-moon-by-merlin2525, and
 https://openclipart.org/detail/189057/android-another-by-roshellin-189057
 
-- Store the session cookies inside a database so the user does not have to log in again
+- Add in an indicator for number of unread messages. This should eventually
+evolve into another activity that presents messages using DialogFragments
 
 - Add remaining number of missions to the IntegerMissionMap class.
 
-- Possibly phase out use of IntegerMissionMap to get mission names (register a custom Mapper
-to relate each mission to the name using Android's built-in resource resolver)
-
 - Fix potential bugs caused by change in screen orientation during loading
+(e.g. login fragment looks terrible in landscape mode)
 
 - Extract names for planets. Add names to the TextViews on overview.
 
