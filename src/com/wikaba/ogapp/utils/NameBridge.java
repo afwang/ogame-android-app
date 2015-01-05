@@ -19,6 +19,8 @@
 
 package com.wikaba.ogapp.utils;
 
+import java.util.HashMap;
+
 import android.content.res.Resources;
 
 import com.wikaba.ogapp.R;
@@ -79,9 +81,9 @@ public class NameBridge {
 		FleetAndResources.EP,
 		FleetAndResources.SS
 	};
-	private static final int size = resourceKeys.length;
 	
 	private Resources res;
+	private HashMap<String, Integer> nameToId;
 	
 	/**
 	 * Create a NameBridge object using a Resources object acquired
@@ -90,6 +92,14 @@ public class NameBridge {
 	 */
 	public NameBridge(Resources res) {
 		this.res = res;
+		float loadFactor = 0.75f;
+		int length = resourceKeys.length;
+		int capacity = (int)(length / loadFactor) + 1;
+		nameToId = new HashMap<String, Integer>(capacity, loadFactor);
+		
+		for(int index = 0; index < length; index++) {
+			nameToId.put(resourceKeys[index], Integer.valueOf(resids[index]));
+		}
 	}
 
 	/**
@@ -103,12 +113,12 @@ public class NameBridge {
 	 * @throws NotFoundException when no resource is found by Android
 	 */
 	public String getName(String nameInLibrary) {
-		for(int index = 0; index < size; index++) {
-			if(nameInLibrary.equals(resourceKeys[index])) {
-				String androidName = res.getString(resids[index]);
-				return androidName;
-			}
+		Integer value = nameToId.get(nameInLibrary);
+		if(value == null) {
+			return null;
 		}
-		return null;
+
+		String androidName = res.getString(value.intValue());
+		return androidName;
 	}
 }

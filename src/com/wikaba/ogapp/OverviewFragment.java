@@ -337,7 +337,8 @@ public class OverviewFragment extends Fragment
 		private Context context;
 		private List<FleetEvent> eventList;
 		private Map<TextView, Long> textViews;
-		private IntegerMissionMap bridge;
+		private IntegerMissionMap missionBridge;
+		private NameBridge nameBridge;
 		private Resources res;
 		
 		public EventAdapter(Context ctx, List<FleetEvent> eventList, Map<TextView, Long> textViews) {
@@ -345,11 +346,13 @@ public class OverviewFragment extends Fragment
 			
 			//Copy elements over to ArrayList to ensure random access to the elements in the list.
 			int size = 0;
-			if(eventList != null)
+			if(eventList != null) {
 				size = eventList.size();
+			}
 			this.eventList = new ArrayList<FleetEvent>(size);
-			if(eventList != null)
+			if(eventList != null) {
 				this.eventList.addAll(eventList);
+			}
 			
 			if(textViews == null) {
 				throw new IllegalArgumentException("Third argument should not be null");
@@ -357,7 +360,8 @@ public class OverviewFragment extends Fragment
 			this.textViews = textViews;
 			
 			res = context.getResources();
-			bridge = new IntegerMissionMap(new AndroidMissionMap(res));
+			missionBridge = new IntegerMissionMap(new AndroidMissionMap(res));
+			nameBridge = new NameBridge(res);
 		}
 
 		@Override
@@ -427,7 +431,7 @@ public class OverviewFragment extends Fragment
 			outOrIn.setText(event.data_return_flight ? res.getString(R.string.overview_incoming) : res.getString(R.string.overview_outgoing));
 			
 			destCoords.setText(event.destCoords);
-			missionType.setText(IntegerMissionMap.getMission(event.data_mission_type));
+			missionType.setText(missionBridge.getMission(event.data_mission_type));
 			
 			addCivilData(event, civilShips);
 			addCombatData(event, combatShips);
@@ -437,9 +441,6 @@ public class OverviewFragment extends Fragment
 		}
 		
 		private void addCivilData(FleetEvent eventData, LinearLayout civilShipLayout) {
-			//TODO: Optimize this method. We should recycle the old views in the layout
-			//instead of removing all views and creating new TextView objects
-			civilShipLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] civilShipNames = {
 					FleetAndResources.SC,
@@ -450,30 +451,48 @@ public class OverviewFragment extends Fragment
 			};
 			
 			Long num;
+			int layoutIndex = 0;
 			for(String shipName : civilShipNames) {
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
-					TextView shipEntry = new TextView(context);
+					TextView shipEntry;
+					if(layoutIndex < civilShipLayout.getChildCount()) {
+						shipEntry = (TextView)civilShipLayout.getChildAt(layoutIndex);
+					}
+					else {
+						shipEntry = new TextView(context);
+						int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+						shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+						civilShipLayout.addView(shipEntry);
+					}
 					
-					shipName = bridge.getName(shipName);
-					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
-					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
-					
+					shipName = nameBridge.getName(shipName);
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')
 					.append(shipName);
 					String shipStr = textBuilder.toString();
 					shipEntry.setText(shipStr);
-					civilShipLayout.addView(shipEntry);
+
+					layoutIndex++;
 				}
+			}
+			
+			//Remove extraneous views
+			/* One way to think about layoutIndex after finishing the above loop
+			 * is that layoutIndex is the number of children in the layout with
+			 * the updated data. The child views starting at position layoutIndex
+			 * to the end should be removed. Thus, we only have to remove
+			 * children from the layout when layoutIndex is less than
+			 * civilShipLayout.getChildCount().
+			 */
+			if(layoutIndex < civilShipLayout.getChildCount()) {
+				int count = civilShipLayout.getChildCount() - layoutIndex;
+				civilShipLayout.removeViews(layoutIndex, count);
 			}
 		}
 		
 		private void addCombatData(FleetEvent eventData, LinearLayout combatShipLayout) {
-			//TODO: Optimize this method. We should recycle the old views in the layout
-			//instead of removing all views and creating new TextView objects
-			combatShipLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] combatShipNames = {
 					FleetAndResources.LF,
@@ -487,30 +506,40 @@ public class OverviewFragment extends Fragment
 			};
 			
 			Long num;
+			int layoutIndex = 0;
 			for(String shipName : combatShipNames) {
 				num = data.get(shipName);
 				if(num != null && num.longValue() > 0) {
-					TextView shipEntry = new TextView(context);
+					TextView shipEntry;
+					if(layoutIndex < combatShipLayout.getChildCount()) {
+						shipEntry = (TextView)combatShipLayout.getChildAt(layoutIndex);
+					}
+					else {
+						shipEntry = new TextView(context);
+						int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+						shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+						combatShipLayout.addView(shipEntry);
+					}
 					
-					shipName = bridge.getName(shipName);
-					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
-					shipEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
-					
+					shipName = nameBridge.getName(shipName);
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')
 					.append(shipName);
 					String shipStr = textBuilder.toString();
 					shipEntry.setText(shipStr);
-					combatShipLayout.addView(shipEntry);
+					
+					layoutIndex++;
 				}
+			}
+			
+			if(layoutIndex < combatShipLayout.getChildCount()) {
+				int count = combatShipLayout.getChildCount() - layoutIndex;
+				combatShipLayout.removeViews(layoutIndex, count);
 			}
 		}
 		
 		private void addResourceData(FleetEvent eventData, LinearLayout resourceLayout) {
-			//TODO: Optimize this method. We should recycle the old views in the layout
-			//instead of removing all views and creating new TextView objects
-			resourceLayout.removeAllViews();
 			Map<String, Long> data = eventData.fleetResources;
 			final String[] resourceNames = {
 					FleetAndResources.METAL,
@@ -519,23 +548,36 @@ public class OverviewFragment extends Fragment
 			};
 			
 			Long num;
+			int layoutIndex = 0;
 			for(String resName : resourceNames) {
 				num = data.get(resName);
 				if(num != null) {
-					TextView resEntry = new TextView(context);
+					TextView resEntry;
+					if(layoutIndex < resourceLayout.getChildCount()) {
+						resEntry = (TextView)resourceLayout.getChildAt(layoutIndex);
+					}
+					else {
+						resEntry = new TextView(context);
+						int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
+						resEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+						resourceLayout.addView(resEntry);
+					}
 					
-					resName = bridge.getName(resName);
-					int size = res.getDimensionPixelSize(R.dimen.fleet_event_ship_text);
-					resEntry.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
-					
+					resName = nameBridge.getName(resName);
 					StringBuilder textBuilder = new StringBuilder();
 					textBuilder.append(num.longValue())
 					.append(' ')
 					.append(resName);
 					String resStr = textBuilder.toString();
 					resEntry.setText(resStr);
-					resourceLayout.addView(resEntry);
+					
+					layoutIndex++;
 				}
+			}
+
+			if(layoutIndex < resourceLayout.getChildCount()) {
+				int count = resourceLayout.getChildCount() - layoutIndex;
+				resourceLayout.removeViews(layoutIndex, count);
 			}
 		}
 	}

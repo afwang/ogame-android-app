@@ -66,6 +66,9 @@ public class OgameAgent {
 	private String serverUri;
 	
 	public OgameAgent(String universe) {
+		if(universe == null) {
+			throw new IllegalArgumentException("OgameAgent constructor argument is null");
+		}
 		serverUri = "http://" + NameToURI.getDomain(universe);
 	}
 	
