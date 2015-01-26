@@ -19,6 +19,10 @@
 
 package com.wikaba.ogapp.agent;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Locale;
+
 public class FleetAndResources {
 	public static final String METAL = "metal";
 	public static final String CRYSTAL = "crystal";
@@ -38,4 +42,51 @@ public class FleetAndResources {
 	public static final String RC = "Recycler";
 	public static final String EP = "Espionage Probe";
 	public static final String SS = "Solar Satellite";
+
+	private static HashMap<String, String> names;
+	private static final int NUM_NAMES = 17;
+
+	/**
+	 * Check if the given @{code input} is contained represented
+	 * by one of the public static fields of this class. The
+	 * internal implementation of this class makes the check
+	 * for whether a name is contained an O(1) operation rather
+	 * than a search through all the public static fields, an
+	 * O(n) operation
+	 * @param input - string to check if there is a static field
+	 * 		represented by this String
+	 * @return
+	 */
+	public static String getName(String input) {
+		if(names == null) {
+			initNames();
+		}
+		return names.get(input.toLowerCase(Locale.US));
+	}
+	
+	private static synchronized void initNames() {
+		if(names == null) {
+			final float defaultLoadFactor = 0.75F;
+			names = new HashMap<String, String>(2 * NUM_NAMES, defaultLoadFactor);
+
+			Class<FleetAndResources> farClass = FleetAndResources.class;
+			for(Field field : farClass.getFields()) {
+				Class<?> type = field.getClass();
+				String typeName = type.getName();
+				if(typeName.equals("String")) {
+					String value;
+					try {
+						value = (String)field.get(null);
+						names.put(value.toLowerCase(Locale.US), value);
+					}
+					catch (IllegalAccessException e) {
+						e.printStackTrace();
+					}
+					catch (IllegalArgumentException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
 }

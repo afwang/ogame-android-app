@@ -585,21 +585,9 @@ public class OgameAgent {
 						fleetInfo[1] = fleetInfo[1].trim().replaceAll("\\.", "");
 
 						// Loop through FleetAndResources.class fields and if we find a match for a tr's text add an entry to the fleetRresources
-						try {
-							FleetAndResources instance = new FleetAndResources();
-							for(Field field : FleetAndResources.class.getFields()) {
-								String fleetOrResourceValue = FleetAndResources.class.getField(field.getName()).get(instance).toString();
-								if(fleetOrResourceValue.equalsIgnoreCase(fleetInfo[0])) {
-									// TODO: Is it possible we might have multiple fleets?
-									thisEvent.fleetResources.put(fleetOrResourceValue, Long.valueOf(fleetInfo[1]));
-								}
-							}
-						}
-						catch (NoSuchFieldException nsfe) {
-							System.out.println("Caught NoSuchFieldException: " + nsfe);
-						}
-						catch (IllegalAccessException iae) {
-							System.out.println("Caught IllegalAccessException: " + iae);
+						String fleetResName = FleetAndResources.getName(fleetInfo[0]);
+						if(fleetResName != null) {
+							thisEvent.fleetResources.put(fleetResName, Long.valueOf(fleetInfo[1]));
 						}
 					}
 				}
