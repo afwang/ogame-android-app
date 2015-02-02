@@ -145,7 +145,7 @@ public class AgentService extends Service {
 				events = agent.getOverviewData();
 				break;
 			}
-			catch (LoggedOutException e) {
+			catch(LoggedOutException e) {
 				//Log in and try again!
 				AccountCredentials creds = null;
 				if(dbman != null) {

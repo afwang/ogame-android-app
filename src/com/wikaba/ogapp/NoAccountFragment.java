@@ -31,6 +31,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.text.InputType;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -43,6 +44,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -56,12 +58,13 @@ public class NoAccountFragment extends Fragment
 	
 	private static final int ALL_ACCS_LOADER_ID = 0;
 	
-	Spinner uniSpinner;
-	EditText usernameField;
-	EditText passwdField;
-	Button loginButton;
-	HomeActivity act;
-	ListView existingAccs;
+	private Spinner uniSpinner;
+	private EditText usernameField;
+	private EditText passwdField;
+	private Button loginButton;
+	private CheckBox pwCheckBox;
+	private HomeActivity act;
+	private ListView existingAccs;
 	private ArrayList<AccountCredentials> allAccounts;
 	
 	public NoAccountFragment() {
@@ -81,6 +84,7 @@ public class NoAccountFragment extends Fragment
 		passwdField = (EditText)root.findViewById(R.id.password);
 		loginButton = (Button)root.findViewById(R.id.login);
 		existingAccs = (ListView)root.findViewById(R.id.existingAccList);
+		pwCheckBox = (CheckBox)root.findViewById(R.id.pw_checkbox);
 		
 		String[] uniNames = getResources().getStringArray(R.array.universe_names);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
@@ -91,6 +95,8 @@ public class NoAccountFragment extends Fragment
 		loginButton.setOnClickListener(this);
 		
 		registerForContextMenu(existingAccs);
+		
+		pwCheckBox.setOnClickListener(this);
 		
 		return root;
 	}
@@ -123,18 +129,29 @@ public class NoAccountFragment extends Fragment
 
 	@Override
 	public void onClick(View v) {
-		String username = usernameField.getText().toString();
-		String passwd = passwdField.getText().toString();
-		View selectedView = uniSpinner.getSelectedView();
-		if(selectedView == null) {
-			Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
-			return;
+		int id = v.getId();
+		switch(id) {
+		case R.id.login:
+			String username = usernameField.getText().toString();
+			String passwd = passwdField.getText().toString();
+			View selectedView = uniSpinner.getSelectedView();
+			if(selectedView == null) {
+				Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
+				return;
+			}
+			
+			TextView selectedText = (TextView)selectedView;
+			String universe = selectedText.getText().toString();
+			
+			act.addAccount(universe, username, passwd);
+			break;
+		case R.id.pw_checkbox:
+			int inputType = (pwCheckBox.isChecked()) ?
+					(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+					: (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+			passwdField.setInputType(inputType);
+			break;
 		}
-		
-		TextView selectedText = (TextView)selectedView;
-		String universe = selectedText.getText().toString();
-		
-		act.addAccount(universe, username, passwd);
 	}
 	
 	@Override

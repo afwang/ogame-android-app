@@ -40,6 +40,13 @@
         android:ems="10"
         android:hint="@string/password"
         android:inputType="textPassword" />
+
+    <CheckBox
+        android:id="@+id/pw_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:text="@string/show_password_checkbox" />
     
     <Spinner
         android:id="@+id/uniSelect"
@@ -58,7 +65,7 @@
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
+        android:layout_gravity="start"
         android:text="@string/existing_accounts"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
