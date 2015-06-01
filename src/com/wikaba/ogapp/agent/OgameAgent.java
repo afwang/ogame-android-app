@@ -431,7 +431,7 @@ public class OgameAgent {
 		}
 		return events;
 	}
-	
+
 	/**
 	 * Sets the required headers and cookies for the request specified by connection.
 	 * Connects to the URL specified by connection.
@@ -512,7 +512,7 @@ public class OgameAgent {
 			System.err.println("Error reading the response: " + e + '\n' + e.getMessage());
 			e.printStackTrace();
 		}
-		
+
 		try {
 			XmlPullParserFactory xppfactory = XmlPullParserFactory.newInstance();
 			XmlPullParser xpp = xppfactory.newPullParser();
@@ -786,7 +786,7 @@ public class OgameAgent {
 		}
 		return eventList;
 	}
-	
+
 	/**
 	 * Convenience method for removing javascript from the response. Mainly used by parseOverviewResponse()
 	 * @param input
@@ -897,54 +897,20 @@ public class OgameAgent {
 					String textData = subxpp.getText();
 					if(textData != null) {
 						textData = textData.trim();
+						if(textData.charAt(textData.length() - 1) == ':') {
+							textData = textData.substring(0, textData.length() - 1);
+						}
 					}
 					if(textData != null && textData.length() > 0) {
-						if(textData.equals("Small Cargo:")) {
-							currentShip = FleetAndResources.SC;
-						}
-						else if(textData.equals("Large Cargo:")) {
-							currentShip = FleetAndResources.LC;
-						}
-						else if(textData.equals("Colony Ship:")) {
-							currentShip = FleetAndResources.COLONY;
-						}
-						else if(textData.equals("Light Fighter:")) {
-							currentShip = FleetAndResources.LF;
-						}
-						else if(textData.equals("Heavy Fighter:")) {
-							currentShip = FleetAndResources.HF;
-						}
-						else if(textData.equals("Cruiser:")) {
-							currentShip = FleetAndResources.CR;
-						}
-						else if(textData.equals("Battleship:")) {
-							currentShip = FleetAndResources.BS;
-						}
-						else if(textData.equals("Battlecruiser:")) {
-							currentShip = FleetAndResources.BC;
-						}
-						else if(textData.equals("Bomber:")) {
-							currentShip = FleetAndResources.BB;
-						}
-						else if(textData.equals("Destroyer:")) {
-							currentShip = FleetAndResources.DS;
-						}
-						else if(textData.equals("Deathstar:")) {
-							currentShip = FleetAndResources.RIP;
-						}
-						else if(textData.equals("Recycler:")) {
-							currentShip = FleetAndResources.RC;
-						}
-						else if(textData.equals("Espionage Probe:")) {
-							currentShip = FleetAndResources.EP;
-						}
-						else if(textData.equals("Shipment:")) {
+						if(textData.equals("Shipment:")) {
 							currentShip = null;
 							parsingShips = false;
 							parsingRes = true;
 							break;
+						} else {
+							currentShip = FleetAndResources.getName(textData);
 						}
-						
+
 						textData = "";
 						while(textData.length() == 0) {
 							subxpp.next();
@@ -964,7 +930,7 @@ public class OgameAgent {
 					}
 				}
 			}
-			
+
 			eventType = subxpp.getEventType();
 			while(parsingRes && eventType != XmlPullParser.END_DOCUMENT) {
 				subxpp.next();
@@ -988,7 +954,7 @@ public class OgameAgent {
 						else {
 							continue;
 						}
-						
+
 						textData = "";
 						while(textData.length() == 0) {
 							subxpp.next();
@@ -998,7 +964,7 @@ public class OgameAgent {
 								textData = textData.trim();
 							}
 						}
-						
+
 						String amount = textData;
 						amount = amount.replaceAll("\\.", "");
 						if(amount.length() > 0) {

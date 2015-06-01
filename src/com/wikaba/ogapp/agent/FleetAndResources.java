@@ -19,7 +19,6 @@
 
 package com.wikaba.ogapp.agent;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -58,35 +57,38 @@ public class FleetAndResources {
 	 * @return
 	 */
 	public static String getName(String input) {
+		if(input == null) {
+			return null;
+		}
+
 		if(names == null) {
 			initNames();
 		}
 		return names.get(input.toLowerCase(Locale.US));
 	}
-	
+
 	private static synchronized void initNames() {
 		if(names == null) {
 			final float defaultLoadFactor = 0.75F;
 			names = new HashMap<String, String>(2 * NUM_NAMES, defaultLoadFactor);
 
-			Class<FleetAndResources> farClass = FleetAndResources.class;
-			for(Field field : farClass.getFields()) {
-				Class<?> type = field.getClass();
-				String typeName = type.getName();
-				if(typeName.equals("String")) {
-					String value;
-					try {
-						value = (String)field.get(null);
-						names.put(value.toLowerCase(Locale.US), value);
-					}
-					catch (IllegalAccessException e) {
-						e.printStackTrace();
-					}
-					catch (IllegalArgumentException e) {
-						e.printStackTrace();
-					}
-				}
-			}
+			//Although the code below can be made a little neater using reflection,
+			//I believe it is better to avoid reflection. We are trading code neatness
+			//for less bugs involving Reflection.
+			names.put(LF.toLowerCase(Locale.US), LF);
+			names.put(HF.toLowerCase(Locale.US), HF);
+			names.put(CR.toLowerCase(Locale.US), CR);
+			names.put(BS.toLowerCase(Locale.US), BS);
+			names.put(SC.toLowerCase(Locale.US), SC);
+			names.put(LC.toLowerCase(Locale.US), LC);
+			names.put(COLONY.toLowerCase(Locale.US), COLONY);
+			names.put(BC.toLowerCase(Locale.US), BC);
+			names.put(BB.toLowerCase(Locale.US), BB);
+			names.put(DS.toLowerCase(Locale.US), DS);
+			names.put(RIP.toLowerCase(Locale.US), RIP);
+			names.put(RC.toLowerCase(Locale.US), RC);
+			names.put(EP.toLowerCase(Locale.US), EP);
+			names.put(SS.toLowerCase(Locale.US), SS);
 		}
 	}
 }
