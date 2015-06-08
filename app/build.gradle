@@ -11,6 +11,14 @@ android {
     }
 
     productFlavors {
+        fdroid {
+            /*
+            This is an empty flavor. It's only purpose
+            is to ensure that the defaultConfig
+            is built
+             */
+        }
+
         playStore {
             applicationId "com.wikaba.ogapp.play"
         }
