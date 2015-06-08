@@ -897,9 +897,6 @@ public class OgameAgent {
 					String textData = subxpp.getText();
 					if(textData != null) {
 						textData = textData.trim();
-						if(textData.charAt(textData.length() - 1) == ':') {
-							textData = textData.substring(0, textData.length() - 1);
-						}
 					}
 					if(textData != null && textData.length() > 0) {
 						if(textData.equals("Shipment:")) {
@@ -908,6 +905,7 @@ public class OgameAgent {
 							parsingRes = true;
 							break;
 						} else {
+							textData = textData.substring(0, textData.length() - 1);
 							currentShip = FleetAndResources.getName(textData);
 						}
 
