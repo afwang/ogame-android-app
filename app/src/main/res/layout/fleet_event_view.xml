@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2014 Alexander Wang
+    
+    This file is part of Ogame on Android.
+
+    Ogame on Android is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ogame on Android is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <TextView
+        android:id="@+id/eta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
+
+    <TextView
+        android:id="@+id/origin_coords"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/eta"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
+
+    <TextView
+        android:id="@+id/outgoing_or_incoming"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/origin_coords"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
+
+    <TextView
+        android:id="@+id/dest_coords"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/outgoing_or_incoming"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin" />
+
+    <TextView
+        android:id="@+id/mission_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mission type"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/eta"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin" />
+
+    <LinearLayout
+        android:id="@+id/civil_ship_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/mission_type"
+        android:layout_alignTop="@+id/mission_type"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
+
+    </LinearLayout>
+    
+   <LinearLayout
+        android:id="@+id/combat_ship_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/civil_ship_layout"
+        android:layout_alignTop="@+id/mission_type"
+        android:layout_marginRight="@dimen/fleet_event_textview_margin"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
+       
+    </LinearLayout>
+    
+   <LinearLayout
+        android:id="@+id/resource_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/combat_ship_layout"
+        android:layout_alignTop="@+id/mission_type"
+        android:layout_marginLeft="@dimen/fleet_event_textview_margin" >
+       
+    </LinearLayout>
+
+</RelativeLayout>

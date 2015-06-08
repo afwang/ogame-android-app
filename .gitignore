@@ -1,4 +1,6 @@
 .gitignore
-bin/
-gen
-.classpath
+.idea/
+.gradle/
+local.properties
+gradle/
+build/
