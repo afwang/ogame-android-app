@@ -33,8 +33,8 @@ import android.widget.Toast;
 
 public class HomeActivity extends ActionBarActivity {
 	private static final String ROWID_KEY = "com.wikaba.ogapp.HomeActivity.accountRowId";
-	long accountRowId;
-	
+	private long accountRowId;
+
 	private ServiceConnection agentServiceConn = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -42,7 +42,7 @@ public class HomeActivity extends ActionBarActivity {
 			mAgent = binder.getService();
 			mBound = true;
 			if(listeningFragment != null) {
-				listeningFragment.onServiceConnected(name, service);
+				listeningFragment.serviceConnected();
 			}
 		}
 
@@ -51,19 +51,19 @@ public class HomeActivity extends ActionBarActivity {
 			mBound = false;
 			mAgent = null;
 			if(listeningFragment != null) {
-				listeningFragment.onServiceDisconnected(name);
+				listeningFragment.serviceDisconnected();
 			}
 		}
 	};
-	AgentService mAgent;
-	boolean mBound;
-	private ServiceConnection listeningFragment;
+	private AgentService mAgent;
+	private boolean mBound;
+	private AgentServiceConsumer listeningFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-		
+
 		if(savedInstanceState == null) {
 			getSupportFragmentManager().beginTransaction()
 			.add(R.id.container, new NoAccountFragment()).commit();
@@ -73,7 +73,7 @@ public class HomeActivity extends ActionBarActivity {
 		}
 		mBound = false;
 	}
-	
+
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -91,13 +91,13 @@ public class HomeActivity extends ActionBarActivity {
 		super.onSaveInstanceState(outState);
 		outState.putLong(ROWID_KEY, accountRowId);
 	}
-	
+
 	@Override
 	protected void onStop() {
 		super.onStop();
 		unbindService(agentServiceConn);
 	}
-	
+
 	public void addAccount(String universe, String username, String password) {
 		DatabaseManager dbman = new DatabaseManager(this);
 		accountRowId = dbman.addAccount(universe, username, password);
@@ -110,21 +110,21 @@ public class HomeActivity extends ActionBarActivity {
 		
 		goToOverview();
 	}
-	
-	public void setListener(ServiceConnection fragment) {
+
+	public void setListener(AgentServiceConsumer fragment) {
 		listeningFragment = fragment;
 	}
-	
+
 	public void unsetListener() {
 		listeningFragment = null;
 	}
-	
+
 	public void goToAccountSelector() {
 		NoAccountFragment f = new NoAccountFragment();
 		getSupportFragmentManager().beginTransaction()
 		.replace(R.id.container, f).commit();
 	}
-	
+
 	public void goToOverview() {
 		DatabaseManager dbman = new DatabaseManager(this);
 		AccountCredentials accountExists = dbman.getAccount(accountRowId);
@@ -138,5 +138,29 @@ public class HomeActivity extends ActionBarActivity {
 		
 		getSupportFragmentManager().beginTransaction()
 		.replace(R.id.container, confrag).commit();
+	}
+
+	public void setAccountRowId(long rowId) {
+		this.accountRowId = rowId;
+	}
+
+	public long getAccountRowId() {
+		return accountRowId;
+	}
+
+	/**
+	 * Check if this Activity is bound to the AgentService yet
+	 * @return true if the Activity is bound, false otherwise
+	 */
+	public boolean isBound() {
+		return mBound;
+	}
+
+	/**
+	 * Return the AgentService that is bound to this activity
+	 * @return the AgentService bound to this activity
+	 */
+	public AgentService getAgentService() {
+		return mAgent;
 	}
 }

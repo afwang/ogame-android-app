@@ -63,7 +63,7 @@ import android.widget.Toast;
 
 public class OverviewFragment extends Fragment
 		implements
-			ServiceConnection,
+			AgentServiceConsumer,
 			LoaderManager.LoaderCallbacks<List<FleetEvent>>,
 			AbsListView.RecyclerListener,
 			Runnable,
@@ -144,8 +144,8 @@ public class OverviewFragment extends Fragment
 		
 		final long timeInMillis = 1000;
 		act.setListener(this);
-		if(act.mBound) {
-			onServiceConnected(null, null);
+		if(act.isBound()) {
+			serviceConnected();
 		}
 		
 		if(dataIsLoaded) {
@@ -236,23 +236,33 @@ public class OverviewFragment extends Fragment
 		//Do not have to do anything, since our resource sits in memory.
 	}
 
+	/**
+	 * <p>This is the callback available to indicate to us when the
+	 * service is connected and ready for action!</p>
+	 */
 	@Override
-	public void onServiceConnected(ComponentName name, IBinder service) {
-		getLoaderManager().initLoader(LOADER_ID, null, this);
+	public void serviceConnected() {
+		if(act == null) {
+			return;
+		}
+
+		if(fragmentRunning) {
+			getLoaderManager().restartLoader(LOADER_ID, null, this);
+		}
 	}
 
 	@Override
-	public void onServiceDisconnected(ComponentName name) {
+	public void serviceDisconnected() {
 		getLoaderManager().destroyLoader(LOADER_ID);
 		act.unsetListener();
 	}
-	
+
 	@Override
 	public void onMovedToScrapHeap(View v) {
 		EventViewHolder holder = (EventViewHolder)v.getTag();
 		etaTextViews.remove(holder.eta);
 	}
-	
+
 	@Override
 	public void run() {
 		Iterator<Entry<TextView, Long>> entryiter = etaTextViews.entrySet().iterator();
@@ -273,7 +283,7 @@ public class OverviewFragment extends Fragment
 		final long timeInMillis = 1000;
 		handler.postDelayed(this, timeInMillis);
 	}
-	
+
 	@Override
 	public void onClick(View v) {
 		if(v == reload) {
@@ -281,13 +291,13 @@ public class OverviewFragment extends Fragment
 			noEventsText.setVisibility(View.GONE);
 			progressWheel.setVisibility(View.VISIBLE);
 			reload.setVisibility(View.INVISIBLE);
-			if(act.mBound) {
+			if(act.isBound()) {
 				getLoaderManager().getLoader(LOADER_ID).onContentChanged();
 			}
 			Toast.makeText(act, R.string.reload_in_progress, Toast.LENGTH_SHORT).show();
 		}
 	}
-	
+
 	private static class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
 		private List<FleetEvent> oldData;
 		private HomeActivity act;
@@ -297,7 +307,7 @@ public class OverviewFragment extends Fragment
 			oldData = null;
 			act = context;
 		}
-		
+
 		@Override
 		protected void onStartLoading() {
 			if(oldData != null)
@@ -308,7 +318,7 @@ public class OverviewFragment extends Fragment
 				this.forceLoad();
 			}
 		}
-		
+
 		@Override
 		public void deliverResult(List<FleetEvent> data) {
 			oldData = data;
@@ -329,10 +339,11 @@ public class OverviewFragment extends Fragment
 
 		@Override
 		public List<FleetEvent> loadInBackground() {
-			return act.mAgent.getFleetEvents(act.accountRowId);
+			AgentService service = act.getAgentService();
+			return service.getFleetEvents(act.getAccountRowId());
 		}
 	}
-	
+
 	private static class EventAdapter extends BaseAdapter {
 		private Context context;
 		private List<FleetEvent> eventList;

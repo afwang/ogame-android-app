@@ -157,7 +157,7 @@ public class NoAccountFragment extends Fragment
 	@Override
 	public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
 		AccountCredentials cred = allAccounts.get(position);
-		act.accountRowId = cred.id;
+		act.setAccountRowId(cred.id);
 		act.goToOverview();
 	}
 	
@@ -173,21 +173,15 @@ public class NoAccountFragment extends Fragment
 		existingAccs.setOnItemClickListener(this);
 		allAccounts = data;
 	}
-	
+
 	@Override
 	public void onLoaderReset(Loader<ArrayList<AccountCredentials>> loader) {
 	}
-	
+
 	private static class LoadAccountsLoader extends AsyncTaskLoader<ArrayList<AccountCredentials>> {
 		private ArrayList<AccountCredentials> oldData;
-		
 		private DatabaseManager dbmanager;
-		/**
-		 * Initialize a LoadAccountsTask object that will be
-		 * calling DatabaseManager methods through the parameter
-		 * passed in
-		 * @param dbman - the DatabaseManager object to use to 
-		 */
+
 		public LoadAccountsLoader(Context ctx) {
 			super(ctx);
 			dbmanager = new DatabaseManager(ctx);
@@ -201,15 +195,15 @@ public class NoAccountFragment extends Fragment
 			
 			this.forceLoad();
 		}
-		
+
 		@Override
 		protected void onStopLoading() {
 		}
-		
+
 		@Override
 		protected void onReset() {
 		}
-		
+
 		@Override
 		public void deliverResult(ArrayList<AccountCredentials> newData) {
 			oldData = newData;
