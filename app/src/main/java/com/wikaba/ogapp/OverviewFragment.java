@@ -29,20 +29,17 @@ import java.util.Map.Entry;
 import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
+import com.wikaba.ogapp.loaders.FleetEventLoader;
 import com.wikaba.ogapp.utils.AndroidMissionMap;
 import com.wikaba.ogapp.utils.NameBridge;
 
 import android.app.Activity;
 import android.support.v4.app.LoaderManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.text.format.DateUtils;
 import android.util.TypedValue;
@@ -86,6 +83,8 @@ public class OverviewFragment extends Fragment
 	private Handler handler;
 	private boolean dataIsLoaded;
 	private boolean fragmentRunning;
+	private boolean shouldDestroyLoader;
+
 	public OverviewFragment() {
 	}
 	
@@ -108,6 +107,7 @@ public class OverviewFragment extends Fragment
 		handler = new Handler();
 		dataIsLoaded = false;
 		fragmentRunning = false;
+		shouldDestroyLoader = false;
 		setHasOptionsMenu(true);
 		
 		reload.setOnClickListener(this);
@@ -137,30 +137,26 @@ public class OverviewFragment extends Fragment
 
 		return root;
 	}
-	
+
 	@Override
 	public void onStart() {
 		super.onStart();
-		
+		fragmentRunning = true;
 		final long timeInMillis = 1000;
 		act.setListener(this);
-		if(act.isBound()) {
-			serviceConnected();
-		}
-		
+
 		if(dataIsLoaded) {
 			handler.postDelayed(this, timeInMillis);
 		}
-		
-		fragmentRunning = true;
+
 	}
-	
+
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		String uniText = header.getText().toString();
 		outState.putString(HEADER_KEY, uniText);
 	}
-	
+
 	@Override
 	public void onStop() {
 		super.onStop();
@@ -168,18 +164,18 @@ public class OverviewFragment extends Fragment
 		handler.removeCallbacks(this);
 		act.unsetListener();
 	}
-	
+
 	@Override
 	public void onDetach() {
 		super.onDetach();
 		act = null;
 	}
-	
+
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.overview, menu);
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
@@ -187,20 +183,29 @@ public class OverviewFragment extends Fragment
 			act.goToAccountSelector();
 			return true;
 		}
-		
+
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 	@Override
 	public Loader<List<FleetEvent>> onCreateLoader(int arg0, Bundle arg1) {
-		eventFleetView.setVisibility(View.GONE);
-		progressWheel.setVisibility(View.VISIBLE);
-		FleetEventLoader loader = new FleetEventLoader(act);
+		Loader<List<FleetEvent>> loader;
+		if(act != null) {
+			eventFleetView.setVisibility(View.GONE);
+			progressWheel.setVisibility(View.VISIBLE);
+			loader = new FleetEventLoader(act);
+		}
+		else {
+			loader = new Loader<List<FleetEvent>>(null);
+		}
 		return loader;
 	}
 
 	@Override
 	public void onLoadFinished(Loader<List<FleetEvent>> loader, List<FleetEvent> events) {
+		if(shouldDestroyLoader) {
+			getLoaderManager().destroyLoader(LOADER_ID);
+		}
 		progressWheel.setVisibility(View.GONE);
 		reload.setVisibility(View.VISIBLE);
 		
@@ -213,7 +218,7 @@ public class OverviewFragment extends Fragment
 		else {
 			noEventsText.setText(res.getString(R.string.no_events));
 		}
-		
+
 		if(events.size() > 0) {
 			eventFleetView.setVisibility(View.VISIBLE);
 			noEventsText.setVisibility(View.GONE);
@@ -222,12 +227,13 @@ public class OverviewFragment extends Fragment
 			eventFleetView.setVisibility(View.GONE);
 			noEventsText.setVisibility(View.VISIBLE);
 		}
-		
+
 		eventFleetView.setAdapter(new EventAdapter(act, events, etaTextViews));
 		eventFleetView.setRecyclerListener(this);
 		final long timeInMillis = 1000;
-		if(fragmentRunning)
+		if(fragmentRunning) {
 			handler.postDelayed(this, timeInMillis);
+		}
 		dataIsLoaded = true;
 	}
 
@@ -242,19 +248,15 @@ public class OverviewFragment extends Fragment
 	 */
 	@Override
 	public void serviceConnected() {
-		if(act == null) {
-			return;
-		}
-
 		if(fragmentRunning) {
-			getLoaderManager().restartLoader(LOADER_ID, null, this);
+			shouldDestroyLoader = false;
+			getLoaderManager().initLoader(LOADER_ID, null, this);
 		}
 	}
 
 	@Override
 	public void serviceDisconnected() {
-		getLoaderManager().destroyLoader(LOADER_ID);
-		act.unsetListener();
+		shouldDestroyLoader = true;
 	}
 
 	@Override
@@ -295,52 +297,6 @@ public class OverviewFragment extends Fragment
 				getLoaderManager().getLoader(LOADER_ID).onContentChanged();
 			}
 			Toast.makeText(act, R.string.reload_in_progress, Toast.LENGTH_SHORT).show();
-		}
-	}
-
-	private static class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
-		private List<FleetEvent> oldData;
-		private HomeActivity act;
-
-		public FleetEventLoader(HomeActivity context) {
-			super(context);
-			oldData = null;
-			act = context;
-		}
-
-		@Override
-		protected void onStartLoading() {
-			if(oldData != null)
-				deliverResult(oldData);
-			
-			boolean contentChanged = takeContentChanged();
-			if(oldData == null || contentChanged) {
-				this.forceLoad();
-			}
-		}
-
-		@Override
-		public void deliverResult(List<FleetEvent> data) {
-			oldData = data;
-			super.deliverResult(data);
-		}
-		
-		@Override
-		protected void onStopLoading() {
-		}
-		
-		@Override
-		protected void onReset() {
-			if(oldData != null) {
-				oldData.clear();
-				oldData = null;
-			}
-		}
-
-		@Override
-		public List<FleetEvent> loadInBackground() {
-			AgentService service = act.getAgentService();
-			return service.getFleetEvents(act.getAccountRowId());
 		}
 	}
 
@@ -592,7 +548,7 @@ public class OverviewFragment extends Fragment
 			}
 		}
 	}
-	
+
 	private static class EventViewHolder {
 		TextView eta;
 		TextView originCoords;

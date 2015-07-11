@@ -473,22 +473,24 @@ public class DatabaseManager implements Closeable {
 			}
 		}
 	}
+
+	public static class AccountsContract {
+		static final String ACCOUNTS_TABLE = "accounts";
+		static final String UNIVERSE = "universe";
+		static final String USERNAME = "username";
+		static final String PASSWORD = "password";
+	}
+
+	public static class CookiesContract {
+		static final String COOKIES_TABLE = "cookies";
+		static final String NAME = "name";
+		static final String VALUE = "value";
+		static final String EXPIRATION = "expires";
+		static final String DOMAIN = "domain";
+		static final String PATH = "path";
+		static final String SECURE = "secure";
+		static final String HTTP_ONLY = "http_only";
+	}
 }
 
-class AccountsContract {
-	static final String ACCOUNTS_TABLE = "accounts";
-	static final String UNIVERSE = "universe";
-	static final String USERNAME = "username";
-	static final String PASSWORD = "password";
-}
 
-class CookiesContract {
-	static final String COOKIES_TABLE = "cookies";
-	static final String NAME = "name";
-	static final String VALUE = "value";
-	static final String EXPIRATION = "expires";
-	static final String DOMAIN = "domain";
-	static final String PATH = "path";
-	static final String SECURE = "secure";
-	static final String HTTP_ONLY = "http_only";
-}

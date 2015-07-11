@@ -113,9 +113,15 @@ public class HomeActivity extends ActionBarActivity {
 
 	public void setListener(AgentServiceConsumer fragment) {
 		listeningFragment = fragment;
+		if(mBound) {
+			listeningFragment.serviceConnected();
+		}
 	}
 
 	public void unsetListener() {
+		if(listeningFragment != null) {
+			listeningFragment.serviceDisconnected();
+		}
 		listeningFragment = null;
 	}
 

@@ -29,7 +29,7 @@ public class AccountCredentials {
 	public String universe;
 	public String username;
 	public String passwd;
-	
+
 	public AccountCredentials() {
 		id = -1;
 		universe = "";
