@@ -69,6 +69,6 @@ public class FleetEventLoader extends AsyncTaskLoader<List<FleetEvent>> {
 	@Override
 	public List<FleetEvent> loadInBackground() {
 		AgentService service = act.getAgentService();
-		return service.getFleetEvents(act.getAccountRowId());
+		return service.getFleetEvents(act.getAccountCredentials());
 	}
 }

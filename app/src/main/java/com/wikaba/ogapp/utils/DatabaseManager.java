@@ -220,10 +220,10 @@ public class DatabaseManager implements Closeable {
 	}
 	
 	/**
-	 * Retrieve and return all account info stored in the database.
-	 * This method does not return passwords.
-	 * @return ArrayList of all account credentials with the password
-	 * 		field set to the empty string. Returns null on error.
+	 * <p>Retrieve and return all account info stored in the database.
+	 * This method does not return passwords.</p>
+	 *
+	 * @return ArrayList of all account credentials.
 	 */
 	public ArrayList<AccountCredentials> getAllAccounts() {
 		ArrayList<AccountCredentials> allAccs = null;
@@ -232,11 +232,14 @@ public class DatabaseManager implements Closeable {
 		}
 
 		Cursor results = null;
-		
 		try {
 			results = database.query(
 					AccountsContract.ACCOUNTS_TABLE,
-					new String[] {BaseColumns._ID, AccountsContract.UNIVERSE, AccountsContract.USERNAME},
+					new String[] {
+						BaseColumns._ID,
+						AccountsContract.UNIVERSE,
+						AccountsContract.USERNAME,
+						AccountsContract.PASSWORD},
 					null,
 					null,
 					null,
@@ -255,6 +258,7 @@ public class DatabaseManager implements Closeable {
 					cred.id = results.getLong(results.getColumnIndex(BaseColumns._ID));
 					cred.universe = results.getString(results.getColumnIndex(AccountsContract.UNIVERSE));
 					cred.username = results.getString(results.getColumnIndex(AccountsContract.USERNAME));
+					cred.passwd = results.getString(results.getColumnIndex(AccountsContract.PASSWORD));
 					allAccs.add(cred);
 				} while(results.moveToNext());
 			}
@@ -264,8 +268,6 @@ public class DatabaseManager implements Closeable {
 				results.close();
 			}
 		}
-		
-		results.close();
 
 		return allAccs;
 	}

@@ -1,20 +1,19 @@
 /*
-    Copyright 2014 Alexander Wang
-    
-    This file is part of Ogame on Android.
+	Copyright 2014 Alexander Wang
 
-    Ogame on Android is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This file is part of Ogame on Android.
 
-    Ogame on Android is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Ogame on Android is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+	Ogame on Android is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.wikaba.ogapp;
@@ -41,11 +40,11 @@ import com.wikaba.ogapp.utils.DatabaseManager;
 
 public class AgentService extends Service {
 	static final String LOGTAG = "AgentService";
-	
+
 	private IBinder mBinder;
 	private LongSparseArray<OgameAgent> ogameSessions;
 	private volatile DatabaseManager dbman;
-	
+
 	public AgentService() {
 	}
 
@@ -81,7 +80,7 @@ public class AgentService extends Service {
 		}
 		return mBinder;
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -96,48 +95,41 @@ public class AgentService extends Service {
 			dbman = null;
 		}
 	}
-	
+
 	/**
-	 * Logs in to the specified account (from database) using a software agent for Ogame. Hold on to the rowId variable,
-	 * because it will be used in all other methods of this service as a key to get the Ogame agent instance.
-	 * @param rowId - account's row ID in database
-	 * @return true if acquiring session cookies (logging in) for the account completed successfully. false otherwise.
+	 * <p>Logs in to the specified account (from database) using a software agent
+	 * for Ogame.</p>
+	 *
+	 * @param account AccountCredentials to use to log in
+	 * @return True if acquiring session cookies (logging in) for the account
+	 * 	completed successfully. False otherwise.
 	 */
-	public boolean loginToAccount(long rowId) {
-		OgameAgent agent = ogameSessions.get(rowId);
+	public boolean loginToAccount(AccountCredentials account) {
+		OgameAgent agent = ogameSessions.get(account.id);
 		if(agent == null) {
-			AccountCredentials creds = dbman.getAccount(rowId);
-			if(creds == null) {
-				Log.e(LOGTAG, "AccountCredentials object in loginToAccount() is null");
-				Log.e(LOGTAG, "The rowId passed in was " + rowId);
-			}
-			else {
-				agent = new OgameAgent(creds.universe);
-				ogameSessions.put(rowId, agent);
-			}
+			agent = new OgameAgent(account.universe);
+			ogameSessions.put(account.id, agent);
 		}
 		return true;
 	}
-	
+
 	/**
-	 * Returns the fleet events parsed from the overview event screen.
+	 * <p>Returns the fleet events parsed from the overview event screen.</p>
 	 * 
-	 * Pre-condition: Method loginToAccount has been called with rowId passed in as the parameter.
-	 * 
-	 * @param rowId - account's row ID in database, used as key to retrieve Ogame agent instance.
+	 * @param account Account to use to log in
 	 * @return list of fleet events from overview screen. Returns null on error.
 	 */
-	public List<FleetEvent> getFleetEvents(long rowId) {
-		OgameAgent agent = ogameSessions.get(rowId);
+	public List<FleetEvent> getFleetEvents(AccountCredentials account) {
+		OgameAgent agent = ogameSessions.get(account.id);
 		if(agent == null) {
-			loginToAccount(rowId);
-			agent = ogameSessions.get(rowId);
+			loginToAccount(account);
+			agent = ogameSessions.get(account.id);
 		}
-		
+
 		if(agent == null) {
 			return null;
 		}
-		
+
 		List<FleetEvent> events = null;
 		final int retryAttempts = 3;
 		for(int attempts = 0; attempts < retryAttempts; attempts++) {
@@ -147,22 +139,12 @@ public class AgentService extends Service {
 			}
 			catch(LoggedOutException e) {
 				//Log in and try again!
-				AccountCredentials creds = null;
-				if(dbman != null) {
-					creds = dbman.getAccount(rowId);
-				}
-
-				if(creds != null) {
-					agent.login(creds.universe, creds.username, creds.passwd);
-				}
-				else {
-					return null;
-				}
+				agent.login(account.universe, account.username, account.passwd);
 			}
 		}
 		return events;
 	}
-	
+
 	public class AgentServiceBinder extends Binder{
 		public AgentService getService() {
 			return AgentService.this;

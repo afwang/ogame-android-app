@@ -29,11 +29,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-public class HomeActivity extends ActionBarActivity {
-	private static final String ROWID_KEY = "com.wikaba.ogapp.HomeActivity.accountRowId";
-	private long accountRowId;
+public class HomeActivity extends AppCompatActivity {
+	private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
+	private AccountCredentials activeAccount;
 
 	private ServiceConnection agentServiceConn = new ServiceConnection() {
 		@Override
@@ -69,7 +70,7 @@ public class HomeActivity extends ActionBarActivity {
 			.add(R.id.container, new NoAccountFragment()).commit();
 		}
 		else {
-			accountRowId = savedInstanceState.getLong(ROWID_KEY, 0);
+			activeAccount = savedInstanceState.getParcelable(ACCOUNT_KEY);
 		}
 		mBound = false;
 	}
@@ -89,7 +90,9 @@ public class HomeActivity extends ActionBarActivity {
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putLong(ROWID_KEY, accountRowId);
+		if(activeAccount != null) {
+			outState.putParcelable(ACCOUNT_KEY, activeAccount);
+		}
 	}
 
 	@Override
@@ -98,16 +101,18 @@ public class HomeActivity extends ActionBarActivity {
 		unbindService(agentServiceConn);
 	}
 
-	public void addAccount(String universe, String username, String password) {
+	public void addAccount(AccountCredentials creds) {
 		DatabaseManager dbman = new DatabaseManager(this);
-		accountRowId = dbman.addAccount(universe, username, password);
+		long accountRowId = dbman.addAccount(creds.universe, creds.username, creds.passwd);
 		dbman.close();
-		
+
 		if(accountRowId < 0) {
 			Toast.makeText(this, "There was a problem adding an account", Toast.LENGTH_LONG).show();
 			return;
 		}
-		
+
+		activeAccount = new AccountCredentials(creds);
+		activeAccount.id = accountRowId;
 		goToOverview();
 	}
 
@@ -132,26 +137,28 @@ public class HomeActivity extends ActionBarActivity {
 	}
 
 	public void goToOverview() {
-		DatabaseManager dbman = new DatabaseManager(this);
-		AccountCredentials accountExists = dbman.getAccount(accountRowId);
-		dbman.close();
-		
-		Bundle args = new Bundle();
-		args.putString(OverviewFragment.UNIVERSE_KEY, accountExists.universe);
-		args.putString(OverviewFragment.USERNAME_KEY, accountExists.username);
-		OverviewFragment confrag = new OverviewFragment();
-		confrag.setArguments(args);
-		
-		getSupportFragmentManager().beginTransaction()
-		.replace(R.id.container, confrag).commit();
+		if (activeAccount != null) {
+			Bundle args = new Bundle();
+			args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.universe);
+			args.putString(OverviewFragment.USERNAME_KEY, activeAccount.username);
+			OverviewFragment confrag = new OverviewFragment();
+			confrag.setArguments(args);
+
+			getSupportFragmentManager().beginTransaction()
+				.replace(R.id.container, confrag).commit();
+		}
 	}
 
-	public void setAccountRowId(long rowId) {
-		this.accountRowId = rowId;
+	public void setActiveAccount(AccountCredentials acc) {
+		this.activeAccount = acc;
 	}
 
-	public long getAccountRowId() {
-		return accountRowId;
+	public AccountCredentials getAccountCredentials() {
+		AccountCredentials creds = new AccountCredentials();
+		creds.universe = activeAccount.universe;
+		creds.username = activeAccount.username;
+		creds.passwd = activeAccount.passwd;
+		return creds;
 	}
 
 	/**

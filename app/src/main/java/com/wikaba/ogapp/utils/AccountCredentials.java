@@ -1,30 +1,33 @@
 /*
-    Copyright 2014 Alexander Wang
-    
-    This file is part of Ogame on Android.
+	Copyright 2014 Alexander Wang
 
-    Ogame on Android is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This file is part of Ogame on Android.
 
-    Ogame on Android is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Ogame on Android is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+	Ogame on Android is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.wikaba.ogapp.utils;
+
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * This is a simple container class with references to account and universe credentials.
  * @author afwang
  *
  */
-public class AccountCredentials {
+public class AccountCredentials implements Parcelable {
 	public long id;
 	public String universe;
 	public String username;
@@ -36,4 +39,42 @@ public class AccountCredentials {
 		username = "";
 		passwd = "";
 	}
+
+	public AccountCredentials(AccountCredentials toCopy) {
+		this.id = toCopy.id;
+		this.universe = toCopy.universe;
+		this.username = toCopy.username;
+		this.passwd = toCopy.passwd;
+	}
+
+	@Override
+	public int describeContents() {
+		return (int)id;
+	}
+
+	@Override
+	public void writeToParcel(Parcel parcel, int flags) {
+		parcel.writeLong(id);
+		parcel.writeString(universe);
+		parcel.writeString(username);
+		parcel.writeString(passwd);
+	}
+
+	public static final Parcelable.Creator<AccountCredentials> CREATOR
+		= new Parcelable.Creator<AccountCredentials>() {
+			@Override
+			public AccountCredentials createFromParcel(Parcel source) {
+				AccountCredentials creds = new AccountCredentials();
+				creds.id = source.readLong();
+				creds.universe = source.readString();
+				creds.username = source.readString();
+				creds.passwd = source.readString();
+				return creds;
+			}
+
+			@Override
+			public AccountCredentials[] newArray(int size) {
+				return new AccountCredentials[size];
+			}
+		};
 }
