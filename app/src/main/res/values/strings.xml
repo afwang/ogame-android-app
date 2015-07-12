@@ -19,8 +19,6 @@
 -->
 <resources>
 
-    <string name="app_name">Math OG client</string>
-    
     <!-- Add initial account fragment (fragment_no_acc) -->
     <string name="username">Username</string>
     <string name="password">Password</string>
