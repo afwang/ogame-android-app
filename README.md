@@ -48,3 +48,7 @@ evolve into another activity that presents messages using DialogFragments
 - Extract names for planets. Add names to the TextViews on overview.
 
 - Add color to missions based on mission type, return status, and hostile/friendly status
+
+- Add elements to represent amount of resources on the planet.
+
+- Refactor the parseEvents() code in the OgameAgent. That thing is ugly.

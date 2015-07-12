@@ -78,12 +78,17 @@ public class OgameAgent {
 		final int timeoutMillis = 30 * 1000;
 		HttpURLConnection connection = null;
 		int response = 0;
-		
+
 		boolean successfulResponse;
-		
+
 		universe = NameToURI.getDomain(universe);
 		serverUri = "http://" + universe;
-		
+
+		//Unfortunately, we have to be a bit more direct about
+		//following these redirects because Ogame returns cookies that
+		//causes Java to throw an error when parsed (might want to
+		//look into a different HTTP library for this, like OkHttp).
+
 		/*
 		 * FIRST REQUEST
 		 */
