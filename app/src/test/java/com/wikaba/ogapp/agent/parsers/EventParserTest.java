@@ -19,6 +19,7 @@
 
 package com.wikaba.ogapp.agent.parsers;
 
+import com.google.gson.Gson;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaga.ogapp.agent.FleetEventListComparator;
@@ -27,24 +28,33 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class EventParserTest {
+	private static final Logger logger = LoggerFactory.getLogger(EventParserTest.class);
+
 	InputStream htmlResponse;
+	List<FleetEvent> expectedEvents;
 
 	@Before
 	public void readInTestFile() {
 		//We will use the Class class's methods for retrieving
 		//resource files
-		final String filepath = "";
+		final String filepath = "lots_of_events.html";
 		InputStream input = this.getClass().getResourceAsStream(filepath);
 		htmlResponse = new BufferedInputStream(input);
+
+		expectedEvents = new LinkedList<>();
+		buildExpectedEventsList();
 	}
 
 	@Test
@@ -73,7 +83,11 @@ public class EventParserTest {
 			}
 		}
 		catch(IOException e) {
-			System.out.println("Caught an IOException:\n" + e);
+			logger.error("Caught an IOException", e);
 		}
+	}
+
+	private void buildExpectedEventsList() {
+		Gson gson = new Gson();
 	}
 }
