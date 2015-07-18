@@ -43,8 +43,8 @@ public class AccountsManager extends AbstractController<AccountsDao> {
         return getAccount(universe, username) != null;
     }
 
-    public long addAccount(String universe, String username, String password) {
-        return addAccount(new Accounts(0l, universe, username, password));
+    public long addAccount(String universe, String username, String password, String lang) {
+        return addAccount(new Accounts(0l, universe, username, password, lang));
     }
 
     public long addAccount(Accounts account) {
@@ -55,6 +55,7 @@ public class AccountsManager extends AbstractController<AccountsDao> {
             acc.setId(null);//config.getId());
             acc.setUniverse(account.getUniverse());
             acc.setUsername(account.getUsername());
+            acc.setLang(account.getLang());
         }
         acc.setPassword(account.getPassword());
 
@@ -100,13 +101,14 @@ public class AccountsManager extends AbstractController<AccountsDao> {
             credentials.passwd = account.getPassword();
             credentials.universe = account.getUniverse();
             credentials.username = account.getUsername();
+            credentials.lang = account.getLang();
 
             return credentials;
         }
         return null;
     }
 
-    public ArrayList<AccountCredentials> getAccountsCredentialsWithoutPassword() {
+    public ArrayList<AccountCredentials> getAllAccountCredentials() {
         List<Accounts> list = findAll();
         ArrayList<AccountCredentials> credentials = new ArrayList<>(list.size());
 
@@ -114,6 +116,8 @@ public class AccountsManager extends AbstractController<AccountsDao> {
             AccountCredentials credential = new AccountCredentials();
             credential.username = acc.getUsername();
             credential.universe = acc.getUniverse();
+            credential.passwd = acc.getPassword();
+            credential.lang = acc.getLang();
             credential.id = acc.getId();
             credentials.add(credential);
         }

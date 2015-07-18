@@ -26,15 +26,33 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.InputType;
-import android.view.*;
+import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.*;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.loaders.AccountsLoader;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
 import java.util.ArrayList;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 public class NoAccountFragment extends Fragment
         implements OnClickListener,
@@ -43,13 +61,28 @@ public class NoAccountFragment extends Fragment
 
     private static final int ALL_ACCS_LOADER_ID = 0;
 
-    private Spinner uniSpinner;
-    private EditText usernameField;
-    private EditText passwdField;
-    private Button loginButton;
-    private CheckBox pwCheckBox;
+    @Bind(R.id.uniSelect)
+    protected Spinner uniSpinner;
+
+    @Bind(R.id.username)
+    protected EditText usernameField;
+
+    @Bind(R.id.password)
+    protected EditText passwdField;
+
+    @Bind(R.id.lang)
+    protected EditText langField;
+
+    @Bind(R.id.login)
+    protected Button loginButton;
+
+    @Bind(R.id.pw_checkbox)
+    protected CheckBox pwCheckBox;
+
+    @Bind(R.id.existingAccList)
+    protected ListView existingAccs;
+
     private HomeActivity act;
-    private ListView existingAccs;
     private ArrayList<AccountCredentials> allAccounts;
 
     public NoAccountFragment() {
@@ -64,12 +97,8 @@ public class NoAccountFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_no_acc, parent, false);
-        uniSpinner = (Spinner) root.findViewById(R.id.uniSelect);
-        usernameField = (EditText) root.findViewById(R.id.username);
-        passwdField = (EditText) root.findViewById(R.id.password);
-        loginButton = (Button) root.findViewById(R.id.login);
-        existingAccs = (ListView) root.findViewById(R.id.existingAccList);
-        pwCheckBox = (CheckBox) root.findViewById(R.id.pw_checkbox);
+
+        ButterKnife.bind(this, root);
 
         String[] uniNames = getResources().getStringArray(R.array.universe_names);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
@@ -118,6 +147,7 @@ public class NoAccountFragment extends Fragment
             case R.id.login:
                 String username = usernameField.getText().toString();
                 String passwd = passwdField.getText().toString();
+                String lang = langField.getText().toString();
                 View selectedView = uniSpinner.getSelectedView();
                 if (selectedView == null) {
                     Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
@@ -131,6 +161,7 @@ public class NoAccountFragment extends Fragment
                 acc.universe = universe;
                 acc.username = username;
                 acc.passwd = passwd;
+                acc.lang = lang;
                 act.addAccount(acc);
                 break;
             case R.id.pw_checkbox:

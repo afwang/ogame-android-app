@@ -22,6 +22,7 @@
     <!-- Add initial account fragment (fragment_no_acc) -->
     <string name="username">Username</string>
     <string name="password">Password</string>
+    <string name="lang">lang (us, en, fr ...)</string>
     <string name="show_password_checkbox">Show password</string>
     <string name="universe">Select account\'s universe</string>
     <string name="login">Login</string>

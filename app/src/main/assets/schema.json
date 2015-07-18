@@ -1,6 +1,6 @@
 {
   "packageName": "greendao",
-  "databaseVersion": 1,
+  "databaseVersion": 2,
   "tables": [
     {
       "name": "Accounts",
@@ -18,6 +18,11 @@
         {
           "type": "string",
           "name": "password",
+          "mandatory": true
+        },
+        {
+          "type": "string",
+          "name": "lang",
           "mandatory": true
         }
       ]

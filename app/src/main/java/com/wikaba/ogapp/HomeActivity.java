@@ -27,6 +27,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
+
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
@@ -100,7 +101,7 @@ public class HomeActivity extends AppCompatActivity {
 
     public void addAccount(AccountCredentials creds) {
         AccountsManager manager = ApplicationController.getInstance().getAccountsManager();
-        long accountRowId = manager.addAccount(creds.universe, creds.username, creds.passwd);
+        long accountRowId = manager.addAccount(creds.universe, creds.username, creds.passwd, creds.lang);
 
         if (accountRowId < 0) {
             Toast.makeText(this, "There was a problem adding an account", Toast.LENGTH_LONG).show();
@@ -154,6 +155,7 @@ public class HomeActivity extends AppCompatActivity {
         creds.universe = activeAccount.universe;
         creds.username = activeAccount.username;
         creds.passwd = activeAccount.passwd;
+        creds.lang = activeAccount.lang;
         return creds;
     }
 

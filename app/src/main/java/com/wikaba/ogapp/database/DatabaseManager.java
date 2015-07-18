@@ -3,7 +3,6 @@ package com.wikaba.ogapp.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import java.io.File;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,7 @@ import greendao.DaoSession;
  * controllers
  */
 public class DatabaseManager {
-    private static final String DATABASE_NAME = "ogameorm";
+    private static final String DATABASE_NAME = "ogame_orm";
     private static DaoSession sDaoSession;
 
     private static DatabaseManager ourInstance = new DatabaseManager();
@@ -59,9 +58,9 @@ public class DatabaseManager {
      * @param passwd
      * @return ID of the row inserted or modified.
      */
-    public long addAccount(String universe, String username, String passwd) {
+    public long addAccount(String universe, String username, String passwd, String lang) {
         return ApplicationController.getInstance()
-                .getAccountsManager().addAccount(universe, username, passwd);
+                .getAccountsManager().addAccount(universe, username, passwd, lang);
     }
 
     /**
@@ -106,7 +105,7 @@ public class DatabaseManager {
      */
     public ArrayList<AccountCredentials> getAllAccounts() {
         return ApplicationController.getInstance().getAccountsManager()
-                .getAccountsCredentialsWithoutPassword();
+                .getAllAccountCredentials();
     }
 
     /**

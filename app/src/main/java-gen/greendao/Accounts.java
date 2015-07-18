@@ -16,6 +16,8 @@ public class Accounts {
     private String username;
     /** Not-null value. */
     private String password;
+    /** Not-null value. */
+    private String lang;
 
     // KEEP FIELDS - put your custom fields here
     // KEEP FIELDS END
@@ -27,11 +29,12 @@ public class Accounts {
         this.id = id;
     }
 
-    public Accounts(Long id, String universe, String username, String password) {
+    public Accounts(Long id, String universe, String username, String password, String lang) {
         this.id = id;
         this.universe = universe;
         this.username = username;
         this.password = password;
+        this.lang = lang;
     }
 
     public Long getId() {
@@ -70,6 +73,16 @@ public class Accounts {
     /** Not-null value; ensure this value is available before it is saved to the database. */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /** Not-null value. */
+    public String getLang() {
+        return lang;
+    }
+
+    /** Not-null value; ensure this value is available before it is saved to the database. */
+    public void setLang(String lang) {
+        this.lang = lang;
     }
 
     // KEEP METHODS - put your custom methods here

@@ -25,22 +25,20 @@ public class ApplicationController extends Application {
     public void onCreate() {
         super.onCreate();
 
+        _static_application_controller = this;
         _database_manager = DatabaseManager.getInstance();
-
         _database_manager.startSession(this);
-
         _accounts_manager = AccountsManager.getInstance(this);
         _cookies_manager = CookiesManager.getInstance(this);
     }
 
-    public AccountsManager getAccountsManager(){
+    public AccountsManager getAccountsManager() {
         return _accounts_manager;
     }
 
-    public CookiesManager getCookiesManager(){
+    public CookiesManager getCookiesManager() {
         return _cookies_manager;
     }
-
 
 
 }

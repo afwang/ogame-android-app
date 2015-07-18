@@ -27,6 +27,7 @@ public class AccountsDao extends AbstractDao<Accounts, Long> {
         public final static Property Universe = new Property(1, String.class, "universe", false, "UNIVERSE");
         public final static Property Username = new Property(2, String.class, "username", false, "USERNAME");
         public final static Property Password = new Property(3, String.class, "password", false, "PASSWORD");
+        public final static Property Lang = new Property(4, String.class, "lang", false, "LANG");
     };
 
 
@@ -45,7 +46,8 @@ public class AccountsDao extends AbstractDao<Accounts, Long> {
                 "'_id' INTEGER PRIMARY KEY ," + // 0: id
                 "'UNIVERSE' TEXT NOT NULL ," + // 1: universe
                 "'USERNAME' TEXT NOT NULL ," + // 2: username
-                "'PASSWORD' TEXT NOT NULL );"); // 3: password
+                "'PASSWORD' TEXT NOT NULL ," + // 3: password
+                "'LANG' TEXT NOT NULL );"); // 4: lang
     }
 
     /** Drops the underlying database table. */
@@ -66,6 +68,7 @@ public class AccountsDao extends AbstractDao<Accounts, Long> {
         stmt.bindString(2, entity.getUniverse());
         stmt.bindString(3, entity.getUsername());
         stmt.bindString(4, entity.getPassword());
+        stmt.bindString(5, entity.getLang());
     }
 
     /** @inheritdoc */
@@ -81,7 +84,8 @@ public class AccountsDao extends AbstractDao<Accounts, Long> {
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // universe
             cursor.getString(offset + 2), // username
-            cursor.getString(offset + 3) // password
+            cursor.getString(offset + 3), // password
+            cursor.getString(offset + 4) // lang
         );
         return entity;
     }
@@ -93,6 +97,7 @@ public class AccountsDao extends AbstractDao<Accounts, Long> {
         entity.setUniverse(cursor.getString(offset + 1));
         entity.setUsername(cursor.getString(offset + 2));
         entity.setPassword(cursor.getString(offset + 3));
+        entity.setLang(cursor.getString(offset + 4));
      }
     
     /** @inheritdoc */

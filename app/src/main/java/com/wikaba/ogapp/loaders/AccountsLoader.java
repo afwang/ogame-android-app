@@ -60,7 +60,7 @@ public class AccountsLoader extends AsyncTaskLoader<ArrayList<AccountCredentials
     @Override
     public ArrayList<AccountCredentials> loadInBackground() {
         ArrayList<AccountCredentials> allAccs = ApplicationController
-                .getInstance().getAccountsManager().getAccountsCredentialsWithoutPassword();
+                .getInstance().getAccountsManager().getAllAccountCredentials();
         return allAccs;
     }
 }

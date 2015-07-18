@@ -23,12 +23,12 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
+
 import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.database.CookiesManager;
-import com.wikaba.ogapp.database.DatabaseManager;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
 import java.net.CookieHandler;
@@ -39,112 +39,112 @@ import java.util.Iterator;
 import java.util.List;
 
 public class AgentService extends Service {
-	static final String LOGTAG = "AgentService";
+    static final String LOGTAG = "AgentService";
 
-	private IBinder mBinder;
-	private LongSparseArray<OgameAgent> ogameSessions;
-	private volatile CookiesManager cookiesManager;
+    private IBinder mBinder;
+    private LongSparseArray<OgameAgent> ogameSessions;
+    private volatile CookiesManager cookiesManager;
 
-	public AgentService() {
-	}
+    public AgentService() {
+    }
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		if(ogameSessions == null) {
-			ogameSessions = new LongSparseArray<OgameAgent>();
-		}
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        if (ogameSessions == null) {
+            ogameSessions = new LongSparseArray<OgameAgent>();
+        }
 
-		if(cookiesManager == null) {
-			cookiesManager = ApplicationController.getInstance().getCookiesManager();
-		}
+        if (cookiesManager == null) {
+            cookiesManager = ApplicationController.getInstance().getCookiesManager();
+        }
 
-		CustomCookieManager cookieman = new CustomCookieManager();
-		CookieStore cookiestore = cookieman.getCookieStore();
+        CustomCookieManager cookieman = new CustomCookieManager();
+        CookieStore cookiestore = cookieman.getCookieStore();
 
-		//Retrieve all cookies from database.
-		//Warning: This is currently done on the main thread.
-		ArrayList<HttpCookie> cookieList = cookiesManager.getAllHttpCookies();
-		for(Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
-			HttpCookie cookie = cookieIter.next();
-			cookiestore.add(null, cookie);
-		}
+        //Retrieve all cookies from database.
+        //Warning: This is currently done on the main thread.
+        ArrayList<HttpCookie> cookieList = cookiesManager.getAllHttpCookies();
+        for (Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
+            HttpCookie cookie = cookieIter.next();
+            cookiestore.add(null, cookie);
+        }
 
-		CookieHandler.setDefault(cookieman);
-	}
+        CookieHandler.setDefault(cookieman);
+    }
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		if(mBinder == null) {
-			mBinder = new AgentServiceBinder();
-		}
-		return mBinder;
-	}
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (mBinder == null) {
+            mBinder = new AgentServiceBinder();
+        }
+        return mBinder;
+    }
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
 
-		CustomCookieManager cookieman = (CustomCookieManager)CookieHandler.getDefault();
-		CookieStore cookiestore = cookieman.getCookieStore();
-		List<HttpCookie> cookies = cookiestore.getCookies();
-		cookiesManager.saveCookies(cookies);
-		//TODO IN THE CONTROLLER MANAGE COOKIES WITH ONLY PROPER VALUES WITH THE LRUCACHE
-		//AND STORE, MORE EFFICIENT
-	}
+        CustomCookieManager cookieman = (CustomCookieManager) CookieHandler.getDefault();
+        CookieStore cookiestore = cookieman.getCookieStore();
+        List<HttpCookie> cookies = cookiestore.getCookies();
+        cookiesManager.saveCookies(cookies);
+        //TODO IN THE CONTROLLER MANAGE COOKIES WITH ONLY PROPER VALUES WITH THE LRUCACHE
+        //AND STORE, MORE EFFICIENT
+    }
 
-	/**
-	 * <p>Logs in to the specified account (from database) using a software agent
-	 * for Ogame.</p>
-	 *
-	 * @param account AccountCredentials to use to log in
-	 * @return True if acquiring session cookies (logging in) for the account
-	 * 	completed successfully. False otherwise.
-	 */
-	public boolean loginToAccount(AccountCredentials account) {
-		OgameAgent agent = ogameSessions.get(account.id);
-		if(agent == null) {
-			agent = new OgameAgent(account.universe);
-			ogameSessions.put(account.id, agent);
-		}
-		return true;
-	}
+    /**
+     * <p>Logs in to the specified account (from database) using a software agent
+     * for Ogame.</p>
+     *
+     * @param account AccountCredentials to use to log in
+     * @return True if acquiring session cookies (logging in) for the account
+     * completed successfully. False otherwise.
+     */
+    public boolean loginToAccount(AccountCredentials account) {
+        OgameAgent agent = ogameSessions.get(account.id);
+        if (agent == null) {
+            agent = new OgameAgent(account.universe, account.lang);
+            ogameSessions.put(account.id, agent);
+        }
+        return true;
+    }
 
-	/**
-	 * <p>Returns the fleet events parsed from the overview event screen.</p>
-	 * 
-	 * @param account Account to use to log in
-	 * @return list of fleet events from overview screen. Returns null on error.
-	 */
-	public List<FleetEvent> getFleetEvents(AccountCredentials account) {
-		OgameAgent agent = ogameSessions.get(account.id);
-		if(agent == null) {
-			loginToAccount(account);
-			agent = ogameSessions.get(account.id);
-		}
+    /**
+     * <p>Returns the fleet events parsed from the overview event screen.</p>
+     *
+     * @param account Account to use to log in
+     * @return list of fleet events from overview screen. Returns null on error.
+     */
+    public List<FleetEvent> getFleetEvents(AccountCredentials account) {
+        OgameAgent agent = ogameSessions.get(account.id);
+        if (agent == null) {
+            loginToAccount(account);
+            agent = ogameSessions.get(account.id);
+        }
 
-		if(agent == null) {
-			return null;
-		}
+        if (agent == null) {
+            return null;
+        }
 
-		List<FleetEvent> events = null;
-		final int retryAttempts = 3;
-		for(int attempts = 0; attempts < retryAttempts; attempts++) {
-			try {
-				events = agent.getOverviewData();
-				break;
-			}
-			catch(LoggedOutException e) {
-				//Log in and try again!
-				agent.login(account.universe, account.username, account.passwd);
-			}
-		}
-		return events;
-	}
+        List<FleetEvent> events = null;
+        final int retryAttempts = 3;
+        for (int attempts = 0; attempts < retryAttempts; attempts++) {
+            try {
+                events = agent.getOverviewData();
+                break;
+            } catch (LoggedOutException e) {
+                e.printStackTrace();
+                //Log in and try again!
+                agent.login(account.universe, account.username, account.passwd, account.lang);
+            }
+        }
+        return events;
+    }
 
-	public class AgentServiceBinder extends Binder{
-		public AgentService getService() {
-			return AgentService.this;
-		}
-	}
+    public class AgentServiceBinder extends Binder {
+        public AgentService getService() {
+            return AgentService.this;
+        }
+    }
 }
