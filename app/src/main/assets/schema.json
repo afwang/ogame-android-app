@@ -1,0 +1,68 @@
+{
+  "packageName": "greendao",
+  "databaseVersion": 1,
+  "tables": [
+    {
+      "name": "Accounts",
+      "properties": [
+        {
+          "type": "string",
+          "name": "universe",
+          "mandatory": true
+        },
+        {
+          "type": "string",
+          "name": "username",
+          "mandatory": true
+        },
+        {
+          "type": "string",
+          "name": "password",
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "name": "Cookies",
+      "properties": [
+        {
+          "type": "string",
+          "name": "name",
+          "mandatory" : true
+        },
+        {
+          "type": "string",
+          "name": "value",
+          "mandatory" : true
+        },
+        {
+          "type": "long",
+          "name": "expiration",
+          "mandatory" : true
+        },
+        {
+          "type": "string",
+          "name": "domain",
+          "mandatory" : true
+        },
+        {
+          "type": "string",
+          "name": "path",
+          "mandatory" : true
+        },
+        {
+          "type": "integer",
+          "name": "secure",
+          "mandatory" : true
+        },
+        {
+          "type": "integer",
+          "name": "http_secure",
+          "mandatory" : true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+  ]
+}

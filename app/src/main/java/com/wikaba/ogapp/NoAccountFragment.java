@@ -19,12 +19,6 @@
 
 package com.wikaba.ogapp;
 
-import java.util.ArrayList;
-
-import com.wikaba.ogapp.loaders.AccountsLoader;
-import com.wikaba.ogapp.utils.AccountCredentials;
-import com.wikaba.ogapp.utils.DatabaseManager;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -32,201 +26,190 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.InputType;
-import android.view.ContextMenu;
+import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
+import com.wikaba.ogapp.database.AccountsManager;
+import com.wikaba.ogapp.loaders.AccountsLoader;
+import com.wikaba.ogapp.utils.AccountCredentials;
+
+import java.util.ArrayList;
 
 public class NoAccountFragment extends Fragment
-		implements OnClickListener,
-			LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
-			AdapterView.OnItemClickListener {
+        implements OnClickListener,
+        LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
+        AdapterView.OnItemClickListener {
 
-	private static final int ALL_ACCS_LOADER_ID = 0;
+    private static final int ALL_ACCS_LOADER_ID = 0;
 
-	private Spinner uniSpinner;
-	private EditText usernameField;
-	private EditText passwdField;
-	private Button loginButton;
-	private CheckBox pwCheckBox;
-	private HomeActivity act;
-	private ListView existingAccs;
-	private ArrayList<AccountCredentials> allAccounts;
+    private Spinner uniSpinner;
+    private EditText usernameField;
+    private EditText passwdField;
+    private Button loginButton;
+    private CheckBox pwCheckBox;
+    private HomeActivity act;
+    private ListView existingAccs;
+    private ArrayList<AccountCredentials> allAccounts;
 
-	public NoAccountFragment() {
-	}
+    public NoAccountFragment() {
+    }
 
-	@Override
-	public void onAttach(Activity act) {
-		super.onAttach(act);
-		this.act = (HomeActivity)act;
-	}
+    @Override
+    public void onAttach(Activity act) {
+        super.onAttach(act);
+        this.act = (HomeActivity) act;
+    }
 
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-		View root = inflater.inflate(R.layout.fragment_no_acc, parent, false);
-		uniSpinner = (Spinner)root.findViewById(R.id.uniSelect);
-		usernameField = (EditText)root.findViewById(R.id.username);
-		passwdField = (EditText)root.findViewById(R.id.password);
-		loginButton = (Button)root.findViewById(R.id.login);
-		existingAccs = (ListView)root.findViewById(R.id.existingAccList);
-		pwCheckBox = (CheckBox)root.findViewById(R.id.pw_checkbox);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_no_acc, parent, false);
+        uniSpinner = (Spinner) root.findViewById(R.id.uniSelect);
+        usernameField = (EditText) root.findViewById(R.id.username);
+        passwdField = (EditText) root.findViewById(R.id.password);
+        loginButton = (Button) root.findViewById(R.id.login);
+        existingAccs = (ListView) root.findViewById(R.id.existingAccList);
+        pwCheckBox = (CheckBox) root.findViewById(R.id.pw_checkbox);
 
-		String[] uniNames = getResources().getStringArray(R.array.universe_names);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
-		uniSpinner.setAdapter(adapter);
+        String[] uniNames = getResources().getStringArray(R.array.universe_names);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
+        uniSpinner.setAdapter(adapter);
 
-		getLoaderManager().initLoader(ALL_ACCS_LOADER_ID, null, this);
+        getLoaderManager().initLoader(ALL_ACCS_LOADER_ID, null, this);
 
-		loginButton.setOnClickListener(this);
+        loginButton.setOnClickListener(this);
 
-		registerForContextMenu(existingAccs);
+        registerForContextMenu(existingAccs);
 
-		pwCheckBox.setOnClickListener(this);
+        pwCheckBox.setOnClickListener(this);
 
-		return root;
-	}
+        return root;
+    }
 
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-		super.onCreateContextMenu(menu, v, menuInfo);
-		MenuInflater inflater = act.getMenuInflater();
-		inflater.inflate(R.menu.accounts, menu);
-	}
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = act.getMenuInflater();
+        inflater.inflate(R.menu.accounts, menu);
+    }
 
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		int itemId = item.getItemId();
-		if(itemId == R.id.remove) {
-			AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-			int rowPosition = info.position;
-			AccountCredentials creds = allAccounts.get(rowPosition);
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.remove) {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+            int rowPosition = info.position;
+            AccountCredentials creds = allAccounts.get(rowPosition);
 
-			DatabaseManager dbmanager = new DatabaseManager(act);
-			dbmanager.removeAccount(creds.universe, creds.username);
-			dbmanager.close();
-			allAccounts.remove(rowPosition);
-			AccountAdapter adapter = (AccountAdapter)existingAccs.getAdapter();
-			adapter.notifyDataSetChanged();
-			return true;
-		}
-		return super.onContextItemSelected(item);
-	}
+            AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
+            dbmanager.removeAccount(creds.universe, creds.username);
+            allAccounts.remove(rowPosition);
+            AccountAdapter adapter = (AccountAdapter) existingAccs.getAdapter();
+            adapter.notifyDataSetChanged();
+            return true;
+        }
+        return super.onContextItemSelected(item);
+    }
 
-	@Override
-	public void onClick(View v) {
-		int id = v.getId();
-		switch(id) {
-		case R.id.login:
-			String username = usernameField.getText().toString();
-			String passwd = passwdField.getText().toString();
-			View selectedView = uniSpinner.getSelectedView();
-			if(selectedView == null) {
-				Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
-				return;
-			}
+    @Override
+    public void onClick(View v) {
+        int id = v.getId();
+        switch (id) {
+            case R.id.login:
+                String username = usernameField.getText().toString();
+                String passwd = passwdField.getText().toString();
+                View selectedView = uniSpinner.getSelectedView();
+                if (selectedView == null) {
+                    Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-			TextView selectedText = (TextView)selectedView;
-			String universe = selectedText.getText().toString();
+                TextView selectedText = (TextView) selectedView;
+                String universe = selectedText.getText().toString();
 
-			AccountCredentials acc = new AccountCredentials();
-			acc.universe = universe;
-			acc.username = username;
-			acc.passwd = passwd;
-			act.addAccount(acc);
-			break;
-		case R.id.pw_checkbox:
-			int inputType = (pwCheckBox.isChecked()) ?
-					(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-					: (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-			passwdField.setInputType(inputType);
-			break;
-		}
-	}
+                AccountCredentials acc = new AccountCredentials();
+                acc.universe = universe;
+                acc.username = username;
+                acc.passwd = passwd;
+                act.addAccount(acc);
+                break;
+            case R.id.pw_checkbox:
+                int inputType = (pwCheckBox.isChecked()) ?
+                        (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+                        : (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                passwdField.setInputType(inputType);
+                break;
+        }
+    }
 
-	@Override
-	public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-		AccountCredentials cred = allAccounts.get(position);
-		act.setActiveAccount(cred);
-		act.goToOverview();
-	}
+    @Override
+    public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+        AccountCredentials cred = allAccounts.get(position);
+        act.setActiveAccount(cred);
+        act.goToOverview();
+    }
 
-	@Override
-	public Loader<ArrayList<AccountCredentials>> onCreateLoader(int id, Bundle args) {
-		return new AccountsLoader(act);
-	}
+    @Override
+    public Loader<ArrayList<AccountCredentials>> onCreateLoader(int id, Bundle args) {
+        return new AccountsLoader(act);
+    }
 
-	@Override
-	public void onLoadFinished(Loader<ArrayList<AccountCredentials>> loader, ArrayList<AccountCredentials> data) {
-		AccountAdapter adapter = new AccountAdapter(act, data);
-		existingAccs.setAdapter(adapter);
-		existingAccs.setOnItemClickListener(this);
-		allAccounts = data;
-	}
+    @Override
+    public void onLoadFinished(Loader<ArrayList<AccountCredentials>> loader, ArrayList<AccountCredentials> data) {
+        AccountAdapter adapter = new AccountAdapter(act, data);
+        existingAccs.setAdapter(adapter);
+        existingAccs.setOnItemClickListener(this);
+        allAccounts = data;
+    }
 
-	@Override
-	public void onLoaderReset(Loader<ArrayList<AccountCredentials>> loader) {
-	}
+    @Override
+    public void onLoaderReset(Loader<ArrayList<AccountCredentials>> loader) {
+    }
 
-	public static class AccountAdapter extends BaseAdapter {
-		private ArrayList<AccountCredentials> accs;
-		private Context ctx;
+    public static class AccountAdapter extends BaseAdapter {
+        private ArrayList<AccountCredentials> accs;
+        private Context ctx;
 
-		public AccountAdapter(Context cont, ArrayList<AccountCredentials> accs) {
-			this.accs = accs;
-			ctx = cont;
-		}
+        public AccountAdapter(Context cont, ArrayList<AccountCredentials> accs) {
+            this.accs = accs;
+            ctx = cont;
+        }
 
-		@Override
-		public int getCount() {
-			return accs.size();
-		}
+        @Override
+        public int getCount() {
+            return accs.size();
+        }
 
-		@Override
-		public Object getItem(int position) {
-			return accs.get(position);
-		}
+        @Override
+        public Object getItem(int position) {
+            return accs.get(position);
+        }
 
-		@Override
-		public long getItemId(int position) {
-			return -1;
-		}
+        @Override
+        public long getItemId(int position) {
+            return -1;
+        }
 
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			TextView v = null;
-			if(convertView == null) {
-				LayoutInflater inflater = (LayoutInflater)ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				v = (TextView)inflater.inflate(R.layout.account_text_view, parent, false);
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView v = null;
+            if (convertView == null) {
+                LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = (TextView) inflater.inflate(R.layout.account_text_view, parent, false);
 
-			}
-			else {
-				v = (TextView)convertView;
-			}
+            } else {
+                v = (TextView) convertView;
+            }
 
-			StringBuilder strb = new StringBuilder();
-			AccountCredentials creds = accs.get(position);
-			strb.append(creds.username)
-			.append(" in ")
-			.append(creds.universe);
+            StringBuilder strb = new StringBuilder();
+            AccountCredentials creds = accs.get(position);
+            strb.append(creds.username)
+                    .append(" in ")
+                    .append(creds.universe);
 
-			v.setText(strb.toString());
+            v.setText(strb.toString());
 
-			return v;
-		}
-	}
+            return v;
+        }
+    }
 }

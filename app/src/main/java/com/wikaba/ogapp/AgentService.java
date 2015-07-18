@@ -18,32 +18,32 @@
 
 package com.wikaba.ogapp;
 
+import android.app.Service;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
+import android.support.v4.util.LongSparseArray;
+import com.wikaba.ogapp.agent.CustomCookieManager;
+import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.LoggedOutException;
+import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.database.CookiesManager;
+import com.wikaba.ogapp.database.DatabaseManager;
+import com.wikaba.ogapp.utils.AccountCredentials;
+
 import java.net.CookieHandler;
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import android.app.Service;
-import android.content.Intent;
-import android.os.Binder;
-import android.os.IBinder;
-import android.support.v4.util.LongSparseArray;
-import android.util.Log;
-
-import com.wikaba.ogapp.agent.CustomCookieManager;
-import com.wikaba.ogapp.agent.FleetEvent;
-import com.wikaba.ogapp.agent.LoggedOutException;
-import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.utils.AccountCredentials;
-import com.wikaba.ogapp.utils.DatabaseManager;
 
 public class AgentService extends Service {
 	static final String LOGTAG = "AgentService";
 
 	private IBinder mBinder;
 	private LongSparseArray<OgameAgent> ogameSessions;
-	private volatile DatabaseManager dbman;
+	private volatile CookiesManager cookiesManager;
 
 	public AgentService() {
 	}
@@ -55,8 +55,8 @@ public class AgentService extends Service {
 			ogameSessions = new LongSparseArray<OgameAgent>();
 		}
 
-		if(dbman == null) {
-			dbman = new DatabaseManager(this);
+		if(cookiesManager == null) {
+			cookiesManager = ApplicationController.getInstance().getCookiesManager();
 		}
 
 		CustomCookieManager cookieman = new CustomCookieManager();
@@ -64,7 +64,7 @@ public class AgentService extends Service {
 
 		//Retrieve all cookies from database.
 		//Warning: This is currently done on the main thread.
-		ArrayList<HttpCookie> cookieList = dbman.getCookies();
+		ArrayList<HttpCookie> cookieList = cookiesManager.getAllHttpCookies();
 		for(Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
 			HttpCookie cookie = cookieIter.next();
 			cookiestore.add(null, cookie);
@@ -88,12 +88,9 @@ public class AgentService extends Service {
 		CustomCookieManager cookieman = (CustomCookieManager)CookieHandler.getDefault();
 		CookieStore cookiestore = cookieman.getCookieStore();
 		List<HttpCookie> cookies = cookiestore.getCookies();
-		dbman.saveCookies(cookies);
-
-		if(dbman != null) {
-			dbman.close();
-			dbman = null;
-		}
+		cookiesManager.saveCookies(cookies);
+		//TODO IN THE CONTROLLER MANAGE COOKIES WITH ONLY PROPER VALUES WITH THE LRUCACHE
+		//AND STORE, MORE EFFICIENT
 	}
 
 	/**
