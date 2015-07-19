@@ -19,15 +19,19 @@
 
 package com.wikaba.ogapp.agent.parsers;
 
-import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.OgameResources;
 
 import java.io.InputStream;
-import java.util.List;
 
-public class DefaultEventParser implements EventParser {
-	@Override
-	public List<FleetEvent> parseEvents(InputStream input, OgameResources resources) {
-		return null;
-	}
+public class DefaultEventParser extends AbstractParser<FleetEventParser> {
+
+    @Override
+    public FleetEventParser parse(InputStream strea, OgameResources ressources) {
+        return null;
+    }
+
+    @Override
+    public FleetEventParser parse(String raw, OgameResources ressources) {
+        return null;
+    }
 }
