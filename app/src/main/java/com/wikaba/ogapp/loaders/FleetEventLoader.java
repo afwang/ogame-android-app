@@ -22,7 +22,7 @@ package com.wikaba.ogapp.loaders;
 import android.support.v4.content.AsyncTaskLoader;
 
 import com.wikaba.ogapp.AgentService;
-import com.wikaba.ogapp.HomeActivity;
+import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.agent.FleetEvent;
 
 import java.util.List;

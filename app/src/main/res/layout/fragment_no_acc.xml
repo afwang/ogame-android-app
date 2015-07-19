@@ -27,10 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/username">
-
-        <requestFocus />
-    </EditText>
+        android:hint="@string/username" />
 
     <EditText
         android:id="@+id/password"
@@ -78,6 +75,14 @@
     <ListView
         android:id="@+id/existingAccList"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"></ListView>
+        android:layout_height="wrap_content" />
 
+    <View
+        android:layout_width="1px"
+        android:layout_height="1px"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
+
+        <requestFocus />
+    </View>
 </LinearLayout>

@@ -29,6 +29,8 @@ import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.database.CookiesManager;
+import com.wikaba.ogapp.events.OnLoggedEvent;
+import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
 import java.net.CookieHandler;
@@ -37,6 +39,10 @@ import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
+import de.greenrobot.event.Subscribe;
+import de.greenrobot.event.ThreadMode;
 
 public class AgentService extends Service {
     static final String LOGTAG = "AgentService";
@@ -51,6 +57,9 @@ public class AgentService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        EventBus.getDefault().register(this);
+
         if (ogameSessions == null) {
             ogameSessions = new LongSparseArray<OgameAgent>();
         }
@@ -83,7 +92,7 @@ public class AgentService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        EventBus.getDefault().unregister(this);
 
         CustomCookieManager cookieman = (CustomCookieManager) CookieHandler.getDefault();
         CookieStore cookiestore = cookieman.getCookieStore();
@@ -91,6 +100,7 @@ public class AgentService extends Service {
         cookiesManager.saveCookies(cookies);
         //TODO IN THE CONTROLLER MANAGE COOKIES WITH ONLY PROPER VALUES WITH THE LRUCACHE
         //AND STORE, MORE EFFICIENT
+        super.onDestroy();
     }
 
     /**
@@ -146,6 +156,28 @@ public class AgentService extends Service {
     public class AgentServiceBinder extends Binder {
         public AgentService getService() {
             return AgentService.this;
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.Async)
+    public void onRequestLogin(OnLoginRequested login_request){
+        synchronized (this) {
+            AccountCredentials credentials = login_request.getAccountCredentials();
+            loginToAccount(credentials);
+            OgameAgent agent = ogameSessions.get(credentials.id);
+            if(!agent.isLogin()) {
+                boolean logged = agent.login(credentials.universe, credentials.username,
+                        credentials.passwd, credentials.lang);
+                List<FleetEvent> events = null;
+                if(logged){
+                    try {
+                        events = agent.getFleetEvents();
+                    }catch(LoggedOutException exception) {
+                        //impossible since we are here when it is all ok
+                    }
+                }
+                EventBus.getDefault().post(new OnLoggedEvent(logged, agent, events));
+            }
         }
     }
 }

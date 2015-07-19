@@ -17,7 +17,7 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp;
+package com.wikaba.ogapp.ui.main;
 
 import android.app.Activity;
 import android.content.Context;
@@ -32,7 +32,6 @@ import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -45,7 +44,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.wikaba.ogapp.ApplicationController;
+import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
+import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.loaders.AccountsLoader;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
@@ -53,10 +55,11 @@ import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import de.greenrobot.event.EventBus;
 
 public class NoAccountFragment extends Fragment
-        implements OnClickListener,
-        LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
+        implements LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
         AdapterView.OnItemClickListener {
 
     private static final int ALL_ACCS_LOADER_ID = 0;
@@ -106,11 +109,7 @@ public class NoAccountFragment extends Fragment
 
         getLoaderManager().initLoader(ALL_ACCS_LOADER_ID, null, this);
 
-        loginButton.setOnClickListener(this);
-
         registerForContextMenu(existingAccs);
-
-        pwCheckBox.setOnClickListener(this);
 
         return root;
     }
@@ -140,44 +139,43 @@ public class NoAccountFragment extends Fragment
         return super.onContextItemSelected(item);
     }
 
-    @Override
-    public void onClick(View v) {
-        int id = v.getId();
-        switch (id) {
-            case R.id.login:
-                String username = usernameField.getText().toString();
-                String passwd = passwdField.getText().toString();
-                String lang = langField.getText().toString();
-                View selectedView = uniSpinner.getSelectedView();
-                if (selectedView == null) {
-                    Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                TextView selectedText = (TextView) selectedView;
-                String universe = selectedText.getText().toString();
-
-                AccountCredentials acc = new AccountCredentials();
-                acc.universe = universe;
-                acc.username = username;
-                acc.passwd = passwd;
-                acc.lang = lang;
-                act.addAccount(acc);
-                break;
-            case R.id.pw_checkbox:
-                int inputType = (pwCheckBox.isChecked()) ?
-                        (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-                        : (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                passwdField.setInputType(inputType);
-                break;
+    @OnClick(R.id.login)
+    public void onLoginClicked() {
+        String username = usernameField.getText().toString();
+        String passwd = passwdField.getText().toString();
+        String lang = langField.getText().toString();
+        if (lang == null || lang.length() == 0) lang = "en";
+        View selectedView = uniSpinner.getSelectedView();
+        if (selectedView == null) {
+            Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        TextView selectedText = (TextView) selectedView;
+        String universe = selectedText.getText().toString();
+
+        AccountCredentials acc = new AccountCredentials();
+        acc.universe = universe;
+        acc.username = username;
+        acc.passwd = passwd;
+        acc.lang = lang;
+        act.addAccount(acc);
+    }
+
+    @OnClick(R.id.pw_checkbox)
+    public void onPasswordCheckBoxClicked() {
+        int inputType = (pwCheckBox.isChecked()) ?
+                (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+                : (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        passwdField.setInputType(inputType);
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
         AccountCredentials cred = allAccounts.get(position);
         act.setActiveAccount(cred);
-        act.goToOverview();
+        act.goToLogin();
+        EventBus.getDefault().post(new OnLoginRequested(cred));
     }
 
     @Override

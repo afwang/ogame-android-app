@@ -1,6 +1,6 @@
-/*
-	Copyright 2014 Alexander Wang
-
+<!--
+    Copyright 2014 Alexander Wang
+    
     This file is part of Ogame on Android.
 
     Ogame on Android is free software: you can redistribute it and/or modify
@@ -15,14 +15,16 @@
 
     You should have received a copy of the GNU General Public License
     along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
- */
+-->
 
-package com.wikaba.ogapp;
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal|center_vertical">
 
-/**
- * Created by afwang on 7/8/15.
- */
-public interface AgentServiceConsumer {
-	void serviceConnected();
-	void serviceDisconnected();
-}
+
+    <ProgressBar
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:indeterminate="true" />
+</LinearLayout>

@@ -1,5 +1,5 @@
-<!--
-    Copyright 2014 Alexander Wang
+/*
+	Copyright 2014 Alexander Wang
     
     This file is part of Ogame on Android.
 
@@ -15,12 +15,25 @@
 
     You should have received a copy of the GNU General Public License
     along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
--->
+ */
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.wikaba.ogapp.ui.main.HomeActivity"
-    tools:ignore="MergeRootFrame" />
+package com.wikaba.ogapp.ui.login;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.wikaba.ogapp.R;
+
+public class LoginFragment extends Fragment {
+
+    public LoginFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_login, container, false);
+    }
+}

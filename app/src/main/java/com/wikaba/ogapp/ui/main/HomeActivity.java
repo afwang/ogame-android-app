@@ -17,7 +17,7 @@
     along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp;
+package com.wikaba.ogapp.ui.main;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,12 +28,29 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import com.wikaba.ogapp.AgentService;
+import com.wikaba.ogapp.ApplicationController;
+import com.wikaba.ogapp.R;
+import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.database.AccountsManager;
+import com.wikaba.ogapp.events.OnLoggedEvent;
+import com.wikaba.ogapp.events.OnLoginRequested;
+import com.wikaba.ogapp.ui.login.LoginFragment;
+import com.wikaba.ogapp.ui.overview.OverviewFragment;
 import com.wikaba.ogapp.utils.AccountCredentials;
+
+import java.util.List;
+
+import de.greenrobot.event.EventBus;
+import de.greenrobot.event.Subscribe;
+import de.greenrobot.event.ThreadMode;
 
 public class HomeActivity extends AppCompatActivity {
     private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
     private AccountCredentials activeAccount;
+    private OgameAgent activeOgameAgent;
+    private List<FleetEvent> _fleet_events;
 
     private ServiceConnection agentServiceConn = new ServiceConnection() {
         @Override
@@ -41,23 +58,18 @@ public class HomeActivity extends AppCompatActivity {
             AgentService.AgentServiceBinder binder = (AgentService.AgentServiceBinder) service;
             mAgent = binder.getService();
             mBound = true;
-            if (listeningFragment != null) {
-                listeningFragment.serviceConnected();
-            }
+            //TODO POST EVENT CONNECTED TO SERVICE
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mBound = false;
             mAgent = null;
-            if (listeningFragment != null) {
-                listeningFragment.serviceDisconnected();
-            }
+            //TODO POST EVENT DISCONNECT FROM SERVICE
         }
     };
     private AgentService mAgent;
     private boolean mBound;
-    private AgentServiceConsumer listeningFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,14 +86,23 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         Intent bindingIntent = new Intent(this, AgentService.class);
+        startService(bindingIntent); //start it consistently
         bindService(bindingIntent, agentServiceConn, Context.BIND_AUTO_CREATE);
+        //and bind to it
     }
 
     @Override
     protected void onPause() {
+        EventBus.getDefault().unregister(this);
         super.onPause();
     }
 
@@ -110,27 +131,21 @@ public class HomeActivity extends AppCompatActivity {
 
         activeAccount = new AccountCredentials(creds);
         activeAccount.id = accountRowId;
-        goToOverview();
-    }
 
-    public void setListener(AgentServiceConsumer fragment) {
-        listeningFragment = fragment;
-        if (mBound) {
-            listeningFragment.serviceConnected();
-        }
-    }
-
-    public void unsetListener() {
-        if (listeningFragment != null) {
-            listeningFragment.serviceDisconnected();
-        }
-        listeningFragment = null;
+        goToLogin();
+        EventBus.getDefault().post(new OnLoginRequested(activeAccount));
     }
 
     public void goToAccountSelector() {
         NoAccountFragment f = new NoAccountFragment();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, f).commit();
+    }
+
+    public void goToLogin() {
+        LoginFragment confrag = new LoginFragment();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, confrag).commit();
     }
 
     public void goToOverview() {
@@ -143,6 +158,18 @@ public class HomeActivity extends AppCompatActivity {
 
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.container, confrag).commit();
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MainThread)
+    public void onEventLogged(OnLoggedEvent event) {
+        if (event.isConnected()) {
+            activeOgameAgent = event.getOgameAgent();
+            _fleet_events = event.getFleetEvents();
+
+            goToOverview();
+        } else {
+            goToAccountSelector();
         }
     }
 
@@ -175,5 +202,13 @@ public class HomeActivity extends AppCompatActivity {
      */
     public AgentService getAgentService() {
         return mAgent;
+    }
+
+    public OgameAgent getCurrentOgameAgent() {
+        return activeOgameAgent;
+    }
+
+    public List<FleetEvent> getCurrentFleetEvents() {
+        return _fleet_events;
     }
 }

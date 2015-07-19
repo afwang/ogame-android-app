@@ -25,7 +25,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.wikaba.ogapp.HomeActivity$PlaceholderFragment" >
+    tools:context="com.wikaba.ogapp.ui.main.HomeActivity$PlaceholderFragment">
 
     <TextView
         android:id="@+id/name_universe"
@@ -34,7 +34,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:textAppearance="?android:attr/textAppearanceSmall" />
-    
+
     <ListView
         android:id="@+id/eventFleetView"
         android:layout_width="match_parent"
@@ -42,17 +42,7 @@
         android:layout_above="@+id/refresh_button"
         android:layout_below="@id/name_universe"
         android:layout_centerHorizontal="true"
-        android:visibility="gone" >
-    </ListView>
-
-    <ProgressBar
-        android:id="@+id/progressBar1"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:visibility="visible" />
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/no_events"

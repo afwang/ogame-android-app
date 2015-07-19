@@ -69,12 +69,15 @@ public class OgameAgent {
     public static final String LOGIN_URL = "http://fr.ogame.gameforge.com/main/login";
     public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 
+    private boolean _is_login;
     private String serverUri;
 
     public OgameAgent(String universe, String lang) {
         if (universe == null) {
             throw new IllegalArgumentException("OgameAgent constructor argument is null");
         }
+
+        _is_login = false;
 
         //TODO getDOmain(), fr to String universe, String language
         serverUri = "http://" + String.format(NameToURI.getDomain(universe), lang);
@@ -155,6 +158,7 @@ public class OgameAgent {
      * @return true on successful login, false on failure
      */
     public boolean login(String universe, String username, String password, String lang) {
+        _is_login = true;
         interceptor.cleanCookie();
 
         interceptor.addCookie("deviceId", "deviceId=" + UUID.randomUUID().toString());
@@ -162,7 +166,6 @@ public class OgameAgent {
         Log.d("LANG", "lang " + lang);
 
         final int timeoutMillis = 30 * 1000;
-        int response = 0;
 
         boolean successfulResponse;
 
@@ -195,16 +198,16 @@ public class OgameAgent {
             Response answer = null;
             try {
                 answer = login_instance.loginStep1("", universe, username, password);
-                response = answer.getStatus();
             } catch (RetrofitError e) {
                 if (e != null && e.getResponse() != null) {
                     answer = e.getResponse();
-                    response = answer.getStatus();
                 }
             } catch (Exception error) {
             }
 
-            if (answer != null && (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400))) {
+            if (answer != null
+                    && (answer.getStatus() == HttpURLConnection.HTTP_OK
+                    || ((answer.getStatus() & 300) == 300))) {
                 successfulResponse = true;
                 Header header = getHeader(answer.getHeaders(), "Location");
                 if (header != null && header.getValue() != null) {
@@ -217,6 +220,7 @@ public class OgameAgent {
             Log.d("TAG", "END FIRST REQUEST (login)");
 
             if (!successfulResponse) {
+                _is_login = false;
                 return false;
             }
 
@@ -236,13 +240,14 @@ public class OgameAgent {
                 answer = null;
                 if (error != null && error.getResponse() != null) {
                     answer = error.getResponse();
-                    response = error.getResponse().getStatus();
                 }
             } catch (Exception e) {
                 answer = null;
             }
 
-            if (answer != null && (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400))) {
+            if (answer != null
+                    && (answer.getStatus() == HttpURLConnection.HTTP_OK
+                    || ((answer.getStatus() & 300) == 300))) {
                 successfulResponse = true;
                 Header locationHeader = getHeader(answer.getHeaders(), "Location");
                 if (locationHeader != null) {
@@ -253,6 +258,7 @@ public class OgameAgent {
             }
             System.out.println("END SECOND REQUEST");
             if (!successfulResponse) {
+                _is_login = false;
                 return false;
             }
 
@@ -271,14 +277,16 @@ public class OgameAgent {
             try {
                 answer = login_instance.loginStep3(root.parameters.get("page"));
             } catch (RetrofitError error) {
+                error.printStackTrace();
                 if (error != null && error.getResponse() != null) {
                     answer = error.getResponse();
                 }
             } catch (Exception e) {
+                e.printStackTrace();
             }
-            if (answer != null && response == HttpURLConnection.HTTP_OK) {
+            if (answer != null && answer.getStatus() == HttpURLConnection.HTTP_OK) {
                 successfulResponse = true;
-                System.out.println("Everything went okay! Response " + response);
+                System.out.println("Everything went okay! Response " + answer.getStatus());
 
                 List<Header> headers = answer.getHeaders();
 
@@ -292,16 +300,28 @@ public class OgameAgent {
             }
             System.out.println("END THIRD REQUEST");
             if (!successfulResponse) {
+                _is_login = false;
                 return false;
             }
         } catch (Exception e) {
             System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
             e.printStackTrace();
+            _is_login = false;
             return false;
         } finally {
         }
 
+        _is_login = false;
         return true;
+    }
+
+    /**
+     * Tell if the current Agent is currently performing a request of login
+     *
+     * @return
+     */
+    public boolean isLogin() {
+        return _is_login;
     }
 
     /**
