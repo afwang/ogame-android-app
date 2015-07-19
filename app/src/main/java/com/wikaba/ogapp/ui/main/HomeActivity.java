@@ -31,8 +31,8 @@ import android.widget.Toast;
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.R;
-import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
@@ -49,8 +49,7 @@ import de.greenrobot.event.ThreadMode;
 public class HomeActivity extends AppCompatActivity {
     private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
     private AccountCredentials activeAccount;
-    private OgameAgent activeOgameAgent;
-    private List<FleetEvent> _fleet_events;
+    private OnLoggedEvent _current_logged_event;
 
     private ServiceConnection agentServiceConn = new ServiceConnection() {
         @Override
@@ -164,8 +163,7 @@ public class HomeActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MainThread)
     public void onEventLogged(OnLoggedEvent event) {
         if (event.isConnected()) {
-            activeOgameAgent = event.getOgameAgent();
-            _fleet_events = event.getFleetEvents();
+            _current_logged_event = event;
 
             goToOverview();
         } else {
@@ -205,10 +203,11 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public OgameAgent getCurrentOgameAgent() {
-        return activeOgameAgent;
+
+        return _current_logged_event != null ? _current_logged_event.getOgameAgent() : null;
     }
 
     public List<FleetEvent> getCurrentFleetEvents() {
-        return _fleet_events;
+        return _current_logged_event != null ? _current_logged_event.getFleetEvents() : null;
     }
 }

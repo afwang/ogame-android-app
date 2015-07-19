@@ -24,7 +24,10 @@ import android.util.Log;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.interfaces.IWebservice;
+import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.agent.parsers.FleetEventParser;
+import com.wikaba.ogapp.agent.parsers.ResourcesParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -56,14 +59,17 @@ import retrofit.mime.TypedInput;
  * @author afwang
  */
 public class OgameAgent {
-    private FleetEventParser _fleet_event_parser = new FleetEventParser();
-    private ReceivedCookiesInterceptor interceptor = new ReceivedCookiesInterceptor();
     private static CookieManager manager = new CookieManager();
     private final static OkHttpClient redirector = new OkHttpClient();
     public static final String LOGIN_URL_ROOT = "http://%s.ogame.gameforge.com/";
     public static final String LOGIN_URL = "http://fr.ogame.gameforge.com/main/login";
     public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 
+    private FleetEventParser _fleet_event_parser = new FleetEventParser();
+    private ReceivedCookiesInterceptor interceptor = new ReceivedCookiesInterceptor();
+    private ResourcesParser _resources_parser = new ResourcesParser();
+
+    private RestAdapter _universe_adapter;
     private boolean _is_login;
     private String serverUri;
 
@@ -76,6 +82,8 @@ public class OgameAgent {
 
         //TODO getDOmain(), fr to String universe, String language
         serverUri = "http://" + String.format(NameToURI.getDomain(universe), lang);
+
+        _universe_adapter = createLoginAdapter(serverUri);
     }
 
     private RestAdapter createLoginAdapter(String base) {
@@ -319,6 +327,20 @@ public class OgameAgent {
         return _is_login;
     }
 
+    public String getResourcePagesContent() {
+        try {
+            IWebservice instance = _universe_adapter.create(IWebservice.class);
+            return consumeResponseToString(instance.getSinglePage("resources")).toString();
+        } catch (RetrofitError error) {
+
+        }
+        return null;
+    }
+
+    public List<ResourceItem> getResourcesFromResourcePageContent(String page) {
+        return _resources_parser.parse(page, null);
+    }
+
     /**
      * Emulate a user clicking the "Overview" link in the navigation bar/column. Also parse fleet
      * movement data from the returned response (if available).
@@ -329,9 +351,8 @@ public class OgameAgent {
      */
     public List<FleetEvent> getOverviewData() throws LoggedOutException {
         List<FleetEvent> overviewData;
-        RestAdapter adapter = createLoginAdapter(serverUri);
         Log.d("TAG", "having root = " + serverUri);
-        IWebservice instance = adapter.create(IWebservice.class);
+        IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
             Response overview = instance.getSinglePage("overview");
@@ -356,9 +377,7 @@ public class OgameAgent {
      * will have non-null instance variables.
      */
     public List<FleetEvent> getFleetEvents() throws LoggedOutException {
-        RestAdapter adapter = createLoginAdapter(serverUri);
-        Log.d("TAG", "having root = " + serverUri);
-        IWebservice instance = adapter.create(IWebservice.class);
+        IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
             Response overview = instance.getSinglePageWithAjaxParameter("eventList", 1);
@@ -375,6 +394,10 @@ public class OgameAgent {
      * is returned. Otherwvise, null is returned
      */
     private List<FleetEvent> consumeFleetEventFrom(Response response) {
+        return parseEvents(consumeResponseToString(response));
+    }
+
+    public StringBuilder consumeResponseToString(Response response) {
         TypedInput body = response.getBody();
         StringBuilder out = null;
         try {
@@ -390,7 +413,7 @@ public class OgameAgent {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return parseEvents(out);
+        return out;
     }
 
     /**

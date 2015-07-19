@@ -17,7 +17,7 @@
     along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>. 
  */
 
-package com.wikaba.ogapp.agent;
+package com.wikaba.ogapp.agent.models;
 
 import java.util.HashMap;
 import java.util.Map;

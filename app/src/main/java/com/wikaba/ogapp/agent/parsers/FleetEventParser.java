@@ -20,7 +20,7 @@
 package com.wikaba.ogapp.agent.parsers;
 
 import com.wikaba.ogapp.agent.FleetAndResources;
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.OgameResources;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -297,41 +297,6 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
         }
         return eventList;
     }
-
-
-    /**
-     * Pre-condition: The current state of the XmlPullParser xpp is at a START_TAG
-     *
-     * @param xpp       the xpp instance used to parse the content
-     * @param attrName  the attribute used in the current tag
-     * @param attrValue the expected attribute value
-     * @return
-     */
-    private boolean hasAttrValue(XmlPullParser xpp, String attrName, String attrValue) {
-        //Scan attributes for "class" attribute.
-        int attrsize = xpp.getAttributeCount();
-        int index;
-        boolean attrFound = false;
-        for (index = 0; index < attrsize; index++) {
-            String currentAttrName = xpp.getAttributeName(index);
-            if (currentAttrName.equals(attrName)) {
-                attrFound = true;
-                break;
-            }
-        }
-
-        if (!attrFound)
-            return false;
-        else {
-            String currentAttrValue = xpp.getAttributeValue(index);
-            if (currentAttrValue.equals(attrValue)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
 
     /**
      * Unescapes the HTML-escaped data in the parameter string htmlEncodedData.

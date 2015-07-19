@@ -38,7 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.wikaba.ogapp.R;
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 
 import java.util.ArrayList;

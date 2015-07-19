@@ -23,11 +23,13 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
+import android.util.Log;
 
 import com.wikaba.ogapp.agent.CustomCookieManager;
-import com.wikaba.ogapp.agent.FleetEvent;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
@@ -160,23 +162,33 @@ public class AgentService extends Service {
     }
 
     @Subscribe(threadMode = ThreadMode.Async)
-    public void onRequestLogin(OnLoginRequested login_request){
+    public void onRequestLogin(OnLoginRequested login_request) {
         synchronized (this) {
             AccountCredentials credentials = login_request.getAccountCredentials();
             loginToAccount(credentials);
             OgameAgent agent = ogameSessions.get(credentials.id);
-            if(!agent.isLogin()) {
+            if (!agent.isLogin()) {
                 boolean logged = agent.login(credentials.universe, credentials.username,
                         credentials.passwd, credentials.lang);
                 List<FleetEvent> events = null;
-                if(logged){
+                List<ResourceItem> resources = null;
+                if (logged) {
                     try {
                         events = agent.getFleetEvents();
-                    }catch(LoggedOutException exception) {
+                    } catch (LoggedOutException exception) {
                         //impossible since we are here when it is all ok
                     }
+
+                    String raw_res = agent.getResourcePagesContent();
+                    try {
+                        resources = agent.getResourcesFromResourcePageContent(raw_res);
+
+                        Log.d("AgentService", "resources = " + resources);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-                EventBus.getDefault().post(new OnLoggedEvent(logged, agent, events));
+                EventBus.getDefault().post(new OnLoggedEvent(logged, agent, events, resources));
             }
         }
     }

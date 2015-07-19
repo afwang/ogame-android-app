@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.FleetAndResources;
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
 import com.wikaba.ogapp.utils.AndroidMissionMap;
 import com.wikaba.ogapp.utils.NameBridge;

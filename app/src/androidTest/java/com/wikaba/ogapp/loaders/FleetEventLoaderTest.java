@@ -24,7 +24,7 @@ import android.support.test.runner.AndroidJUnit4;
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.agent.FleetAndResources;
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
 
 import org.junit.Before;

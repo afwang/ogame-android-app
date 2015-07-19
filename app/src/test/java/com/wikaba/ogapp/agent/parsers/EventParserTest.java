@@ -19,7 +19,7 @@
 
 package com.wikaba.ogapp.agent.parsers;
 
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaga.ogapp.agent.FleetEventListComparator;
 
