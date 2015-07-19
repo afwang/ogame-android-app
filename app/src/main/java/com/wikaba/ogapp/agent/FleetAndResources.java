@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class FleetAndResources {
+	public static final String METAL_TAG = "Metal:";
+	public static final String CRYSTAL_TAG = "Crystal:";
+	public static final String DEUT_TAG = "Deuterium:";
 	public static final String METAL = "metal";
 	public static final String CRYSTAL = "crystal";
 	public static final String DEUT = "deuterium";
