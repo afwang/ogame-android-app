@@ -8,7 +8,6 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
-import eu.codlab.sharedmutex.Mutex;
 import greendao.Cookies;
 import greendao.CookiesDao;
 
@@ -21,11 +20,9 @@ public class CookiesManager extends AbstractController<CookiesDao> {
     private static CookiesManager _instance;
 
     private Context _context;
-    private Mutex _mutex;
 
     private CookiesManager(Context context) {
         super();
-        _mutex = new Mutex("DB");
         _context = context;
     }
 

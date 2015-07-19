@@ -9,12 +9,15 @@ import eu.codlab.sharedmutex.Mutex;
  * Created by kevinleperf on 04/07/15.
  */
 public abstract class AbstractController<T extends AbstractDao> {
+    private static final Object object = new Object();
     private Mutex _mutex;
 
     public abstract T getDao();
 
     protected AbstractController() {
-        _mutex = new Mutex("ogame_mutex");
+        synchronized (object) {
+            if (_mutex == null) _mutex = new Mutex("ogame_mutex");
+        }
     }
 
     public void delete(T item) {
