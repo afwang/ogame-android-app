@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 Alexander Wang
+	Copyright 2015 Kevin Le Perf
 
 	This file is part of Ogame on Android.
 
@@ -17,21 +17,29 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.agent.models;
 
-import com.wikaba.ogapp.agent.OgameResources;
+import com.wikaba.ogapp.agent.FleetAndResources;
 
-import java.io.InputStream;
+/**
+ * Created by kevinleperf on 19/07/15.
+ */
+public class ResourceItem {
+    /**
+     * The type of the resource
+     * <p/>
+     * corresponding to the
+     */
+    public FleetAndResources.Resources resource_type;
+    public long resource_production;
+    public String resource_consumption;
 
-public class DefaultEventParser extends AbstractParser<FleetEventParser> {
-
-    @Override
-    public FleetEventParser parse(InputStream strea, OgameResources ressources) {
-        return null;
+    public ResourceItem(FleetAndResources.Resources resource) {
+        resource_type = resource;
     }
 
     @Override
-    public FleetEventParser parse(String raw, OgameResources ressources) {
-        return null;
+    public String toString() {
+        return resource_type + " " + resource_production + " " + resource_consumption;
     }
 }

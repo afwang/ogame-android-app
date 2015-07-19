@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 Alexander Wang
+	Copyright 2015 Kevin Le Perf
 
 	This file is part of Ogame on Android.
 
@@ -17,21 +17,23 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.ui.login;
 
-import com.wikaba.ogapp.agent.OgameResources;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
-import java.io.InputStream;
+import com.wikaba.ogapp.R;
 
-public class DefaultEventParser extends AbstractParser<FleetEventParser> {
+public class LoginFragment extends Fragment {
 
-    @Override
-    public FleetEventParser parse(InputStream strea, OgameResources ressources) {
-        return null;
+    public LoginFragment() {
     }
 
     @Override
-    public FleetEventParser parse(String raw, OgameResources ressources) {
-        return null;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_login, container, false);
     }
 }

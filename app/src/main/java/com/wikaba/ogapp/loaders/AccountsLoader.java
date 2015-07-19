@@ -21,48 +21,46 @@ package com.wikaba.ogapp.loaders;
 
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
-
+import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.utils.AccountCredentials;
-import com.wikaba.ogapp.utils.DatabaseManager;
 
 import java.util.ArrayList;
 
 public class AccountsLoader extends AsyncTaskLoader<ArrayList<AccountCredentials>> {
-	private ArrayList<AccountCredentials> oldData;
-	private DatabaseManager dbmanager;
+    private ArrayList<AccountCredentials> oldData;
 
-	public AccountsLoader(Context ctx) {
-		super(ctx);
-		dbmanager = new DatabaseManager(ctx);
-		oldData = null;
-	}
+    public AccountsLoader(Context ctx) {
+        super(ctx);
+        oldData = null;
+    }
 
-	@Override
-	protected void onStartLoading() {
-		if (oldData != null) {
-			deliverResult(oldData);
-		}
+    @Override
+    protected void onStartLoading() {
+        if (oldData != null) {
+            deliverResult(oldData);
+        }
 
-		this.forceLoad();
-	}
+        this.forceLoad();
+    }
 
-	@Override
-	protected void onStopLoading() {
-	}
+    @Override
+    protected void onStopLoading() {
+    }
 
-	@Override
-	protected void onReset() {
-	}
+    @Override
+    protected void onReset() {
+    }
 
-	@Override
-	public void deliverResult(ArrayList<AccountCredentials> newData) {
-		oldData = newData;
-		super.deliverResult(newData);
-	}
+    @Override
+    public void deliverResult(ArrayList<AccountCredentials> newData) {
+        oldData = newData;
+        super.deliverResult(newData);
+    }
 
-	@Override
-	public ArrayList<AccountCredentials> loadInBackground() {
-		ArrayList<AccountCredentials> allAccs = dbmanager.getAllAccounts();
-		return allAccs;
-	}
+    @Override
+    public ArrayList<AccountCredentials> loadInBackground() {
+        ArrayList<AccountCredentials> allAccs = ApplicationController
+                .getInstance().getAccountsManager().getAllAccountCredentials();
+        return allAccs;
+    }
 }

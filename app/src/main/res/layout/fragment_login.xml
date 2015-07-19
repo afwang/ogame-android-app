@@ -1,5 +1,6 @@
-/*
-	Copyright 2014 Alexander Wang
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Copyright 2015 Kevin Le Perf
 
 	This file is part of Ogame on Android.
 
@@ -15,23 +16,16 @@
 
 	You should have received a copy of the GNU General Public License
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
- */
+-->
 
-package com.wikaba.ogapp.agent.parsers;
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal|center_vertical">
 
-import com.wikaba.ogapp.agent.OgameResources;
 
-import java.io.InputStream;
-
-public class DefaultEventParser extends AbstractParser<FleetEventParser> {
-
-    @Override
-    public FleetEventParser parse(InputStream strea, OgameResources ressources) {
-        return null;
-    }
-
-    @Override
-    public FleetEventParser parse(String raw, OgameResources ressources) {
-        return null;
-    }
-}
+    <ProgressBar
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:indeterminate="true" />
+</LinearLayout>

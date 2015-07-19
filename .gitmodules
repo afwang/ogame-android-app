@@ -1,0 +1,6 @@
+[submodule "daogenerator"]
+	path = daogenerator
+	url = git@bitbucket.org:lduparc/daogenerator-android.git
+[submodule "mutex"]
+	path = mutex
+	url = git@github.com:codlab/android_process_mutex.git

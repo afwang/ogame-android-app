@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 Alexander Wang
+	Copyright 2015 Kevin Le Perf
 
 	This file is part of Ogame on Android.
 
@@ -17,14 +17,22 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.events;
 
-import com.wikaba.ogapp.agent.FleetEvent;
-import com.wikaba.ogapp.agent.OgameResources;
+import com.wikaba.ogapp.utils.AccountCredentials;
 
-import java.io.InputStream;
-import java.util.List;
+/**
+ * Created by kevinleperf on 19/07/15.
+ */
+public class OnLoginRequested {
+    private AccountCredentials _account_crendentials;
 
-public interface EventParser {
-	List<FleetEvent> parseEvents(InputStream input, OgameResources resources);
+
+    public OnLoginRequested(AccountCredentials credentials) {
+        _account_crendentials = credentials;
+    }
+
+    public AccountCredentials getAccountCredentials() {
+        return _account_crendentials;
+    }
 }

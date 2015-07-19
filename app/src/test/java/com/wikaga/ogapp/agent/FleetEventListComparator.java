@@ -19,7 +19,7 @@
 
 package com.wikaga.ogapp.agent;
 
-import com.wikaba.ogapp.agent.FleetEvent;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 
 import java.util.Comparator;
 import java.util.Iterator;

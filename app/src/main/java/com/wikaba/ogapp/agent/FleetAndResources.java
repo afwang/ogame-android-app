@@ -23,72 +23,82 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class FleetAndResources {
-	public static final String METAL = "metal";
-	public static final String CRYSTAL = "crystal";
-	public static final String DEUT = "deuterium";
-	
-	public static final String LF = "Light Fighter";
-	public static final String HF = "Heavy Fighter";
-	public static final String CR = "Cruiser";
-	public static final String BS = "Battleship";
-	public static final String SC = "Small Cargo";
-	public static final String LC = "Large Cargo";
-	public static final String COLONY = "Colony Ship";
-	public static final String BC = "Battlecruiser";
-	public static final String BB = "Bomber";
-	public static final String DS = "Destroyer";
-	public static final String RIP = "Deathstar";
-	public static final String RC = "Recycler";
-	public static final String EP = "Espionage Probe";
-	public static final String SS = "Solar Satellite";
+    public enum Resources {
+        METAL,
+        CRYSTAL,
+        DEUTERIUM
+    }
 
-	private static HashMap<String, String> names;
-	private static final int NUM_NAMES = 17;
+    public static final String METAL_TAG = "Metal:";
+    public static final String CRYSTAL_TAG = "Crystal:";
+    public static final String DEUT_TAG = "Deuterium:";
+    public static final String METAL = "metal";
+    public static final String CRYSTAL = "crystal";
+    public static final String DEUT = "deuterium";
 
-	/**
-	 * Check if the given @{code input} is contained represented
-	 * by one of the public static fields of this class. The
-	 * internal implementation of this class makes the check
-	 * for whether a name is contained an O(1) operation rather
-	 * than a search through all the public static fields, an
-	 * O(n) operation
-	 * @param input - string to check if there is a static field
-	 * 		represented by this String
-	 * @return
-	 */
-	public static String getName(String input) {
-		if(input == null) {
-			return null;
-		}
+    public static final String LF = "Light Fighter";
+    public static final String HF = "Heavy Fighter";
+    public static final String CR = "Cruiser";
+    public static final String BS = "Battleship";
+    public static final String SC = "Small Cargo";
+    public static final String LC = "Large Cargo";
+    public static final String COLONY = "Colony Ship";
+    public static final String BC = "Battlecruiser";
+    public static final String BB = "Bomber";
+    public static final String DS = "Destroyer";
+    public static final String RIP = "Deathstar";
+    public static final String RC = "Recycler";
+    public static final String EP = "Espionage Probe";
+    public static final String SS = "Solar Satellite";
 
-		if(names == null) {
-			initNames();
-		}
-		return names.get(input.toLowerCase(Locale.US));
-	}
+    private static HashMap<String, String> names;
+    private static final int NUM_NAMES = 17;
 
-	private static synchronized void initNames() {
-		if(names == null) {
-			final float defaultLoadFactor = 0.75F;
-			names = new HashMap<String, String>(2 * NUM_NAMES, defaultLoadFactor);
+    /**
+     * Check if the given @{code input} is contained represented
+     * by one of the public static fields of this class. The
+     * internal implementation of this class makes the check
+     * for whether a name is contained an O(1) operation rather
+     * than a search through all the public static fields, an
+     * O(n) operation
+     *
+     * @param input - string to check if there is a static field
+     *              represented by this String
+     * @return
+     */
+    public static String getName(String input) {
+        if (input == null) {
+            return null;
+        }
 
-			//Although the code below can be made a little neater using reflection,
-			//I believe it is better to avoid reflection. We are trading code neatness
-			//for less bugs involving Reflection.
-			names.put(LF.toLowerCase(Locale.US), LF);
-			names.put(HF.toLowerCase(Locale.US), HF);
-			names.put(CR.toLowerCase(Locale.US), CR);
-			names.put(BS.toLowerCase(Locale.US), BS);
-			names.put(SC.toLowerCase(Locale.US), SC);
-			names.put(LC.toLowerCase(Locale.US), LC);
-			names.put(COLONY.toLowerCase(Locale.US), COLONY);
-			names.put(BC.toLowerCase(Locale.US), BC);
-			names.put(BB.toLowerCase(Locale.US), BB);
-			names.put(DS.toLowerCase(Locale.US), DS);
-			names.put(RIP.toLowerCase(Locale.US), RIP);
-			names.put(RC.toLowerCase(Locale.US), RC);
-			names.put(EP.toLowerCase(Locale.US), EP);
-			names.put(SS.toLowerCase(Locale.US), SS);
-		}
-	}
+        if (names == null) {
+            initNames();
+        }
+        return names.get(input.toLowerCase(Locale.US));
+    }
+
+    private static synchronized void initNames() {
+        if (names == null) {
+            final float defaultLoadFactor = 0.75F;
+            names = new HashMap<String, String>(2 * NUM_NAMES, defaultLoadFactor);
+
+            //Although the code below can be made a little neater using reflection,
+            //I believe it is better to avoid reflection. We are trading code neatness
+            //for less bugs involving Reflection.
+            names.put(LF.toLowerCase(Locale.US), LF);
+            names.put(HF.toLowerCase(Locale.US), HF);
+            names.put(CR.toLowerCase(Locale.US), CR);
+            names.put(BS.toLowerCase(Locale.US), BS);
+            names.put(SC.toLowerCase(Locale.US), SC);
+            names.put(LC.toLowerCase(Locale.US), LC);
+            names.put(COLONY.toLowerCase(Locale.US), COLONY);
+            names.put(BC.toLowerCase(Locale.US), BC);
+            names.put(BB.toLowerCase(Locale.US), BB);
+            names.put(DS.toLowerCase(Locale.US), DS);
+            names.put(RIP.toLowerCase(Locale.US), RIP);
+            names.put(RC.toLowerCase(Locale.US), RC);
+            names.put(EP.toLowerCase(Locale.US), EP);
+            names.put(SS.toLowerCase(Locale.US), SS);
+        }
+    }
 }

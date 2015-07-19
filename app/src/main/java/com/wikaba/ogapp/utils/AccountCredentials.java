@@ -24,57 +24,62 @@ import android.os.Parcelable;
 
 /**
  * This is a simple container class with references to account and universe credentials.
- * @author afwang
  *
+ * @author afwang
  */
 public class AccountCredentials implements Parcelable {
-	public long id;
-	public String universe;
-	public String username;
-	public String passwd;
+    public long id;
+    public String universe;
+    public String username;
+    public String passwd;
+    public String lang;
 
-	public AccountCredentials() {
-		id = -1;
-		universe = "";
-		username = "";
-		passwd = "";
-	}
+    public AccountCredentials() {
+        id = -1;
+        universe = "";
+        username = "";
+        passwd = "";
+        lang = "";
+    }
 
-	public AccountCredentials(AccountCredentials toCopy) {
-		this.id = toCopy.id;
-		this.universe = toCopy.universe;
-		this.username = toCopy.username;
-		this.passwd = toCopy.passwd;
-	}
+    public AccountCredentials(AccountCredentials toCopy) {
+        this.id = toCopy.id;
+        this.universe = toCopy.universe;
+        this.username = toCopy.username;
+        this.passwd = toCopy.passwd;
+        this.lang = toCopy.lang;
+    }
 
-	@Override
-	public int describeContents() {
-		return (int)id;
-	}
+    @Override
+    public int describeContents() {
+        return (int) id;
+    }
 
-	@Override
-	public void writeToParcel(Parcel parcel, int flags) {
-		parcel.writeLong(id);
-		parcel.writeString(universe);
-		parcel.writeString(username);
-		parcel.writeString(passwd);
-	}
+    @Override
+    public void writeToParcel(Parcel parcel, int flags) {
+        parcel.writeLong(id);
+        parcel.writeString(universe);
+        parcel.writeString(username);
+        parcel.writeString(passwd);
+        parcel.writeString(lang);
+    }
 
-	public static final Parcelable.Creator<AccountCredentials> CREATOR
-		= new Parcelable.Creator<AccountCredentials>() {
-			@Override
-			public AccountCredentials createFromParcel(Parcel source) {
-				AccountCredentials creds = new AccountCredentials();
-				creds.id = source.readLong();
-				creds.universe = source.readString();
-				creds.username = source.readString();
-				creds.passwd = source.readString();
-				return creds;
-			}
+    public static final Parcelable.Creator<AccountCredentials> CREATOR
+            = new Parcelable.Creator<AccountCredentials>() {
+        @Override
+        public AccountCredentials createFromParcel(Parcel source) {
+            AccountCredentials creds = new AccountCredentials();
+            creds.id = source.readLong();
+            creds.universe = source.readString();
+            creds.username = source.readString();
+            creds.passwd = source.readString();
+            creds.lang = source.readString();
+            return creds;
+        }
 
-			@Override
-			public AccountCredentials[] newArray(int size) {
-				return new AccountCredentials[size];
-			}
-		};
+        @Override
+        public AccountCredentials[] newArray(int size) {
+            return new AccountCredentials[size];
+        }
+    };
 }
