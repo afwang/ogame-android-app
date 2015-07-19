@@ -20,28 +20,40 @@
 package com.wikaba.ogapp.agent;
 
 
+import android.util.Log;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.wikaba.ogapp.agent.interfaces.ILogin;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.net.URLEncoder;
+import java.net.URLDecoder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Header;
+import retrofit.client.OkClient;
+import retrofit.client.Response;
 
 /**
  * This class represents 1 account on 1 universe. If the user is playing multiple accounts simultaneously,
@@ -51,7 +63,11 @@ import java.util.Map;
  * @author afwang
  */
 public class OgameAgent {
-    public static final String LOGIN_URL = "http://en.ogame.gameforge.com/main/login";
+    private ReceivedCookiesInterceptor interceptor = new ReceivedCookiesInterceptor();
+    private static CookieManager manager = new CookieManager();
+    private final static OkHttpClient redirector = new OkHttpClient();
+    public static final String LOGIN_URL_ROOT = "http://%s.ogame.gameforge.com/";
+    public static final String LOGIN_URL = "http://fr.ogame.gameforge.com/main/login";
     public static final String OVERVIEW_ENDPOINT = "/game/index.php?page=overview";
     public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 
@@ -61,7 +77,71 @@ public class OgameAgent {
         if (universe == null) {
             throw new IllegalArgumentException("OgameAgent constructor argument is null");
         }
+
+        //TODO getDOmain(), fr to String universe, String language
         serverUri = "http://" + String.format(NameToURI.getDomain(universe), lang);
+    }
+
+    private RestAdapter createLoginAdapter(String base) {
+        CookieHandler.setDefault(manager);
+        manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        redirector.setFollowRedirects(false);
+        redirector.interceptors().add(interceptor);
+
+        RestAdapter adapter = new RestAdapter.Builder()
+                .setEndpoint(base)
+                .setLogLevel(RestAdapter.LogLevel.HEADERS)
+                .setRequestInterceptor(interceptor)
+                .setClient(new OkClient(redirector))
+                .build();
+        return adapter;
+    }
+
+    private class UriCut {
+        public String root;
+        public String path;
+        public HashMap<String, String> parameters;
+    }
+
+    private UriCut getRoot(String uri, String split) {
+        UriCut cut = new UriCut();
+        String[] splitted = uri.split(split);
+
+        Log.d("TAG", "splitted " + Arrays.toString(splitted));
+        if (splitted.length > 1) {
+            cut.root = splitted[0] + split;
+            splitted = splitted[1].split("\\?");
+            cut.path = splitted[0];
+            String parameters = null;
+            if (splitted.length > 1) parameters = splitted[1];
+
+            if (parameters != null) {
+                HashMap<String, String> params = new HashMap<>();
+                String[] queries = parameters.split("&");
+                String[] sub_query;
+                for (String query : queries) {
+                    sub_query = query.split("=");
+                    String right = sub_query.length > 1 ? sub_query[1] : "";
+                    try {
+                        params.put(sub_query[0], URLDecoder.decode(right, "UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+                cut.parameters = params;
+            }
+        }
+        return cut;
+    }
+
+    private Header getHeader(List<Header> headers, String name) {
+        //TODO make this research efficient by storing all header in map instead of the raw list
+        for (Header header : headers) {
+            if (header != null && header.getName().equalsIgnoreCase(name)) {
+                return header;
+            }
+        }
+        return null;
     }
 
     /**
@@ -77,8 +157,13 @@ public class OgameAgent {
      * @return true on successful login, false on failure
      */
     public boolean login(String universe, String username, String password, String lang) {
+        interceptor.cleanCookie();
+
+        interceptor.addCookie("deviceId", "deviceId=" + UUID.randomUUID().toString());
+
+        Log.d("LANG", "lang " + lang);
+
         final int timeoutMillis = 30 * 1000;
-        HttpURLConnection connection = null;
         int response = 0;
 
         boolean successfulResponse;
@@ -91,179 +176,154 @@ public class OgameAgent {
         //causes Java to throw an error when parsed (might want to
         //look into a different HTTP library for this, like OkHttp).
 
+        RestAdapter adapter = createLoginAdapter(String.format("http://%s.ogame.gameforge.com", lang));
+        ILogin login_instance = adapter.create(ILogin.class);
+
+        try {
+            Response reponse = login_instance.getMain();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 		/*
          * FIRST REQUEST
 		 */
         System.out.println("START FIRST REQUEST (login)");
-        String uri = LOGIN_URL;
-        String parameters;
+        String uri = String.format(LOGIN_URL_ROOT, lang);
+        Log.d("TAG", "----------------------------");
+        Log.d("TAG", "----------------------------");
+        Log.d("TAG", "----------------------------");
+        Log.d("TAG", "----------------------------");
+        Log.d("TAG", "----------------------------");
+        Log.d("TAG", "uri " + uri);
         try {
-            parameters = "kid=&uni=" + URLEncoder.encode(universe, "UTF-8") + "&login=" + URLEncoder.encode(username, "UTF-8") + "&pass=" + URLEncoder.encode(password, "UTF-8");
-        } catch (UnsupportedEncodingException e1) {
-            System.out.println("Error: " + e1 + '\n' + e1.getMessage());
-            e1.printStackTrace();
-            return false;
-        }
-        String length = Integer.toString(parameters.length());
-        try {
-            for (boolean redo = true; redo; ) {
-                try {
-                    connection = (HttpURLConnection) (new URL(uri)).openConnection();
-                    connection.setConnectTimeout(timeoutMillis);
-                    connection.setRequestProperty("Accept-Language", "en-US");
-                    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                    connection.setRequestProperty("Content-Length", length);
-                    connection.setDoOutput(true);
-                    connection.setRequestMethod("POST");
-                    Writer writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-                    writer.write(parameters);
-                    writer.flush();
-                    writer.close();
-                    connection.setInstanceFollowRedirects(false);
-                    connection.connect();
-                    response = connection.getResponseCode();
-                    redo = false;
-                } catch (java.io.EOFException e) {
-                    //Catch annoying server-side issue sending faulty HTTP responses.
-                    //Just force a retry.
-                    redo = true;
+            adapter = createLoginAdapter(uri);
+            login_instance = adapter.create(ILogin.class);
+
+            Response answer = null;
+            try {
+                answer = login_instance.loginStep1("", universe, username, password);
+                response = answer.getStatus();
+            } catch (RetrofitError e) {
+                if (e != null && e.getResponse() != null) {
+                    answer = e.getResponse();
+                    response = answer.getStatus();
                 }
+            } catch (Exception error) {
             }
 
-            if (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+            if (answer != null && (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400))) {
                 successfulResponse = true;
-                System.out.println("Everything went okay! Response " + response);
-
-                Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-                List<String> locationHeader = responseHeaders.get("Location");
-                if (locationHeader != null && locationHeader.size() > 0) {
-                    uri = locationHeader.get(0);
+                Header header = getHeader(answer.getHeaders(), "Location");
+                if (header != null && header.getValue() != null) {
+                    uri = header.getValue();
                 }
             } else {
                 successfulResponse = false;
-                System.err.println("Something went wrong!");
-                BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                String line;
-                while ((line = errReader.readLine()) != null) {
-                    System.err.println(line);
-                }
-                errReader.close();
+                Log.d("TAG", "Something went wrong!");
             }
-            connection.disconnect();
-            System.out.println("END FIRST REQUEST (login)");
+            Log.d("TAG", "END FIRST REQUEST (login)");
 
             if (!successfulResponse) {
                 return false;
             }
-			
+
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+
 			/*
-			 * SECOND REQUEST
+             * SECOND REQUEST
 			 */
-            System.out.println("START SECOND REQUEST");
-            connection = (HttpURLConnection) (new URL(uri)).openConnection();
-            connection.setConnectTimeout(timeoutMillis);
-            connection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-            connection.setDoOutput(false);
-            connection.setRequestMethod("GET");
-            connection.setInstanceFollowRedirects(false);
+            Log.d("TAG", "START SECOND REQUEST " + uri);
 
-            connection.connect();
+            UriCut root = getRoot(uri, "gameforge.com/");
+            adapter = createLoginAdapter(root.root);
+            Log.d("TAG", "having root = " + root.root);
+            login_instance = adapter.create(ILogin.class);
 
-            response = connection.getResponseCode();
-            if (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400)) {
+            try {
+                answer = login_instance.loginStep2(root.parameters.get("data"));
+            } catch (RetrofitError error) {
+                answer = null;
+                if (error != null && error.getResponse() != null) {
+                    answer = error.getResponse();
+                    response = error.getResponse().getStatus();
+                }
+            } catch (Exception e) {
+                answer = null;
+            }
+
+            if (answer != null && (response == HttpURLConnection.HTTP_OK || (response >= 300 && response < 400))) {
                 successfulResponse = true;
-
-                Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-
-                List<String> locationHeader = responseHeaders.get("Location");
-                if (locationHeader != null && locationHeader.size() > 0) {
-                    uri = locationHeader.get(0);
+                Header locationHeader = getHeader(answer.getHeaders(), "Location");
+                if (locationHeader != null) {
+                    uri = locationHeader.getValue();
                 }
             } else {
                 successfulResponse = false;
-                System.err.println("Something went wrong!");
-                BufferedReader errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                String line;
-                while ((line = errReader.readLine()) != null) {
-                    System.err.println(line);
-                }
-                errReader.close();
             }
-            connection.disconnect();
             System.out.println("END SECOND REQUEST");
             if (!successfulResponse) {
                 return false;
             }
-			
-			/*
-			 * THIRD REQUEST (final request)
+
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            Log.d("TAG", "----------------------------");
+            /*
+             * THIRD REQUEST (final request)
 			 */
-            for (boolean redo = true; redo; ) {
-                try {
-                    System.out.println("START THIRD REQUEST");
-                    connection = (HttpURLConnection) (new URL(uri)).openConnection();
-                    connection.setConnectTimeout(timeoutMillis);
-                    connection.setRequestProperty("Accept-Language", "en-US");
-                    connection.setRequestProperty("Accept", "text/html");
-                    connection.setDoOutput(false);
-                    connection.setDoInput(true);
-                    connection.setRequestMethod("GET");
-                    connection.setInstanceFollowRedirects(false);
+            root = getRoot(uri, "gameforge.com/");
+            adapter = createLoginAdapter(root.root);
+            login_instance = adapter.create(ILogin.class);
 
-                    connection.connect();
 
-                    response = connection.getResponseCode();
-                    redo = false;
-                } catch (java.io.EOFException e) {
-                    //Again, to avoid the weird EOFException bug. Goddamn Ogame's programming!
-                    redo = true;
+            //remove last server cookie
+            interceptor.deleteCookie("OG_lastServer");
+
+            try {
+                System.out.println("START THIRD REQUEST");
+
+                answer = login_instance.loginStep3(root.parameters.get("page"));
+            } catch (RetrofitError error) {
+                if (error != null && error.getResponse() != null) {
+                    answer = error.getResponse();
                 }
+            } catch (Exception e) {
             }
-            //The last response must receive a status 200. If it isn't, we did something wrong.
-            if (response == HttpURLConnection.HTTP_OK) {
+            if (answer != null && response == HttpURLConnection.HTTP_OK) {
                 successfulResponse = true;
                 System.out.println("Everything went okay! Response " + response);
 
-                Map<String, List<String>> responseHeaders = connection.getHeaderFields();
+                List<Header> headers = answer.getHeaders();
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                while ((reader.readLine()) != null) ;
-                reader.close();
-
-                List<String> locationHeader = responseHeaders.get("Location");
-                if (locationHeader != null && locationHeader.size() > 0) {
-                    uri = locationHeader.get(0);
+                Header locationHeader = getHeader(headers, "Location");
+                if (locationHeader != null) {
+                    uri = locationHeader.getValue();
                 }
             } else {
                 successfulResponse = false;
                 System.err.println("Something went wrong!");
-                BufferedReader errReader;
-                try {
-                    errReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                } catch (IOException e) {
-                    errReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()));
-                }
-                String line;
-                while ((line = errReader.readLine()) != null) {
-                    System.err.println(line);
-                }
-                errReader.close();
             }
-            connection.disconnect();
             System.out.println("END THIRD REQUEST");
             if (!successfulResponse) {
                 return false;
             }
-        } catch (MalformedURLException e) {
-            System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Something wrong happened! " + e + '\n' + e.getMessage());
             e.printStackTrace();
             return false;
         } finally {
-            connection.disconnect();
         }
 
         return true;
@@ -535,8 +595,8 @@ public class OgameAgent {
                     eventType = xpp.next();
                 } catch (XmlPullParserException e) {
                     if (e != null) {
-						/* For some strange reason, the emulator can reach this catch block with
-						 * e set to null. (Why and how?) Might be a debugger bug
+                        /* For some strange reason, the emulator can reach this catch block with
+                         * e set to null. (Why and how?) Might be a debugger bug
 						 */
                         System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
                         e.printStackTrace();
@@ -581,8 +641,8 @@ public class OgameAgent {
                         }
                     } else if (tagName.equals("td")) {
                         if (hasAttrValue(xpp, "class", "originFleet")) {
-							/* Example from the extracted response sample:
-							 * 	<td class="originFleet"> <--XPP pointer is here currently
+                            /* Example from the extracted response sample:
+                             * 	<td class="originFleet"> <--XPP pointer is here currently
 									<span class="tooltip" title="A Whole New World">
 										<figure class="planetIcon planet"></figure>
 										A Whole New World
@@ -607,8 +667,8 @@ public class OgameAgent {
                                     lastScannedEvent.originFleet = lastScannedEvent.originFleet.trim();
                             }
                         } else if (hasAttrValue(xpp, "class", "coordsOrigin")) {
-							/* Example:
-							 * <td class="coordsOrigin"> <-- XPP pointer here
+                            /* Example:
+                             * <td class="coordsOrigin"> <-- XPP pointer here
 									<a href="http://s125-en.ogame.gameforge.com/game/index.php?page=galaxy&galaxy=1&system=373" target="_top">
 										[1:373:8]
 									</a>
@@ -635,8 +695,8 @@ public class OgameAgent {
                             //Have to parse another HTML snippet. This HTML is both encoded to not confuse
                             //the parser, so it must be decoded first. Then it must be put through another
                             //XmlPullParser to gather the data.
-							/* Example:
-							 * <td class="icon_movement"> <-- xpp point here
+                            /* Example:
+                             * <td class="icon_movement"> <-- xpp point here
 							 * 	<span class="blah blah blah"
 							 * 		title="bunch of escaped HTML we have to unescape"
 							 * 		data-federation-user-id="">
@@ -670,8 +730,8 @@ public class OgameAgent {
 
                             lastScannedEvent.fleetResources.putAll(fleetData);
                         } else if (hasAttrValue(xpp, "class", "destFleet")) {
-							/* Example:
-							 * <td class="destFleet"> <-- XPP pointer here
+                            /* Example:
+                             * <td class="destFleet"> <-- XPP pointer here
 									<span class="tooltip" title="Slot 8 unavailable">
 										<figure class="planetIcon planet"></figure>
 										Slot 8 unavailable
@@ -694,8 +754,8 @@ public class OgameAgent {
                                     lastScannedEvent.destFleet = lastScannedEvent.destFleet.trim();
                             }
                         } else if (hasAttrValue(xpp, "class", "destCoords")) {
-							/* Example:
-							 * <td class="destCoords"> <--XPP pointer here
+                            /* Example:
+                             * <td class="destCoords"> <--XPP pointer here
 									<a href="http://s125-en.ogame.gameforge.com/game/index.php?page=galaxy&galaxy=1&system=204" target="_top">
 										[1:204:8]
 									</a>

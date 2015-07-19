@@ -19,8 +19,6 @@
 
 package com.wikaba.ogapp.agent;
 
-import com.wikaba.ogapp.ApplicationController;
-
 import java.util.HashMap;
 
 /**
@@ -40,6 +38,7 @@ public class NameToURI {
     private static void init() {
         initializedYet = true;
 
+        nameMap.put("Ganimede", "s133-%s.ogame.gameforge.com");
         nameMap.put("Antares", "s127-%s.ogame.gameforge.com");
         nameMap.put("Andromeda", "s101-%s.ogame.gameforge.com");
         nameMap.put("Betelgeuse", "s128-%s.ogame.gameforge.com");

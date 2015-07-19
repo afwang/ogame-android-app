@@ -128,15 +128,16 @@ public class AgentService extends Service {
         }
 
         List<FleetEvent> events = null;
-        final int retryAttempts = 3;
-        for (int attempts = 0; attempts < retryAttempts; attempts++) {
+        try {
+            events = agent.getOverviewData();
+        } catch (LoggedOutException e) {
+            e.printStackTrace();
+            //Log in and try again!
+            agent.login(account.universe, account.username, account.passwd, account.lang);
             try {
                 events = agent.getOverviewData();
-                break;
-            } catch (LoggedOutException e) {
-                e.printStackTrace();
-                //Log in and try again!
-                agent.login(account.universe, account.username, account.passwd, account.lang);
+            } catch (Exception exception) {
+                //woops
             }
         }
         return events;
