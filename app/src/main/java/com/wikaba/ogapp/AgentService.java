@@ -136,8 +136,8 @@ public class AgentService extends Service {
             agent.login(account.universe, account.username, account.passwd, account.lang);
             try {
                 events = agent.getOverviewData();
-            } catch (Exception exception) {
-                //woops
+            } catch (LoggedOutException e1) {
+                e1.printStackTrace();
             }
         }
         return events;

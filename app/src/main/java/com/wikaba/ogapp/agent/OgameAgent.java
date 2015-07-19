@@ -23,7 +23,7 @@ package com.wikaba.ogapp.agent;
 import android.util.Log;
 
 import com.squareup.okhttp.OkHttpClient;
-import com.wikaba.ogapp.agent.interfaces.ILogin;
+import com.wikaba.ogapp.agent.interfaces.IWebservice;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -39,8 +39,6 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,6 +52,7 @@ import retrofit.RetrofitError;
 import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
+import retrofit.mime.TypedInput;
 
 /**
  * This class represents 1 account on 1 universe. If the user is playing multiple accounts simultaneously,
@@ -68,7 +67,6 @@ public class OgameAgent {
     private final static OkHttpClient redirector = new OkHttpClient();
     public static final String LOGIN_URL_ROOT = "http://%s.ogame.gameforge.com/";
     public static final String LOGIN_URL = "http://fr.ogame.gameforge.com/main/login";
-    public static final String OVERVIEW_ENDPOINT = "/game/index.php?page=overview";
     public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 
     private String serverUri;
@@ -177,7 +175,7 @@ public class OgameAgent {
         //look into a different HTTP library for this, like OkHttp).
 
         RestAdapter adapter = createLoginAdapter(String.format("http://%s.ogame.gameforge.com", lang));
-        ILogin login_instance = adapter.create(ILogin.class);
+        IWebservice login_instance = adapter.create(IWebservice.class);
 
         try {
             Response reponse = login_instance.getMain();
@@ -190,15 +188,9 @@ public class OgameAgent {
 		 */
         System.out.println("START FIRST REQUEST (login)");
         String uri = String.format(LOGIN_URL_ROOT, lang);
-        Log.d("TAG", "----------------------------");
-        Log.d("TAG", "----------------------------");
-        Log.d("TAG", "----------------------------");
-        Log.d("TAG", "----------------------------");
-        Log.d("TAG", "----------------------------");
-        Log.d("TAG", "uri " + uri);
         try {
             adapter = createLoginAdapter(uri);
-            login_instance = adapter.create(ILogin.class);
+            login_instance = adapter.create(IWebservice.class);
 
             Response answer = null;
             try {
@@ -228,14 +220,6 @@ public class OgameAgent {
                 return false;
             }
 
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-
 			/*
              * SECOND REQUEST
 			 */
@@ -244,7 +228,7 @@ public class OgameAgent {
             UriCut root = getRoot(uri, "gameforge.com/");
             adapter = createLoginAdapter(root.root);
             Log.d("TAG", "having root = " + root.root);
-            login_instance = adapter.create(ILogin.class);
+            login_instance = adapter.create(IWebservice.class);
 
             try {
                 answer = login_instance.loginStep2(root.parameters.get("data"));
@@ -272,28 +256,19 @@ public class OgameAgent {
                 return false;
             }
 
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
-            Log.d("TAG", "----------------------------");
             /*
              * THIRD REQUEST (final request)
 			 */
             root = getRoot(uri, "gameforge.com/");
             adapter = createLoginAdapter(root.root);
-            login_instance = adapter.create(ILogin.class);
+            login_instance = adapter.create(IWebservice.class);
 
+
+            serverUri = root.root;
 
             //remove last server cookie
             interceptor.deleteCookie("OG_lastServer");
-
             try {
-                System.out.println("START THIRD REQUEST");
-
                 answer = login_instance.loginStep3(root.parameters.get("page"));
             } catch (RetrofitError error) {
                 if (error != null && error.getResponse() != null) {
@@ -338,69 +313,17 @@ public class OgameAgent {
      * will have non-null instance variables.
      */
     public List<FleetEvent> getOverviewData() throws LoggedOutException {
-        List<FleetEvent> overviewData = null;
-
-        HttpURLConnection conn = null;
-        String connectionUriStr = serverUri + OVERVIEW_ENDPOINT;
+        List<FleetEvent> overviewData;
+        RestAdapter adapter = createLoginAdapter(serverUri);
+        Log.d("TAG", "having root = " + serverUri);
+        IWebservice instance = adapter.create(IWebservice.class);
 
         try {
-            URL connectionUrl = new URL(connectionUriStr);
-            conn = (HttpURLConnection) connectionUrl.openConnection();
-        } catch (IOException e) {
-            System.err.println(e.toString() + '\n' + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-
-        InputStream responseStream = null;
-        try {
-            conn.setInstanceFollowRedirects(false);
-            int responseCode = makeGETReq(conn);
-
-            if (responseCode < 0) {
-                return null;
-            }
-
-            boolean isError;
-            if (responseCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
-                responseStream = conn.getErrorStream();
-                isError = true;
-            } else if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-                throw new LoggedOutException("Agent's cookies are no longer valid");
-            } else {
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    isError = false;
-                } else {
-                    isError = true;
-                }
-                responseStream = conn.getInputStream();
-            }
-
-            if (isError) {
-                BufferedReader isr = new BufferedReader(new InputStreamReader(responseStream));
-                String line;
-                while ((line = isr.readLine()) != null) {
-                    System.err.println(line);
-                }
-                isr.close();
-            } else {
-                List<FleetEvent> events = parseEvents(responseStream);
-                overviewData = events;
-            }
-        } catch (IOException e) {
-            System.err.println("Could not read response stream");
-            System.err.println(e.toString() + '\n' + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-            if (responseStream != null) {
-                try {
-                    responseStream.close();
-                } catch (IOException e) {
-                }
-            }
+            Response overview = instance.getSinglePage("overview");
+            overviewData = consumeFleetEventFrom(overview);
+        } catch (RetrofitError error) {
+            error.printStackTrace();
+            throw new LoggedOutException("Agent's cookies are no longer valid");
         }
 
         if (overviewData != null && overviewData.size() == 0) {
@@ -418,102 +341,41 @@ public class OgameAgent {
      * will have non-null instance variables.
      */
     public List<FleetEvent> getFleetEvents() throws LoggedOutException {
-        HttpURLConnection conn = null;
-        InputStream responseStream = null;
-        List<FleetEvent> events = null;
+        RestAdapter adapter = createLoginAdapter(serverUri);
+        Log.d("TAG", "having root = " + serverUri);
+        IWebservice instance = adapter.create(IWebservice.class);
 
         try {
-            URL connection = new URL(serverUri + EVENTLIST_ENDPOINT);
-            conn = (HttpURLConnection) connection.openConnection();
-
-            conn.setInstanceFollowRedirects(false);
-
-            int responseCode = makeGETReq(conn);
-
-            if (responseCode < 0) {
-                return null;
-            }
-
-            boolean isError;
-            if (responseCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
-                responseStream = conn.getErrorStream();
-                isError = true;
-            } else if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-                throw new LoggedOutException("Agent's cookies are no longer valid");
-            } else {
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    isError = false;
-                } else {
-                    isError = true;
-                }
-                responseStream = conn.getInputStream();
-            }
-
-            if (isError) {
-                BufferedReader isr = new BufferedReader(new InputStreamReader(responseStream));
-                String line;
-                while ((line = isr.readLine()) != null) {
-                    System.err.println(line);
-                }
-                isr.close();
-            } else {
-                events = parseEvents(responseStream);
-            }
-        } catch (IOException e) {
-            System.err.println(e.toString() + '\n' + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-            if (responseStream != null) {
-                try {
-                    responseStream.close();
-                } catch (IOException e) {
-                }
-            }
+            Response overview = instance.getSinglePageWithAjaxParameter("eventList", 1);
+            return consumeFleetEventFrom(overview);
+        } catch (RetrofitError error) {
+            throw new LoggedOutException("Agent's cookies are no longer valid");
         }
-        return events;
     }
 
     /**
-     * Sets the required headers and cookies for the request specified by connection.
-     * Connects to the URL specified by connection.
-     * <p/>
-     * Pre-condition: Parameter connection must be a valid connection request, and it
-     * should not have had connect() called on it.
-     * <p/>
-     * Post-condition: Parameter connection now has either an input or error stream to read from.
-     * Use the return value of this method to determine which stream to read from. Method
-     * disconnect() has also not been called on connection, so the caller of this method should
-     * handle calling disconnect on the connection.
+     * Convert a call for fleet event to an actual list of such items
      *
-     * @param connection - an HttpURLConnection to connect to.
-     * @return the HTTP response's status code if a connection was made. -1 if setting up the connection failed
-     * -2 if the connection could not be made.
+     * @return If no errors occurred while extracting the data, a list of @NotNull fleet movements with details
+     * is returned. Otherwvise, null is returned
      */
-    private int makeGETReq(HttpURLConnection connection) {
-        int responseCode = 0;
-
+    private List<FleetEvent> consumeFleetEventFrom(Response response) {
+        TypedInput body = response.getBody();
+        StringBuilder out = null;
         try {
-            connection.setRequestProperty("Accept-Language", "en-US");
-            connection.setRequestMethod("GET");
-            connection.setDoInput(true);
-
-            connection.connect();
-            responseCode = connection.getResponseCode();
-        } catch (ProtocolException e) {
-            System.err.println(e.toString() + '\n' + e.getMessage());
-            e.printStackTrace();
-            responseCode = -1;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(body.in()));
+            out = new StringBuilder();
+            String newLine = System.getProperty("line.separator");
+            String line;
+            while ((line = reader.readLine()) != null) {
+                out.append(line);
+                out.append(newLine);
+            }
+            System.out.println(out);
         } catch (IOException e) {
-            System.err.println("Could not open connection");
-            System.err.println(e.toString() + '\n' + e.getMessage());
             e.printStackTrace();
-            responseCode = -2;
         }
-
-        return responseCode;
+        return parseEvents(out.toString());
     }
 
     /**
@@ -529,8 +391,6 @@ public class OgameAgent {
      * Null on error.
      */
     private List<FleetEvent> parseEvents(InputStream inputStream) {
-        List<FleetEvent> eventList = new LinkedList<FleetEvent>();
-
         String response = "";
         try {
             StringBuilder strb = new StringBuilder();
@@ -548,11 +408,15 @@ public class OgameAgent {
             removeSection(strb, "The relocation allows you to move your planets", "deactivated for 24 hours.");
             removeSection(strb, "<div id=\"mmonetbar\" class=\"mmoogame\">", "</script>");
             response = strb.toString();
-//			System.out.println(response);
         } catch (IOException e) {
             System.err.println("Error reading the response: " + e + '\n' + e.getMessage());
             e.printStackTrace();
         }
+        return parseEvents(response);
+    }
+
+    private List<FleetEvent> parseEvents(String response) {
+        List<FleetEvent> eventList = new LinkedList<FleetEvent>();
 
         try {
             XmlPullParserFactory xppfactory = XmlPullParserFactory.newInstance();
