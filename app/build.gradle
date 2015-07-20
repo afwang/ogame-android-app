@@ -14,11 +14,6 @@ android {
         main {
             java.srcDirs = ['src/main/java-gen', 'src/main/java']
         }
-
-        //make AS and Gradle aware of the active dependencies
-        androidTest {
-            java.srcDirs = ['src/main/java-gen', 'src/test/java', 'src/test/resources']
-        }
     }
 
     productFlavors {

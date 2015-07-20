@@ -32,13 +32,14 @@ import android.widget.TextView;
 
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.FleetAndResources;
-import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.IntegerMissionMap;
+import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.utils.AndroidMissionMap;
 import com.wikaba.ogapp.utils.NameBridge;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,12 +137,12 @@ public class EventAdapter extends BaseAdapter {
         long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
         long timeLeft = event.data_arrival_time - currentTime;
         eta.setText(DateUtils.formatElapsedTime(timeLeft));
-        originCoords.setText(event.coordsOrigin);
+        originCoords.setText(event.coordsOrigin != null ? event.coordsOrigin.text : "");
 
         Resources res = context.getResources();
         outOrIn.setText(event.data_return_flight ? res.getString(R.string.overview_incoming) : res.getString(R.string.overview_outgoing));
 
-        destCoords.setText(event.destCoords);
+        destCoords.setText(event.destCoords != null ? event.destCoords.text : "");
         missionType.setText(missionBridge.getMission(event.data_mission_type));
 
         addCivilData(event, civilShips);
@@ -152,7 +153,7 @@ public class EventAdapter extends BaseAdapter {
     }
 
     private void addCivilData(FleetEvent eventData, LinearLayout civilShipLayout) {
-        Map<String, Long> data = eventData.fleetResources;
+        Map<String, Long> data = eventData.fleet;
         final String[] civilShipNames = {
                 FleetAndResources.SC,
                 FleetAndResources.LC,
@@ -190,7 +191,7 @@ public class EventAdapter extends BaseAdapter {
 
         //Remove extraneous views
             /* One way to think about layoutIndex after finishing the above loop
-			 * is that layoutIndex is the number of children in the layout with
+             * is that layoutIndex is the number of children in the layout with
 			 * the updated data. The child views starting at position layoutIndex
 			 * to the end should be removed. Thus, we only have to remove
 			 * children from the layout when layoutIndex is less than
@@ -203,7 +204,7 @@ public class EventAdapter extends BaseAdapter {
     }
 
     private void addCombatData(FleetEvent eventData, LinearLayout combatShipLayout) {
-        Map<String, Long> data = eventData.fleetResources;
+        Map<String, Long> data = eventData.fleet;
         final String[] combatShipNames = {
                 FleetAndResources.LF,
                 FleetAndResources.HF,
@@ -249,7 +250,11 @@ public class EventAdapter extends BaseAdapter {
     }
 
     private void addResourceData(FleetEvent eventData, LinearLayout resourceLayout) {
-        Map<String, Long> data = eventData.fleetResources;
+        Map<String, Long> data = new HashMap<>();
+
+        data.put(FleetAndResources.METAL, eventData.resources.metal);
+        data.put(FleetAndResources.CRYSTAL, eventData.resources.crystal);
+        data.put(FleetAndResources.DEUT, eventData.resources.deuterium);
         final String[] resourceNames = {
                 FleetAndResources.METAL,
                 FleetAndResources.CRYSTAL,

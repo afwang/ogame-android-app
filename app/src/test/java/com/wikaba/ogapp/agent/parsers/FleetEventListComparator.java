@@ -27,110 +27,68 @@ import java.util.List;
 import java.util.Map;
 
 public class FleetEventListComparator implements Comparator<List<FleetEvent>> {
-	@Override
-	public int compare(List<FleetEvent> l1, List<FleetEvent> l2) {
-		if(l1 == null || l2 == null) {
-			if(l1 != l2) {
-				//One, and only one, of the two list references are not null
-				//Treat null as the "lesser" value
-				return l1 == null ? -1 : 1;
-			}
-			else {
-				return 0;
-			}
-		}
+    @Override
+    public int compare(List<FleetEvent> l1, List<FleetEvent> l2) {
+        if (l1 == null || l2 == null) {
+            if (l1 != l2) {
+                //One, and only one, of the two list references are not null
+                //Treat null as the "lesser" value
+                return l1 == null ? -1 : 1;
+            } else {
+                return 0;
+            }
+        }
 
-		int size1 = l1.size();
-		int size2 = l2.size();
-		if(size1 != size2) {
-			return size2 - size1;
-		}
+        int size1 = l1.size();
+        int size2 = l2.size();
+        if (size1 != size2) {
+            return size2 - size1;
+        }
 
-		long difference = 0;
-		Iterator<FleetEvent> iter1 = l1.iterator();
-		Iterator<FleetEvent> iter2 = l2.iterator();
-		while(iter1.hasNext()) {
-			FleetEvent f1 = iter1.next();
-			FleetEvent f2 = iter2.next();
-			difference = f1.coordsOrigin.compareTo(f2.coordsOrigin);
-			if(difference != 0) {
-				break;
-			}
+        long difference = 0;
+        Iterator<FleetEvent> iter1 = l1.iterator();
+        Iterator<FleetEvent> iter2 = l2.iterator();
+        while (iter1.hasNext()) {
+            FleetEvent f1 = iter1.next();
+            FleetEvent f2 = iter2.next();
 
-			difference = f1.data_arrival_time - f2.data_arrival_time;
-			if(difference != 0) {
-				break;
-			}
+            difference = f1.compareTo(f2);
+        }
 
-			difference = f1.data_mission_type - f2.data_mission_type;
-			if(difference != 0) {
-				break;
-			}
+        return (int) difference;
+    }
 
-			if(f1.data_return_flight != f2.data_return_flight) {
-				difference = f1.data_return_flight ? 1 : 0;
-			}
+    private int compareFleetResources(Map<String, Long> m1, Map<String, Long> m2) {
+        if (m1 == null || m2 == null) {
+            if (m1 != m2) {
+                return m1 == null ? -1 : 1;
+            } else {
+                return 0;
+            }
+        }
 
-			if(difference != 0) {
-				break;
-			}
+        int size1 = m1.size();
+        int size2 = m2.size();
+        if (size1 != size2) {
+            return size2 - size1;
+        }
 
-			difference = f1.destCoords.compareTo(f2.destCoords);
-			if(difference != 0) {
-				break;
-			}
-
-			difference = f1.destFleet.compareTo(f2.destFleet);
-			if(difference != 0) {
-				break;
-			}
-
-			difference = f1.originFleet.compareTo(f2.destFleet);
-			if(difference != 0) {
-				break;
-			}
-
-			difference = compareFleetResources(f1.fleetResources, f2.fleetResources);
-			if(difference != 0) {
-				break;
-			}
-		}
-
-		return (int)difference;
-	}
-
-	private int compareFleetResources(Map<String, Long> m1, Map<String, Long> m2) {
-		if(m1 == null || m2 == null) {
-			if(m1 != m2) {
-				return m1 == null ? -1 : 1;
-			}
-			else {
-				return 0;
-			}
-		}
-
-		int size1 = m1.size();
-		int size2 = m2.size();
-		if(size1 != size2) {
-			return size2 - size1;
-		}
-
-		long difference = 0;
-		Iterator<String> keyIter = m1.keySet().iterator();
-		while(keyIter.hasNext()) {
-			String key1 = keyIter.next();
-			long v1 = m1.get(key1);
-			Long val2 = m2.get(key1);
-			if(val2 == null) {
-				return 1;
-			}
-			long v2 = val2;
-			if(v1 != v2) {
-				difference = v2 - v1;
-				break;
-			}
-			m2.remove(key1);
-		}
-		return (int)difference;
-	}
+        long difference = 0;
+        Iterator<String> keyIter = m1.keySet().iterator();
+        while (keyIter.hasNext()) {
+            String key1 = keyIter.next();
+            long v1 = m1.get(key1);
+            Long val2 = m2.get(key1);
+            if (val2 == null) {
+                return 1;
+            }
+            long v2 = val2;
+            if (v1 != v2) {
+                difference = v2 - v1;
+                break;
+            }
+            m2.remove(key1);
+        }
+        return (int) difference;
+    }
 }
