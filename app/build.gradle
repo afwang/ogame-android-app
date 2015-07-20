@@ -57,6 +57,9 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.2.+'
     compile 'com.squareup.okhttp:okhttp-urlconnection:2.2.+'
     compile 'org.jsoup:jsoup:1.8.2'
+
+    compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
+    compile 'com.afollestad:material-dialogs:0.7.6.0'
     compile 'com.github.navasmdc:MaterialDesign:1.5@aar'
 
     compile 'com.jakewharton:butterknife:7.0.1'
