@@ -246,8 +246,11 @@ public class NoAccountActivity extends SystemFittableActivity {
     public void onLoggedEvent(OnLoggedEvent event) {
         if (event.isConnected()) {
             startOverviewActivity();
+        } else {
+            //possible race condition with http service returning false so dismiss any dialog possible
+            //which could prevent app usability during onCOnfigurationChanged
+            dismissLogin();
         }
-        //nothing, stay in this activity
     }
 
     private void dismissLogin() {
