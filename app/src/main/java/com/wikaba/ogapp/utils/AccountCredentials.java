@@ -82,4 +82,9 @@ public class AccountCredentials implements Parcelable {
             return new AccountCredentials[size];
         }
     };
+
+    @Override
+    public String toString() {
+        return username + " " + universe;
+    }
 }

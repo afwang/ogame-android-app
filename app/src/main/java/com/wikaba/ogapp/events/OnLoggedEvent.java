@@ -22,6 +22,7 @@ package com.wikaba.ogapp.events;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.ResourceItem;
+import com.wikaba.ogapp.utils.AccountCredentials;
 
 import java.util.List;
 
@@ -33,10 +34,12 @@ public class OnLoggedEvent {
     private OgameAgent _agent;
     private List<FleetEvent> _fleet_events;
     private List<ResourceItem> _resources_information;
+    private AccountCredentials _credentials;
 
-    public OnLoggedEvent(boolean state, OgameAgent agent,
+    public OnLoggedEvent(boolean state, AccountCredentials credentials, OgameAgent agent,
                          List<FleetEvent> fleet_events,
                          List<ResourceItem> resources_information) {
+        _credentials = credentials;
         _state = state;
         _agent = agent;
         _fleet_events = fleet_events;
@@ -57,5 +60,9 @@ public class OnLoggedEvent {
 
     public List<ResourceItem> getResourceItems() {
         return _resources_information;
+    }
+
+    public AccountCredentials getCredentials() {
+        return _credentials;
     }
 }

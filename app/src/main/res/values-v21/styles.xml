@@ -35,6 +35,7 @@
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowBackground">@color/colorPrimaryDark</item>
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:windowTranslucentStatus">true</item>
     </style>
 
 </resources>

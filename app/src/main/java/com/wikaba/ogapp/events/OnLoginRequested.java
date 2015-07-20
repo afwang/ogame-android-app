@@ -35,4 +35,9 @@ public class OnLoginRequested {
     public AccountCredentials getAccountCredentials() {
         return _account_crendentials;
     }
+
+	@Override
+	public String toString(){
+		return _account_crendentials.toString();
+	}
 }

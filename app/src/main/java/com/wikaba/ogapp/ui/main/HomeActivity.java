@@ -26,17 +26,12 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
 
 import com.wikaba.ogapp.AgentService;
-import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.models.FleetEvent;
-import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
-import com.wikaba.ogapp.events.OnLoginRequested;
-import com.wikaba.ogapp.ui.login.LoginFragment;
 import com.wikaba.ogapp.ui.overview.OverviewFragment;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
@@ -75,12 +70,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new NoAccountFragment()).commit();
-        } else {
-            activeAccount = savedInstanceState.getParcelable(ACCOUNT_KEY);
-        }
+        //no creation since the register on eventbus will created for us the event
         mBound = false;
     }
 
@@ -119,32 +109,8 @@ public class HomeActivity extends AppCompatActivity {
         unbindService(agentServiceConn);
     }
 
-    public void addAccount(AccountCredentials creds) {
-        AccountsManager manager = ApplicationController.getInstance().getAccountsManager();
-        long accountRowId = manager.addAccount(creds.universe, creds.username, creds.passwd, creds.lang);
-
-        if (accountRowId < 0) {
-            Toast.makeText(this, "There was a problem adding an account", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        activeAccount = new AccountCredentials(creds);
-        activeAccount.id = accountRowId;
-
-        goToLogin();
-        EventBus.getDefault().post(new OnLoginRequested(activeAccount));
-    }
-
     public void goToAccountSelector() {
-        NoAccountFragment f = new NoAccountFragment();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, f).commit();
-    }
-
-    public void goToLogin() {
-        LoginFragment confrag = new LoginFragment();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, confrag).commit();
+        EventBus.getDefault().postSticky(new OnLoggedEvent(false, null, null, null, null));
     }
 
     public void goToOverview() {
@@ -160,14 +126,15 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void onEventLogged(OnLoggedEvent event) {
         if (event.isConnected()) {
             _current_logged_event = event;
+            activeAccount = event.getCredentials();
 
             goToOverview();
         } else {
-            goToAccountSelector();
+            startLoginActivity();
         }
     }
 
@@ -209,5 +176,12 @@ public class HomeActivity extends AppCompatActivity {
 
     public List<FleetEvent> getCurrentFleetEvents() {
         return _current_logged_event != null ? _current_logged_event.getFleetEvents() : null;
+    }
+
+    private void startLoginActivity() {
+        Intent intent = new Intent(this, NoAccountActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(0, 0);
     }
 }

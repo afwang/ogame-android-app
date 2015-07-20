@@ -58,6 +58,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 
+@Deprecated
 public class NoAccountFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
         AdapterView.OnItemClickListener {
@@ -159,7 +160,7 @@ public class NoAccountFragment extends Fragment
         acc.username = username;
         acc.passwd = passwd;
         acc.lang = lang;
-        act.addAccount(acc);
+        //act.addAccount(acc);
     }
 
     @OnClick(R.id.pw_checkbox)
@@ -170,11 +171,12 @@ public class NoAccountFragment extends Fragment
         passwdField.setInputType(inputType);
     }
 
+    @Deprecated
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
         AccountCredentials cred = allAccounts.get(position);
         act.setActiveAccount(cred);
-        act.goToLogin();
+        //act.goToLogin();
         EventBus.getDefault().post(new OnLoginRequested(cred));
     }
 

@@ -32,6 +32,7 @@ import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
+import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
@@ -163,6 +164,7 @@ public class AgentService extends Service {
 
     @Subscribe(threadMode = ThreadMode.Async)
     public void onRequestLogin(OnLoginRequested login_request) {
+        EventBus.getDefault().postSticky(new OnLoginEvent(true));
         synchronized (this) {
             AccountCredentials credentials = login_request.getAccountCredentials();
             loginToAccount(credentials);
@@ -188,8 +190,13 @@ public class AgentService extends Service {
                         e.printStackTrace();
                     }
                 }
-                EventBus.getDefault().post(new OnLoggedEvent(logged, agent, events, resources));
+                EventBus.getDefault().postSticky(new OnLoginEvent(false));
+                EventBus.getDefault().postSticky(new OnLoggedEvent(logged, credentials,
+                        agent, events, resources));
             }
+            //no post event here
         }
+        // or here
+        //since the only way to be ok is via the current poststicky/post
     }
 }
