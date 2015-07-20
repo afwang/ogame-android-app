@@ -17,7 +17,7 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaga.ogapp.agent;
+package com.wikaba.ogapp.agent.parsers;
 
 import com.wikaba.ogapp.agent.models.FleetEvent;
 
