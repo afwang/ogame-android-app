@@ -85,27 +85,40 @@ public class FleetEvent implements Comparable<FleetEvent> {
         int difference = 0;
         try {
             difference = coordsOrigin.compareTo(another.coordsOrigin);
-            if (difference != 0) return difference;
+            if (difference != 0) {
+                return difference;
+            }
 
             difference = (int) (data_arrival_time - another.data_arrival_time);
-            if (difference != 0) return difference;
+            if (difference != 0) {
+                return difference;
+            }
 
             difference = data_mission_type - another.data_mission_type;
-            if (difference != 0) return difference;
+            if (difference != 0) {
+                return difference;
+            }
 
             if (data_return_flight != another.data_return_flight) {
-                difference = data_return_flight ? 1 : 0;
+                if (data_return_flight) {
+                    return 1;
+                }
             }
-            if (difference != 0) return difference;
 
             difference = destCoords.compareTo(another.destCoords);
-            if (difference != 0) return difference;
+            if (difference != 0) {
+                return difference;
+            }
 
             difference = destFleet.compareTo(another.destFleet);
-            if (difference != 0) return difference;
+            if (difference != 0) {
+                return difference;
+            }
 
-            difference = originFleet.compareTo(another.destFleet);
-            if (difference != 0) return difference;
+            difference = originFleet.compareTo(another.originFleet);
+            if (difference != 0) {
+                return difference;
+            }
 
             //TODO compare resources
         } catch (Exception exception) {

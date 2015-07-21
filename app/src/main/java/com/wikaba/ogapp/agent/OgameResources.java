@@ -24,6 +24,7 @@ public class OgameResources {
 	private long crystal;
 	private long deut;
 	private long availEnergy;
+	private long maxEnergy;
 
 	public long getMetal() {
 		return metal;
@@ -65,5 +66,4 @@ public class OgameResources {
 		this.maxEnergy = maxEnergy;
 	}
 
-	private long maxEnergy;
 }

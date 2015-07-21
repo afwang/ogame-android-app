@@ -51,16 +51,16 @@ public class FleetEventLoaderTest {
 		//Mockito.when(act.getAccountRowId()).thenReturn(Long.valueOf(1));
 		List<FleetEvent> myEventList = new ArrayList<FleetEvent>();
 		FleetEvent myEvent = new FleetEvent();
-		myEvent.coordsOrigin = "1:1:1";
+//		myEvent.coordsOrigin = "1:1:1";
 		myEvent.data_arrival_time = 1000;
 		myEvent.data_mission_type = IntegerMissionMap.ATTACK;
 		myEvent.data_return_flight = true;
-		myEvent.destCoords = "1:1:2";
+//		myEvent.destCoords = "1:1:2";
 		myEvent.destFleet = "Destination planet";
 		myEvent.originFleet = "Origin planet";
-		Map<String, Long> fleetResources = myEvent.fleetResources;
-		fleetResources.put(FleetAndResources.LF, 1000L);
-		fleetResources.put(FleetAndResources.METAL, 500L);
+//		Map<String, Long> fleetResources = myEvent.fleetResources;
+//		fleetResources.put(FleetAndResources.LF, 1000L);
+//		fleetResources.put(FleetAndResources.METAL, 500L);
 		myEventList.add(myEvent);
 		//ERROR HERE REQUIRE AccountCredentials
 		//Mockito.when(service.getFleetEvents(1)).thenReturn(myEventList);
@@ -98,7 +98,7 @@ public class FleetEventLoaderTest {
 				&& cursor1.destFleet.equals(cursor2.destFleet)
 				&& cursor1.originFleet.equals(cursor2.originFleet);
 			if(areEventsEqual) {
-				areEventsEqual = areMapsEqual(cursor1.fleetResources, cursor2.fleetResources);
+//				areEventsEqual = areMapsEqual(cursor1.fleetResources, cursor2.fleetResources);
 			}
 
 			if(!areEventsEqual) {

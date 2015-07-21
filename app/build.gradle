@@ -8,6 +8,7 @@ android {
         applicationId "com.wikaba.ogapp"
         minSdkVersion 9
         targetSdkVersion 21
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets {
@@ -48,6 +49,9 @@ dependencies {
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
     androidTestCompile 'com.android.support.test:runner:0.3'
     androidTestCompile 'com.android.support.test:rules:0.3'
+    androidTestCompile 'org.slf4j:slf4j-api:1.7.12'
+    androidTestCompile 'org.slf4j:slf4j-simple:1.7.12'
+    androidTestCompile 'com.google.code.gson:gson:2.3.1'
 
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'com.squareup.okhttp:okhttp:2.2.+'

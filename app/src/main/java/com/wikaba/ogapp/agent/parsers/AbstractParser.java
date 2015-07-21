@@ -34,9 +34,9 @@ import java.util.List;
  * Created by kevinleperf on 19/07/15.
  */
 public abstract class AbstractParser<T> {
-    public abstract T parse(InputStream strea, OgameResources ressources);
+    public abstract T parse(InputStream stream, OgameResources resources);
 
-    public abstract T parse(String raw, OgameResources ressources);
+    public abstract T parse(String raw, OgameResources resources);
 
     /**
      * Pre-condition: The current state of the XmlPullParser xpp is at a START_TAG
