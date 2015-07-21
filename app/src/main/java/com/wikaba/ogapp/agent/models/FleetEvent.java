@@ -67,9 +67,9 @@ public class FleetEvent implements Comparable<FleetEvent> {
         fleet = new HashMap<String, Long>();
         resources = new FleetResources();
 
-        //originFleet = "";
+        originFleet = "";
         //coordsOrigin = new LinkHTML();
-        //destFleet = "";
+        destFleet = "";
         //destCoords = new LinkHTML();
     }
 
