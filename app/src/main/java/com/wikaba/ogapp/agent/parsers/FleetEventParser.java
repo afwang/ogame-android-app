@@ -99,9 +99,9 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
             for (Element td : tds) {
                 Element span = td.getElementsByTag("span").first();
                 if (td.hasClass("originFleet")) {
-					event.originFleet = stripTags(td.childNodes()).trim();
+                    event.originFleet = stripTags(td.childNodes()).trim();
                 } else if (td.hasClass("destFleet")) {
-					event.destFleet = stripTags(td.childNodes()).trim();
+                    event.destFleet = stripTags(td.childNodes()).trim();
                 } else if (td.hasClass("coordsOrigin")) {
                     event.coordsOrigin = extractFirstLink(td);
                 } else if (td.hasClass("destCoords")) {
@@ -130,7 +130,6 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
      * class FleetAndResources
      */
     private void parseFleetResComposition(FleetEvent output, String htmlEncodedData) {
-        HashMap<String, Long> resources = new HashMap<>();
         Document document = Jsoup.parse(htmlEncodedData);
 
         Element table = document.getElementsByTag("table").first();
@@ -151,7 +150,7 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
                     } else if (!has_ships && tr.children().size() == 2) {
                         String name = tr.child(0).text().trim();
                         long value = optLong(tr.child(1).text());
-                        resources.put(name, value);
+                        output.fleet.put(name, value);
                     } else if (!has_res && tr.children().size() == 2) {
                         long value = optLong(tr.child(1).text());
                         if (output.resources.metal == -1) {
@@ -176,7 +175,6 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
             if (output.resources.deuterium == -1) {
                 output.resources.deuterium = 0;
             }
-
         }
     }
 }
