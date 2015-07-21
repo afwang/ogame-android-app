@@ -99,9 +99,9 @@ public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
             for (Element td : tds) {
                 Element span = td.getElementsByTag("span").first();
                 if (td.hasClass("originFleet")) {
-                    if (span != null) event.originFleet = stripTags(span.childNodes());
+					event.originFleet = stripTags(td.childNodes()).trim();
                 } else if (td.hasClass("destFleet")) {
-                    if (span != null) event.destFleet = stripTags(span.childNodes());
+					event.destFleet = stripTags(td.childNodes()).trim();
                 } else if (td.hasClass("coordsOrigin")) {
                     event.coordsOrigin = extractFirstLink(td);
                 } else if (td.hasClass("destCoords")) {

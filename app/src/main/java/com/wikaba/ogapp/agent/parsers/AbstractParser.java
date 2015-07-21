@@ -24,6 +24,7 @@ import com.wikaba.ogapp.agent.models.LinkHTML;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.xmlpull.v1.XmlPullParser;
 
@@ -91,9 +92,7 @@ public abstract class AbstractParser<T> {
 
     private void stripTagsInternal(StringBuilder builder, List<Node> node_list) {
         for (Node node : node_list) {
-            String nodeName = node.nodeName();
-
-            if (nodeName.equalsIgnoreCase("#text")) {
+            if (node instanceof TextNode) {
                 builder.append(node.toString());
             } else {
                 //TODO LINEAR CALL WITH TEMPORARY LIST
