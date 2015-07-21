@@ -38,91 +38,63 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class EventParserTest {
-	private static final Logger logger = LoggerFactory.getLogger(EventParserTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventParserTest.class);
 
-	InputStream htmlResponse;
-	List<FleetEvent> expectedEvents;
-	OgameResources expectedRes;
+    InputStream htmlResponse;
+    List<FleetEvent> expectedEvents;
 
-	@Before
-	public void readInTestFile() {
-		//We will use the Class class's methods for retrieving
-		//resource files
-		final String filepath = "lots_of_events.html";
-		InputStream input = this.getClass().getResourceAsStream(filepath);
-		htmlResponse = new BufferedInputStream(input);
+    @Before
+    public void readInTestFile() {
+        //We will use the Class class's methods for retrieving
+        //resource files
+        final String filepath = "lots_of_events.html";
+        InputStream input = this.getClass().getResourceAsStream(filepath);
+        htmlResponse = new BufferedInputStream(input);
 
-		expectedEvents = buildExpectedEventsList();
-		expectedRes = getExpectedRes();
-	}
+        expectedEvents = buildExpectedEventsList();
+    }
 
-	@Test
-	public void testParseEvents() {
-		FleetEventParser myParser = new FleetEventParser();
-		OgameResources parsedRes = new OgameResources();
+    @Test
+    public void testParseEvents() {
+        FleetEventParser myParser = new FleetEventParser();
+        OgameResources parsedRes = new OgameResources();
+        OgameResources expectedRes = new OgameResources();
 
-		List<FleetEvent> parsedEvents = myParser.parse(htmlResponse, parsedRes);
+        List<FleetEvent> parsedEvents = myParser.parse(htmlResponse, parsedRes);
 
-		Comparator<List<FleetEvent>> listComparator = new FleetEventListComparator();
-		Assert.assertEquals(0, listComparator.compare(expectedEvents, parsedEvents));
-		Assert.assertEquals(expectedRes.getMetal(), parsedRes.getMetal());
-		Assert.assertEquals(expectedRes.getCrystal(), parsedRes.getCrystal());
-		Assert.assertEquals(expectedRes.getDeut(), parsedRes.getDeut());
-		Assert.assertEquals(expectedRes.getAvailEnergy(), parsedRes.getAvailEnergy());
-		Assert.assertEquals(expectedRes.getMaxEnergy(), parsedRes.getMaxEnergy());
-	}
+        Comparator<List<FleetEvent>> listComparator = new FleetEventListComparator();
+        Assert.assertEquals(listComparator.compare(expectedEvents, parsedEvents), 0);
+        Assert.assertEquals(expectedRes.getMetal(), parsedRes.getMetal());
+        Assert.assertEquals(expectedRes.getCrystal(), parsedRes.getCrystal());
+        Assert.assertEquals(expectedRes.getDeut(), parsedRes.getDeut());
+        Assert.assertEquals(expectedRes.getAvailEnergy(), parsedRes.getAvailEnergy());
+        Assert.assertEquals(expectedRes.getMaxEnergy(), parsedRes.getMaxEnergy());
+    }
 
-	@After
-	public void closeResources() {
-		try {
-			if(htmlResponse != null) {
-				htmlResponse.close();
-			}
-		}
-		catch(IOException e) {
-			logger.error("Caught an IOException", e);
-		}
-	}
+    @After
+    public void closeResources() {
+        try {
+            if (htmlResponse != null) {
+                htmlResponse.close();
+            }
+        } catch (IOException e) {
+            logger.error("Caught an IOException", e);
+        }
+    }
 
-	private List<FleetEvent> buildExpectedEventsList() {
-		List<FleetEvent> eventsList;
-		try {
-			Gson gson = new Gson();
-			final String expectedResultsPath = "expectedEventsList.json";
-			InputStream expectedResultsIn = this.getClass().getResourceAsStream(expectedResultsPath);
-			BufferedReader jsonInput = new BufferedReader(
-				new InputStreamReader(expectedResultsIn, "UTF-8"));
-			EventsList expectedEvents = gson.fromJson(jsonInput, EventsList.class);
-			eventsList = Arrays.asList(expectedEvents.events);
-		} catch(UnsupportedEncodingException e) {
-			logger.error("Unsupported encoding in event list builder method", e);
-			eventsList = new ArrayList<>();
-		}
-		return eventsList;
-	}
-
-	private OgameResources getExpectedRes() {
-		OgameResources res;
-		try {
-			Gson gson = new Gson();
-			final String expectedResPath = "expectedResources.json";
-			InputStream expectedResIn = this.getClass().getResourceAsStream(expectedResPath);
-			BufferedReader jsonInput = new BufferedReader(
-				new InputStreamReader(expectedResIn, "UTF-8"));
-			res = gson.fromJson(jsonInput, OgameResources.class);
-		} catch(UnsupportedEncodingException e) {
-			logger.error("Unsupported encoding in resource builder method", e);
-			//Create a resources object with values set to 0
-			res = new OgameResources();
-		}
-		return res;
-	}
+    private List<FleetEvent> buildExpectedEventsList() {
+        Gson gson = new Gson();
+        final String expectedResultsPath = "expectedEventsList.json";
+        InputStream expectedResultsIn = this.getClass().getResourceAsStream(expectedResultsPath);
+        BufferedReader jsonInput = new BufferedReader(
+                new InputStreamReader(expectedResultsIn));
+        EventsList expectedEvents = gson.fromJson(jsonInput, EventsList.class);
+        return Arrays.asList(expectedEvents.events);
+    }
 }
