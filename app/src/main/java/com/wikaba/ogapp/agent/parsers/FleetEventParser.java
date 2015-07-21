@@ -19,164 +19,445 @@
 
 package com.wikaba.ogapp.agent.parsers;
 
-import com.wikaba.ogapp.agent.OgameResources;
+import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.OgameResources;
+import com.wikaba.ogapp.agent.models.FleetResources;
+import com.wikaba.ogapp.agent.models.LinkHTML;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
 
-    public List<FleetEvent> parse(InputStream stream, OgameResources ressources) {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
-        StringBuffer buffer = new StringBuffer(1024);
-        String line;
-        try {
-            while ((line = bufferedReader.readLine()) != null) {
-                buffer.append(line);
-                buffer.append("\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+	public List<FleetEvent> parse(String raw, OgameResources resources) {
+		List<FleetEvent> eventList;
+		try {
+			byte[] byteArray = raw.getBytes("UTF-8");
+			ByteArrayInputStream byteStream = new ByteArrayInputStream(byteArray);
+			eventList = parse(byteStream, resources);
+		} catch(UnsupportedEncodingException e) {
+			eventList = null;
+		}
+		return eventList;
+	}
 
-        return parse(buffer.toString(), ressources);
-    }
+	public List<FleetEvent> parse(InputStream stream, OgameResources resources) {
+		List<FleetEvent> eventList = new LinkedList<>();
 
-    public List<FleetEvent> parse(String raw, OgameResources ressources) {
-        List<FleetEvent> eventList = new LinkedList<>();
+		try {
+			XmlPullParserFactory xppfactory = XmlPullParserFactory.newInstance();
+			XmlPullParser xpp = xppfactory.newPullParser();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+			xpp.setInput(reader);
+			xpp.defineEntityReplacementText("ndash", "-");
+			xpp.defineEntityReplacementText("nbsp", " ");
 
-        Document document = Jsoup.parse(raw);
+			FleetEvent lastScannedEvent = null;
+			//To make the next for loop look easier to read and understand, we get to the first instance of
+			//<tr class="eventFleet">
+			int eventType = xpp.getEventType();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				String tagName = xpp.getName();
 
-        Element table_event = null;
-        if (document != null) {
-            Elements tables = document.getElementsByTag("table");
-            for (Element element : tables) {
-                if ("eventContent".equals(element.id())) {
-                    table_event = element;
-                    break;
-                }
-            }
-        }
+				if (tagName != null && tagName.equals("tr") && hasAttrValue(xpp, "class", "eventFleet")) {
+					lastScannedEvent = new FleetEvent();
+					int attrCount = xpp.getAttributeCount();
+					for (int index = 0; index < attrCount; index++) {
+						String attrName = xpp.getAttributeName(index);
+						if (attrName.equals("data-mission-type")) {
+							String value = xpp.getAttributeValue(index);
+							lastScannedEvent.data_mission_type = Integer.valueOf(value);
+						} else if (attrName.equals("data-return-flight")) {
+							String value = xpp.getAttributeValue(index);
+							lastScannedEvent.data_return_flight = Boolean.valueOf(value);
+						} else if (attrName.equals("data-arrival-time")) {
+							String value = xpp.getAttributeValue(index);
+							lastScannedEvent.data_arrival_time = Long.valueOf(value);
+						}
+					}
+					//We must call next() here before breaking. Otherwise, the next loop
+					//will add the incomplete FleetEvent object since it will detect
+					//the same <tr...> element and think it's a new event when it's
+					//still the same first event.
+					xpp.next();
+					break;
+				}
+				try {
+					eventType = xpp.next();
+				} catch (XmlPullParserException e) {
+						/* For some strange reason, the emulator can reach this catch block with
+						 * e set to null. (Why and how?) Might be a debugger bug
+						 */
+					System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				} catch (ArrayIndexOutOfBoundsException e) {
+					//This exception occurs near the end of the document, but it is not something that
+					//should stop the app over.
+					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
+			}
 
-        if (table_event != null) {
-            Elements trs = table_event.getElementsByTag("tr");
+			//No events scanned. Just return.
+			if (lastScannedEvent == null)
+				return eventList;
 
-            for (Element tr : trs) {
-                if (tr.hasClass("eventFleet")) {
-                    FleetEvent event = extractFleetEvent(tr);
+			eventType = xpp.getEventType();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				//Begin parsing for fleet events.
+				if (eventType == XmlPullParser.START_TAG) {
+					String tagName = xpp.getName();
+					tagName = (tagName == null) ? "" : tagName;
 
-                    if (event != null) {
-                        eventList.add(event);
-                    }
-                }
-            }
-        }
+					if (tagName.equals("tr") && hasAttrValue(xpp, "class", "eventFleet")) {
+						eventList.add(lastScannedEvent);
+						lastScannedEvent = new FleetEvent();
 
-        return eventList;
-    }
+						int attrCount = xpp.getAttributeCount();
+						for (int index = 0; index < attrCount; index++) {
+							String attrName = xpp.getAttributeName(index);
+							if (attrName.equals("data-mission-type")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_mission_type = Integer.valueOf(value);
+							} else if (attrName.equals("data-return-flight")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_return_flight = Boolean.valueOf(value);
+							} else if (attrName.equals("data-arrival-time")) {
+								String value = xpp.getAttributeValue(index);
+								lastScannedEvent.data_arrival_time = Long.valueOf(value);
+							}
+						}
+					} else if (tagName.equals("td")) {
+						if (hasAttrValue(xpp, "class", "originFleet")) {
+							/* Example from the extracted response sample:
+							 * 	<td class="originFleet"> <--XPP pointer is here currently
+									<span class="tooltip" title="A Whole New World">
+										<figure class="planetIcon planet"></figure>
+										A Whole New World
+									</span>
+								</td>
+							 */
+							tagName = xpp.getName();
+							int htmlevent = 0;
+							int counter = 0;
+							//From the response extract, we need 5 next()'s to get to the text we need.
+							//Set a hard limit just in case.
+							while ((htmlevent != XmlPullParser.END_TAG || !tagName.equalsIgnoreCase("figure")) && counter < 5) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
 
-    public FleetEvent extractFleetEvent(Element tr) {
-        if (tr != null) {
-            FleetEvent event = new FleetEvent();
-            event.data_mission_type = optInt(tr.attr("data-mission-type"));
-            event.data_arrival_time = optInt(tr.attr("data-arrival-time"));
-            event.data_return_flight = optBoolean(tr.attr("data-return-flight"));
+							xpp.next();
+							if (xpp.getEventType() == XmlPullParser.TEXT) {
+								lastScannedEvent.originFleet = xpp.getText();
+								if (lastScannedEvent.originFleet != null)
+									lastScannedEvent.originFleet = lastScannedEvent.originFleet.trim();
+							}
+						} else if (hasAttrValue(xpp, "class", "coordsOrigin")) {
+							/* Example:
+							 * <td class="coordsOrigin"> <-- XPP pointer here
+									<a href="http://s125-en.ogame.gameforge.com/game/index.php?page=galaxy&galaxy=1&system=373" target="_top">
+										[1:373:8]
+									</a>
+								</td>
+							 */
+							tagName = xpp.getName();
 
+							//We need 2 next()'s to get to the <a> element. Use a hard limit just in case.
+							int htmlevent = 0;
+							int counter = 0;
+							while ((htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("a")) && counter < 2) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
 
-            Elements tds = tr.getElementsByTag("td");
+							xpp.next();
+							if (xpp.getEventType() == XmlPullParser.TEXT) {
+								lastScannedEvent.coordsOrigin = new LinkHTML();
+								String coordinates = xpp.getText();
+								if (coordinates != null) {
+									coordinates = coordinates.trim();
+								} else {
+									coordinates = "";
+								}
+								lastScannedEvent.coordsOrigin.text = coordinates;
+							}
+						} else if (hasAttrValue(xpp, "class", "icon_movement") || hasAttrValue(xpp, "class", "icon_movement_reserve")) {
+							//Have to parse another HTML snippet. This HTML is both encoded to not confuse
+							//the parser, so it must be decoded first. Then it must be put through another
+							//XmlPullParser to gather the data.
+							/* Example:
+							 * <td class="icon_movement"> <-- xpp point here
+							 * 	<span class="blah blah blah"
+							 * 		title="bunch of escaped HTML we have to unescape"
+							 * 		data-federation-user-id="">
+							 * 			&nbsp;
+							 * 	</span>
+							 * </td>
+							 */
+							tagName = xpp.getName();
+							int htmlevent = 0;
+							tagName = (tagName == null) ? "" : tagName;
+							while (htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("span")) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+							}
 
-            for (Element td : tds) {
-                Element span = td.getElementsByTag("span").first();
-                if (td.hasClass("originFleet")) {
-					event.originFleet = stripTags(td.childNodes()).trim();
-                } else if (td.hasClass("destFleet")) {
-					event.destFleet = stripTags(td.childNodes()).trim();
-                } else if (td.hasClass("coordsOrigin")) {
-                    event.coordsOrigin = extractFirstLink(td);
-                } else if (td.hasClass("destCoords")) {
-                    event.destCoords = extractFirstLink(td);
-                } else if (td.hasClass("icon_movement_reserve") || td.hasClass("icon_movement")) {
-                    if (span != null) {
-                        String composition = span.attr("title");
-                        parseFleetResComposition(event, composition);
-                    }
-                }
-            }
-            return event;
-        }
+							Map<String, Long> fleetData = null;
+							if (xpp.getEventType() == XmlPullParser.START_TAG) {
+								int attrSize = xpp.getAttributeCount();
+								String titleValue = null;
+								for (int index = 0; index < attrSize; index++) {
+									String attrName = xpp.getAttributeName(index);
+									if (attrName.equals("title")) {
+										titleValue = xpp.getAttributeValue(index);
+									}
+								}
 
-        return null;
-    }
+								if (titleValue != null) {
+									parseFleetResComposition(titleValue, lastScannedEvent.fleet, lastScannedEvent.resources);
+								}
+							}
+						} else if (hasAttrValue(xpp, "class", "destFleet")) {
+							/* Example:
+							 * <td class="destFleet"> <-- XPP pointer here
+									<span class="tooltip" title="Slot 8 unavailable">
+										<figure class="planetIcon planet"></figure>
+										Slot 8 unavailable
+									</span>
+								</td>
+							 */
+							int counter = 0;
+							int htmlevent = 0;
+							tagName = xpp.getName();
+							tagName = (tagName == null) ? "" : tagName;
+							while ((htmlevent != XmlPullParser.END_TAG || !tagName.equalsIgnoreCase("figure")) && counter < 5) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
+							xpp.next();
+							if (xpp.getEventType() == XmlPullParser.TEXT) {
+								lastScannedEvent.destFleet = xpp.getText();
+								if (lastScannedEvent.destFleet != null)
+									lastScannedEvent.destFleet = lastScannedEvent.destFleet.trim();
+							}
+						} else if (hasAttrValue(xpp, "class", "destCoords")) {
+							/* Example:
+							 * <td class="destCoords"> <--XPP pointer here
+									<a href="http://s125-en.ogame.gameforge.com/game/index.php?page=galaxy&galaxy=1&system=204" target="_top">
+										[1:204:8]
+									</a>
+								</td>
+							 */
 
-    /**
-     * Unescapes the HTML-escaped data in the parameter string htmlEncodedData.
-     * The string is then parsed with an XmlPullParser to extract fleet and resource
-     * data. The data is inserted into a Map<String, Long> object. This Map is then
-     * returned.
-     *
-     * @param htmlEncodedData - HTML-escaped string containing the details of the fleet breakdown and composition
-     * @return a Map<String, Long> object containing fleet and resource composition. Keys are listed in
-     * class FleetAndResources
-     */
-    private void parseFleetResComposition(FleetEvent output, String htmlEncodedData) {
-        HashMap<String, Long> resources = new HashMap<>();
-        Document document = Jsoup.parse(htmlEncodedData);
+							int counter = 0;
+							int htmlevent = 0;
+							tagName = xpp.getName();
+							tagName = (tagName == null) ? "" : tagName;
+							while ((htmlevent != XmlPullParser.START_TAG || !tagName.equalsIgnoreCase("a")) && counter < 2) {
+								htmlevent = xpp.next();
+								tagName = xpp.getName();
+								counter++;
+							}
 
-        Element table = document.getElementsByTag("table").first();
-        if (table != null && table.hasClass("fleetinfo")) {
-            Elements children = table.getElementsByTag("tr");
-            boolean has_header = false;
-            boolean has_ships = false;
-            boolean has_res = false;
+							xpp.next();
+							if (xpp.getEventType() == XmlPullParser.TEXT) {
+								lastScannedEvent.destCoords = new LinkHTML();
+								String coordinates = xpp.getText();
+								if (coordinates != null) {
+									coordinates = coordinates.trim();
+								} else {
+									coordinates = "";
+								}
+								lastScannedEvent.destCoords.text = coordinates;
+							}
+						}
+					}
+				}
+				try {
+					eventType = xpp.next();
+				} catch (XmlPullParserException e) {
+//					System.out.println("Analysis of an error: " + e + '\n' + e.getMessage());
+//					e.printStackTrace();
+					eventType = XmlPullParser.END_DOCUMENT;
+				} catch (ArrayIndexOutOfBoundsException e) {
+					//This exception occurs near the end of the document, but it is not something that
+					//should stop the app over.
+					System.err.println("Possibly reached end of document (HTML is painful): " + e + '\n' + e.getMessage());
+					e.printStackTrace();
+					eventType = XmlPullParser.END_DOCUMENT;
+				}
+			}
+			eventList.add(lastScannedEvent);
+		} catch (XmlPullParserException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		}
+		return eventList;
+	}
 
-            for (Element tr : children) {
-                try {
-                    if (!has_header && tr.children().size() == 1) {
-                        has_header = true;
-                    } else if (!has_ships && tr.children().size() == 1) {
-                        //can be nbsp or shipment - called twice then
-                        has_header = true;
-                        has_ships = true;
-                    } else if (!has_ships && tr.children().size() == 2) {
-                        String name = tr.child(0).text().trim();
-                        long value = optLong(tr.child(1).text());
-                        resources.put(name, value);
-                    } else if (!has_res && tr.children().size() == 2) {
-                        long value = optLong(tr.child(1).text());
-                        if (output.resources.metal == -1) {
-                            output.resources.metal = value;
-                        } else if (output.resources.crystal == -1) {
-                            output.resources.crystal = value;
-                        } else if (output.resources.deuterium == -1) {
-                            output.resources.deuterium = value;
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+	/**
+	 * Unescapes the HTML-escaped data in the parameter string htmlEncodedData.
+	 * The string is then parsed with an XmlPullParser to extract fleet and resource
+	 * data. The data is inserted into a Map<String, Long> object. This Map is then
+	 * returned.
+	 *
+	 * @param htmlEncodedData - HTML-escaped string containing the details of the fleet breakdown and composition
+	 * @return a Map<String, Long> object containing fleet and resource composition. Keys are listed in
+	 * class FleetAndResources
+	 */
+	private void parseFleetResComposition(String htmlEncodedData, Map<String, Long> fleet, FleetResources res) {
+		StringReader strReader = null;
+		XmlPullParser subxpp = null;
+		try {
+			strReader = new StringReader(htmlEncodedData);
+			subxpp = XmlPullParserFactory.newInstance().newPullParser();
+			subxpp.setInput(strReader);
+			subxpp.defineEntityReplacementText("nbsp", " ");
 
-            if (output.resources.metal == -1) {
-                output.resources.metal = 0;
-            }
-            if (output.resources.crystal == -1) {
-                output.resources.crystal = 0;
-            }
-            if (output.resources.deuterium == -1) {
-                output.resources.deuterium = 0;
-            }
+			boolean parsingShips = false;
+			boolean parsingRes = false;
+			String currentShip;
+			String currentRes;
 
-        }
-    }
+			int eventType = subxpp.getEventType();
+			while (eventType != XmlPullParser.END_DOCUMENT) {
+				if (subxpp.getEventType() == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					textData = textData.replaceAll(":", "");
+					if (textData.equals("Ships")) {
+						parsingShips = true;
+						break;
+					}
+				}
+				try {
+					subxpp.next();
+					eventType = subxpp.getEventType();
+				} catch (XmlPullParserException e) {
+//					System.out.println("Caught an exception. Not stopping: " + e + '\n' + e.getMessage());
+//					e.printStackTrace();
+				}
+			}
+
+			while (parsingShips && eventType != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				eventType = subxpp.getEventType();
+				if (eventType == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if (textData != null) {
+						textData = textData.trim();
+					}
+					if (textData != null && textData.length() > 0) {
+						if (textData.equals("Shipment:")) {
+							parsingRes = true;
+							break;
+						} else {
+							textData = textData.substring(0, textData.length() - 1);
+							currentShip = FleetAndResources.getName(textData);
+						}
+
+						textData = "";
+						while (textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if (eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
+
+						String numshipstr = textData;
+						numshipstr = numshipstr.replaceAll("\\.", "");
+						if (currentShip != null && currentShip.length() > 0) {
+							Long numships = Long.valueOf(numshipstr);
+							fleet.put(currentShip, numships);
+						}
+					}
+				}
+			}
+
+			eventType = subxpp.getEventType();
+			while (parsingRes && eventType != XmlPullParser.END_DOCUMENT) {
+				subxpp.next();
+				eventType = subxpp.getEventType();
+				if (eventType == XmlPullParser.TEXT) {
+					String textData = subxpp.getText();
+					if (textData != null) {
+						textData = textData.trim();
+					}
+					if (textData != null && textData.length() > 0) {
+						String resType = subxpp.getText();
+						if (FleetAndResources.METAL_TAG.equals(resType)) {
+							currentRes = FleetAndResources.METAL;
+						} else if (FleetAndResources.CRYSTAL_TAG.equals(resType)) {
+							currentRes = FleetAndResources.CRYSTAL;
+						} else if (FleetAndResources.DEUT_TAG.equals(resType)) {
+							currentRes = FleetAndResources.DEUT;
+						} else {
+							continue;
+						}
+
+						textData = "";
+						while (textData.length() == 0) {
+							subxpp.next();
+							eventType = subxpp.getEventType();
+							if (eventType == XmlPullParser.TEXT) {
+								textData = subxpp.getText();
+								textData = textData.trim();
+							}
+						}
+
+						String amount = textData;
+						amount = amount.replaceAll("\\.", "");
+						if (amount.length() > 0) {
+							long amt = Long.valueOf(amount);
+							if(currentRes == FleetAndResources.METAL) {
+								res.metal = amt;
+							} else if(currentRes == FleetAndResources.CRYSTAL) {
+								res.crystal = amt;
+							} else if(currentRes == FleetAndResources.DEUT) {
+								res.deuterium = amt;
+							}
+						}
+					}
+				}
+			}
+		} catch (XmlPullParserException | IOException e) {
+			System.err.println(e.toString() + '\n' + e.getMessage());
+			e.printStackTrace();
+		} finally {
+			if (subxpp != null) {
+				try {
+					subxpp.setInput(null);
+				} catch (XmlPullParserException e) {
+					System.err.println(e.toString() + '\n' + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if (strReader != null)
+				strReader.close();
+		}
+	}
 }
