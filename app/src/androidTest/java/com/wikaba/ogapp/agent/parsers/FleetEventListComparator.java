@@ -21,12 +21,17 @@ package com.wikaba.ogapp.agent.parsers;
 
 import com.wikaba.ogapp.agent.models.FleetEvent;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class FleetEventListComparator implements Comparator<List<FleetEvent>> {
+    private static final Logger logger = LoggerFactory.getLogger(FleetEventListComparator.class);
+
     @Override
     public int compare(List<FleetEvent> l1, List<FleetEvent> l2) {
         if (l1 == null || l2 == null) {
@@ -42,6 +47,8 @@ public class FleetEventListComparator implements Comparator<List<FleetEvent>> {
         int size1 = l1.size();
         int size2 = l2.size();
         if (size1 != size2) {
+            int diff = size2 - size1;
+            logger.info("FleetEvent lists are not equal. Second list is longer by {}", diff);
             return size2 - size1;
         }
 
@@ -53,6 +60,12 @@ public class FleetEventListComparator implements Comparator<List<FleetEvent>> {
             FleetEvent f2 = iter2.next();
 
             difference = f1.compareTo(f2);
+            if(difference != 0) {
+                logger.info("Element f1 is not equal to element f2:");
+                logger.info("f1: {}", f1);
+                logger.info("f2: {}", f2);
+                break;
+            }
         }
 
         return (int) difference;

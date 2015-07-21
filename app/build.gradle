@@ -8,6 +8,7 @@ android {
         applicationId "com.wikaba.ogapp"
         minSdkVersion 9
         targetSdkVersion 21
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     sourceSets {
