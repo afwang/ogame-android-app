@@ -35,7 +35,10 @@ public abstract class AbstractController<T extends AbstractDao> {
 
     protected AbstractController() {
         synchronized (object) {
-            if (_mutex == null) _mutex = new Mutex("ogame_mutex");
+            try {
+                if (_mutex == null) _mutex = new Mutex("ogame_mutex");
+            } catch (UnsatisfiedLinkError exception) {
+            }
         }
     }
 
