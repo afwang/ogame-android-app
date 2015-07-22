@@ -16,21 +16,28 @@
 	You should have received a copy of the GNU General Public License
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.wikaba.ogapp.ui.overview;
-
-import android.widget.LinearLayout;
-import android.widget.TextView;
+package com.wikaba.ogapp.events;
 
 /**
- * Created by kevinleperf on 19/07/15.
+ * Created by kevinleperf on 20/07/15.
  */
-class EventViewHolder {
-    TextView eta;
-    TextView originCoords;
-    TextView outOrIn;
-    TextView destCoords;
-    TextView missionType;
-    LinearLayout civilShips;
-    LinearLayout combatShips;
-    LinearLayout resources;
+public class OnLoginEvent {
+    private boolean _pending_login;
+
+    public OnLoginEvent() {
+        _pending_login = false;
+    }
+
+    public OnLoginEvent(boolean pending_login) {
+        _pending_login = pending_login;
+    }
+
+    public boolean isPendingLogin() {
+        return _pending_login;
+    }
+
+    @Override
+    public String toString() {
+        return "pending_login :: " + _pending_login;
+    }
 }

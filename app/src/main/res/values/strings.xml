@@ -119,5 +119,8 @@
     <string name="mission_harvest">Harvest</string>
     <string name="mission_moon_destruction">Moon dest.</string>
     <string name="mission_expedition">Expedition</string>
+    <string name="account_spinner" formatted="false">%s in %s</string>
+    <string name="please_wait">Please wait ...</string>
+    <string name="select_an_account">Select an existing account here</string>
 
 </resources>
