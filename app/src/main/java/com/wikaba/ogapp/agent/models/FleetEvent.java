@@ -64,7 +64,7 @@ public class FleetEvent implements Comparable<FleetEvent> {
     public FleetResources resources;
 
     public FleetEvent() {
-        fleet = new HashMap<String, Long>();
+        fleet = new HashMap<>();
         resources = new FleetResources();
 
         originFleet = "";
