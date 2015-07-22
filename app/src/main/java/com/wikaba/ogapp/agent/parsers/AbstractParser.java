@@ -28,7 +28,10 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.xmlpull.v1.XmlPullParser;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 
 /**
@@ -38,6 +41,21 @@ public abstract class AbstractParser<T> {
     public abstract T parse(InputStream stream, OgameResources resources);
 
     public abstract T parse(String raw, OgameResources resources);
+
+    protected String consumeStream(InputStream stream) {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
+        StringBuffer buffer = new StringBuffer(1024);
+        String line;
+        try {
+            while ((line = bufferedReader.readLine()) != null) {
+                buffer.append(line);
+                buffer.append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer.toString();
+    }
 
     /**
      * Pre-condition: The current state of the XmlPullParser xpp is at a START_TAG

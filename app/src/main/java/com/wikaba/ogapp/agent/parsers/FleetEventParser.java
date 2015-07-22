@@ -27,30 +27,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
 
     public List<FleetEvent> parse(InputStream stream, OgameResources ressources) {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
-        StringBuffer buffer = new StringBuffer(1024);
-        String line;
-        try {
-            while ((line = bufferedReader.readLine()) != null) {
-                buffer.append(line);
-                buffer.append("\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return parse(buffer.toString(), ressources);
+        return parse(consumeStream(stream).toString(), ressources);
     }
 
     public List<FleetEvent> parse(String raw, OgameResources ressources) {

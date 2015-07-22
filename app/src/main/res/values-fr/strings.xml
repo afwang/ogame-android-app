@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2014 Alexander Wang
+    
+    This file is part of Ogame on Android.
+
+    Ogame on Android is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ogame on Android is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<resources>
+    <string name="account_spinner" formatted="false">%s in %s</string>
+
+<!-- AUTO-GENERATED -->
+<!-- Add initial account fragment -->
+<string name="username">Nom d\'utilisateur</string>
+<string name="password">Mot de passe</string>
+<string name="lang">langue (us, en, fr &#8230;)</string>
+<string name="show_password_checkbox">Montrer</string>
+<string name="universe">Choisir l\'univers du compte</string>
+<string name="login">Login</string>
+<string name="existing_accounts">Compte existants:</string>
+<!-- home.xml string -->
+<string name="remove">Supprimer le compte</string>
+<!-- overview.xml strings -->
+<string name="switch_accounts">Changer de compte</string>
+<!-- OverviewFragment's needed strings -->
+<string name="overview_outgoing">-></string>
+<string name="overview_incoming">--</string>
+<string name="overview_arrived">Terminer!</string>
+<string name="no_events">Aucun évènement</string>
+<string name="error_msg">Erreur pendant le chargement!</string>
+<string name="login_error">Vérifiez le login et mot de passe</string>
+<string name="reload_button">Rafraichir</string>
+<string name="reload_in_progress">Chargement en cours</string>
+<!-- resources overview -->
+<string name="metal_name">Métal</string>
+<string name="crystal_name">Cristal</string>
+<string name="deuterium_name">Deutérium</string>
+<string name="metal">m</string>
+<string name="crystal">c</string>
+<string name="deuterium">d</string>
+<!-- resources overview - todo improve localized -->
+<string name="metal_mine">Mine de Metal</string>
+<string name="crystal_mine">Mine de Cristal</string>
+<string name="deuterium_mine">Extraction de Deutérium</string>
+<string name="solar_power_plant">Centrale à Energie Solaire</string>
+<string name="fusion_power_plant">Réacteur à fusion</string>
+<string name="metal_stock">Entrepôt de Métal</string>
+<string name="crystal_stock">Entrepôt de Cristal</string>
+<string name="deuterium_stock">Entrepôt de Deutérieum</string>
+<string name="metal_stash">Cache de Métal</string>
+<string name="crystal_stash">Cache de Cristal</string>
+<string name="deuterium_stash">Cache de Deutérium</string>
+<!-- building -->
+<string name="robot_factory">Usine de Robot</string>
+<string name="spaceship_factory">Chantier Spatial</string>
+<string name="laboratory">Labo de Recherche</string>
+<string name="supply_depot">Depot de Ressource</string>
+<string name="missile_silo">Silo à Missile</string>
+<!-- research -->
+<string name="energy">Energie</string>
+<string name="laser">Laser</string>
+<string name="ion">Ion</string>
+<string name="hyperspace">Hyper-Espace</string>
+<string name="plasma">Plasma</string>
+<string name="combustion">Combustion</string>
+<string name="impulsion">Impulsion</string>
+<string name="hyperspace_engine">Moteur hyperespace</string>
+<string name="spy">Espionnage</string>
+<string name="computer">Ordinateur</string>
+<string name="astrophysic">Astrophysique</string>
+<string name="intergalactic_network">Réseau Intergalactique</string>
+<string name="graviton">Graviton</string>
+<string name="weapon">Arme</string>
+<string name="shield">Bouclier</string>
+<string name="protection">Protection</string>
+<!-- ships -->
+<string name="lightfighter">L. Fighter</string>
+<string name="heavyfighter">H. Fighter</string>
+<string name="cruiser">Cruiser</string>
+<string name="battleship">Battleship</string>
+<string name="smallcargo">S. Cargo</string>
+<string name="largecargo">L. Cargo</string>
+<string name="colony">Colony</string>
+<string name="battlecruiser">B.Cruiser</string>
+<string name="bomber">Bomber</string>
+<string name="destroyer">Destroyer</string>
+<string name="deathstar">Death Start</string>
+<string name="recycler">Recycler</string>
+<string name="probe">Esp. Probe</string>
+<string name="satellite">S. Satellite</string>
+<!-- defense -->
+<string name="rocket_launcher">Lanceur de Missile</string>
+<string name="light_laser">Artillerie Laser Légère</string>
+<string name="heavy_laser">Artillerie Laser Lourde</string>
+<string name="gauss_cannon">Cannon à Gauss</string>
+<string name="ion_cannon">Cannon à Ion</string>
+<string name="plasma_turret">Tourrelle Plasma</string>
+<string name="small_shield_dome">Petit Bouclier</string>
+<string name="large_shield_dome">Large Bouclier</string>
+<string name="anti_ballistic_missile">Missile d\'Interception</string>
+<string name="interplanetary_missile">Missile Interplanétaire</string>
+<!-- servers -->
+<string name="antares">Antares</string>
+<string name="betelgeuse">Betelgeuse</string>
+<string name="electra">Electra</string>
+<string name="jupiter">Jupiter</string>
+<string name="nekkar">Nekkar</string>
+<string name="orion">Orion</string>
+<string name="pegasus">Pegasus</string>
+<string name="quantum">Quantum</string>
+<string name="rigel">Rigel</string>
+<string name="sirius">Sirius</string>
+<string name="taurus">Taurus</string>
+<string name="ursa">Ursa</string>
+<string name="vega">Vega</string>
+<string name="wasat">Wasat</string>
+<string name="xalynth">Xalynth</string>
+<string name="yakini">Yakini</string>
+<string name="zagadra">Zagadra</string>
+<string name="uni1">Univers 1</string>
+<string name="uni20">Univers 20</string>
+<string name="uni30">Univers 30</string>
+<string name="uni35">Univers 35</string>
+<string name="uni44">Univers 44</string>
+<!-- Mission names -->
+<string name="mission_attack">Attaque</string>
+<string name="mission_transport">Transport</string>
+<string name="mission_deploy">Déploiement</string>
+<string name="mission_espionage">Espionnage</string>
+<string name="mission_colonize">Coloniser</string>
+<string name="mission_harvest">Récolter</string>
+<string name="mission_moon_destruction">Destination, Lune!</string>
+<string name="mission_expedition">Expédition</string>
+<string name="please_wait">Veuillez patienter&#8230;</string>
+<string name="select_an_account">Choisissez un compte ici</string>
+</resources>

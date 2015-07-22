@@ -28,7 +28,11 @@ import android.util.Log;
 import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.agent.constants.BuildingConstants;
+import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
+import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.ItemRepresentation;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
@@ -188,6 +192,13 @@ public class AgentService extends Service {
                         Log.d("AgentService", "resources = " + resources);
                     } catch (Exception e) {
                         e.printStackTrace();
+                    }
+
+                    try{
+                        List<AbstractItemInformation> building = agent
+                                .getItemFromPage(ItemRepresentationFactory.getBuildingConstants());
+                    }catch(Exception exception){
+
                     }
                 }
                 EventBus.getDefault().postSticky(new OnLoginEvent(false));

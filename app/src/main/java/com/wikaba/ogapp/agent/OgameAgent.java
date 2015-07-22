@@ -23,8 +23,11 @@ package com.wikaba.ogapp.agent;
 import android.util.Log;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.interfaces.IWebservice;
+import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.ItemRepresentation;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.agent.parsers.FleetEventParser;
 import com.wikaba.ogapp.agent.parsers.ResourcesParser;
@@ -39,6 +42,7 @@ import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -339,6 +343,31 @@ public class OgameAgent {
 
     public List<ResourceItem> getResourcesFromResourcePageContent(String page) {
         return _resources_parser.parse(page, null);
+    }
+
+    public List<AbstractItemInformation> getItemFromPage(ItemRepresentationConstant item_to_fetch) {
+        try {
+            List<AbstractItemInformation> items = new ArrayList<>();
+            IWebservice instance = _universe_adapter.create(IWebservice.class);
+            List<ItemRepresentation> list = item_to_fetch.toList();
+            Response response;
+            AbstractItemInformation tmp_information;
+            for (ItemRepresentation item : list) {
+                response = instance.getSinglePageFromCategory(item.getPage(), 1, item.getIndex());
+                tmp_information = item.getParser()
+                        .parse(consumeResponseToString(response).toString(), null);
+
+                if (tmp_information != null) {
+                    items.add(tmp_information);
+                }
+            }
+
+            return items;
+        } catch (RetrofitError error) {
+
+        }
+        return null;
+
     }
 
     /**

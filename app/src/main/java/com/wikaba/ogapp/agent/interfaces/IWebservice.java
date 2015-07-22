@@ -56,4 +56,9 @@ public interface IWebservice {
     @GET("/game/index.php")
     Response getSinglePageWithAjaxParameter(@Query("page") String page_name,
                                                    @Query("ajax") int ajax);
+
+    @GET("/game/index.php")
+    Response getSinglePageFromCategory(@Query("page") String page_name,
+                                            @Query("ajax") int ajax,
+                                       @Query("type") int category);
 }
