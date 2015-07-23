@@ -17,7 +17,7 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.ui.main;
+package com.wikaba.ogapp.ui.login;
 
 import android.app.Activity;
 import android.content.Context;
@@ -49,6 +49,7 @@ import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.loaders.AccountsLoader;
+import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
 import java.util.ArrayList;

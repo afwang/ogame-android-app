@@ -92,7 +92,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:id="@+id/chat"
+                        android:id="@+id/resource"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/main_left"
@@ -128,7 +128,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:id="@+id/clone"
+                        android:id="@+id/building"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/main_left"
@@ -164,7 +164,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:id="@+id/tor"
+                        android:id="@+id/research"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/main_left"
@@ -201,7 +201,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:id="@+id/push"
+                        android:id="@+id/shipyard"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/main_left"
@@ -238,7 +238,7 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:id="@+id/push"
+                        android:id="@+id/defense"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:background="@drawable/main_left"

@@ -39,8 +39,11 @@ import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.events.OnLoggedEvent;
+import com.wikaba.ogapp.ui.listings.ListingFragmentWithEvent;
+import com.wikaba.ogapp.ui.login.NoAccountActivity;
 import com.wikaba.ogapp.ui.overview.OverviewFragment;
 import com.wikaba.ogapp.utils.AccountCredentials;
+import com.wikaba.ogapp.utils.Constants;
 import com.wikaba.ogapp.utils.FragmentStackManager;
 import com.wikaba.ogapp.utils.SystemFittableActivity;
 
@@ -48,6 +51,7 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
 import de.greenrobot.event.ThreadMode;
@@ -57,6 +61,37 @@ public class HomeActivity extends SystemFittableActivity {
 
     @Bind(R.id.drawerLayout)
     protected DrawerLayout mDrawerLayout;
+
+
+    @OnClick(R.id.main)
+    public void onOverView() {
+        goToOverview();
+    }
+
+    @OnClick(R.id.resource)
+    public void onResourceClick() {
+        push(Constants.RESOURCES_INDEX);
+    }
+
+    @OnClick(R.id.building)
+    public void onBuildingClick() {
+        push(Constants.BUILDING_INDEX);
+    }
+
+    @OnClick(R.id.research)
+    public void onResearchClick() {
+        push(Constants.RESEARCH_INDEX);
+    }
+
+    @OnClick(R.id.shipyard)
+    public void onShipyardCLick() {
+        push(Constants.SHIPYARD_INDEX);
+    }
+
+    @OnClick(R.id.defense)
+    public void onDefenseClick() {
+        push(Constants.DEFENSE_INDEX);
+    }
 
     private AccountCredentials activeAccount;
     private OnLoggedEvent _current_logged_event;
@@ -234,11 +269,8 @@ public class HomeActivity extends SystemFittableActivity {
             Bundle args = new Bundle();
             args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.universe);
             args.putString(OverviewFragment.USERNAME_KEY, activeAccount.username);
-            OverviewFragment confrag = new OverviewFragment();
-            confrag.setArguments(args);
 
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, confrag).commit();
+            push(Constants.OVERVIEW_INDEX, args);
         }
     }
 
@@ -305,31 +337,10 @@ public class HomeActivity extends SystemFittableActivity {
     //Manager used to push / pop Fragments
     @Override
     protected FragmentStackManager getFragmentStackManager() {
-        return new FragmentStackManager(this, 0) {
-            @Override
-            public void pop() {
+        return new HomeFragmentStackManager(this, R.id.container);
+    }
 
-            }
-
-            @Override
-            public void push(int new_index, Bundle arguments) {
-
-            }
-
-            @Override
-            public boolean isMainView() {
-                return false;
-            }
-
-            @Override
-            public boolean navigationBackEnabled() {
-                return true;
-            }
-
-            @Override
-            public boolean isNavigationDrawerEnabled() {
-                return true;
-            }
-        };
+    private void push(int type) {
+        push(type, ListingFragmentWithEvent.createBundleInstance(type));
     }
 }

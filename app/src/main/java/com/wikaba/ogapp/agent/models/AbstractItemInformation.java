@@ -4,6 +4,7 @@ package com.wikaba.ogapp.agent.models;
  * Created by kevinleperf on 22/07/15.
  */
 public abstract class AbstractItemInformation {
+    private ItemRepresentation _current_representation;
     private long _duration;
     private long _current_cardinal;
     private long _metal_cost;
@@ -18,6 +19,14 @@ public abstract class AbstractItemInformation {
 
     public long getDuration() {
         return _duration;
+    }
+
+    public void setItemRepresentation(ItemRepresentation representation) {
+        _current_representation = representation;
+    }
+
+    public ItemRepresentation getItemRepresentation() {
+        return _current_representation;
     }
 
     public void setMetalCost(long metal_cost) {
@@ -56,7 +65,7 @@ public abstract class AbstractItemInformation {
         _current_cardinal = currentCardinal;
     }
 
-    public long getCurrentCardinal() {
+    public long getLevelOrCount() {
         return _current_cardinal;
     }
 
@@ -72,7 +81,7 @@ public abstract class AbstractItemInformation {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + " :: " + getCurrentCardinal() + " // " + getDuration()
+        return getClass().getSimpleName() + " :: " + getLevelOrCount() + " // " + getDuration()
                 + " " + getMetalCost() + "m/" + getCrystalCost() + "c/" + getDeuteriumCost() + "d";
     }
 }

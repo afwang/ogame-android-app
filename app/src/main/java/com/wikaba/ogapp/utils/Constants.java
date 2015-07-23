@@ -15,4 +15,12 @@ public class Constants {
     public static final int RESEARCH_INDEX = 3;
     public static final int SHIPYARD_INDEX = 4;
     public static final int DEFENSE_INDEX = 5;
+
+    public static final int OVERVIEW_INDEX = 6;
+
+    public enum Status {
+        LOADING,
+        LOADED,
+        ERROR
+    }
 }

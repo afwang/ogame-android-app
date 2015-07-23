@@ -16,7 +16,7 @@
 	You should have received a copy of the GNU General Public License
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.wikaba.ogapp.ui.main;
+package com.wikaba.ogapp.ui.login;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -38,6 +38,7 @@ import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
+import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.FragmentStackManager;
 import com.wikaba.ogapp.utils.SystemFittableActivity;

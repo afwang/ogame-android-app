@@ -360,6 +360,7 @@ public class OgameAgent {
                         .parse(consumeResponseToString(response).toString(), null);
 
                 if (tmp_information != null) {
+                    tmp_information.setItemRepresentation(item);
                     items.add(tmp_information);
                 }
             }

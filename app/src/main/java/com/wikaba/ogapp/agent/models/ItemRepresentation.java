@@ -33,7 +33,7 @@ public class ItemRepresentation {
         return _index;
     }
 
-    public int getResource() {
+    public int getResourceString() {
         return _resource_string;
     }
 

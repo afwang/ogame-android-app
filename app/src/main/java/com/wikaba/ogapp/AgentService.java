@@ -240,33 +240,38 @@ public class AgentService extends Service {
     @Subscribe(threadMode = ThreadMode.Async)
     public void onResourceRequestToLoading(OnResourceRequestToLoadEvent event) {
         OnAbstractListInformationLoaded resource_request_to_load = null;
-        ItemRepresentationConstant content = event.getContent();
-        List<AbstractItemInformation> retrieved = event.getOgameAgent().getItemFromPage(content);
 
         switch (event.getRequested()) {
             case Constants.RESOURCES_INDEX:
                 resource_request_to_load = new OnResourcesLoaded(event.getOgameAgent(),
-                        retrieved, retrieved != null && retrieved.size() > 0);
+                        event.getRequested(), null, Constants.Status.LOADING);
                 break;
             case Constants.BUILDING_INDEX:
                 resource_request_to_load = new OnBuildingLoaded(event.getOgameAgent(),
-                        retrieved, retrieved != null && retrieved.size() > 0);
+                        event.getRequested(), null, Constants.Status.LOADING);
                 break;
             case Constants.RESEARCH_INDEX:
                 resource_request_to_load = new OnResearchsLoaded(event.getOgameAgent(),
-                        retrieved, retrieved != null && retrieved.size() > 0);
+                        event.getRequested(), null, Constants.Status.LOADING);
                 break;
             case Constants.SHIPYARD_INDEX:
                 resource_request_to_load = new OnShipyardsLoaded(event.getOgameAgent(),
-                        retrieved, retrieved != null && retrieved.size() > 0);
+                        event.getRequested(), null, Constants.Status.LOADING);
                 break;
             case Constants.DEFENSE_INDEX:
                 resource_request_to_load = new OnDefensesLoaded(event.getOgameAgent(),
-                        retrieved, retrieved != null && retrieved.size() > 0);
+                        event.getRequested(), null, Constants.Status.LOADING);
                 break;
         }
 
         if (resource_request_to_load != null) {
+            EventBus.getDefault().postSticky(resource_request_to_load);
+
+            ItemRepresentationConstant content = event.getContent();
+            List<AbstractItemInformation> retrieved = event.getOgameAgent().getItemFromPage(content);
+            resource_request_to_load.setRetrieved(retrieved);
+            resource_request_to_load.setStatus(Constants.Status.LOADED);
+
             EventBus.getDefault().postSticky(resource_request_to_load);
         }
     }

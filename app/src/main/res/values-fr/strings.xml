@@ -151,4 +151,5 @@
 <string name="mission_expedition">Expédition</string>
 <string name="please_wait">Veuillez patienter&#8230;</string>
 <string name="select_an_account">Choisissez un compte ici</string>
+<string name="error_while_loading">Erreur lors du chargement de la liste</string>
 </resources>
