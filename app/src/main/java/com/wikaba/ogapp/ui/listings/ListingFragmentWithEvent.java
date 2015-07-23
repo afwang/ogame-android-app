@@ -127,7 +127,6 @@ public class ListingFragmentWithEvent extends Fragment {
     }
 
     public void onEventForRecycler(OnAbstractListInformationLoaded event) {
-        Toast.makeText(getActivity(), "onevent " + event.getType() + " " + _type, Toast.LENGTH_SHORT).show();
         if (event.getType() == _type) {
             ListingRecyclerAdapter adapter = new ListingRecyclerAdapter(event);
             _recycler.setAdapter(adapter);

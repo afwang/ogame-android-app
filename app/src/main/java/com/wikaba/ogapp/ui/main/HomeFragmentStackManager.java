@@ -40,7 +40,6 @@ public class HomeFragmentStackManager extends FragmentStackManager {
                 _current_fragment = createInternalFragment();
                 break;
             default:
-                Toast.makeText(_activity, "OverViewFragment " + new_index + arguments, Toast.LENGTH_SHORT).show();
                 _current_fragment = new OverviewFragment();
         }
         _current_fragment.setArguments(arguments);

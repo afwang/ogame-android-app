@@ -272,7 +272,6 @@ public class HomeActivity extends SystemFittableActivity {
             args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.universe);
             args.putString(OverviewFragment.USERNAME_KEY, activeAccount.username);
 
-            Toast.makeText(this, args + "", Toast.LENGTH_SHORT).show();
             push(Constants.OVERVIEW_INDEX, args);
         }
     }
