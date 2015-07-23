@@ -152,4 +152,8 @@
 <string name="please_wait">Veuillez patienter&#8230;</string>
 <string name="select_an_account">Choisissez un compte ici</string>
 <string name="error_while_loading">Erreur lors du chargement de la liste</string>
+<!-- Costs -->
+<string name="cost_metal">%1$d m</string>
+<string name="cost_crystal">%1$d c</string>
+<string name="cost_deuterium">%1$d d</string>
 </resources>

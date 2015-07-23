@@ -26,6 +26,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.events.abstracts.OnAbstractListInformationLoaded;
@@ -100,32 +101,33 @@ public class ListingFragmentWithEvent extends Fragment {
         return _recycler;
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void checkProperEvent(OnResourcesLoaded event) {
         onEventForRecycler(event);
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void checkProperEvent(OnBuildingLoaded event) {
         onEventForRecycler(event);
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void checkProperEvent(OnResearchsLoaded event) {
         onEventForRecycler(event);
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void checkProperEvent(OnShipyardsLoaded event) {
         onEventForRecycler(event);
     }
 
-    @Subscribe(threadMode = ThreadMode.MainThread)
+    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
     public void checkProperEvent(OnDefensesLoaded event) {
         onEventForRecycler(event);
     }
 
     public void onEventForRecycler(OnAbstractListInformationLoaded event) {
+        Toast.makeText(getActivity(), "onevent " + event.getType() + " " + _type, Toast.LENGTH_SHORT).show();
         if (event.getType() == _type) {
             ListingRecyclerAdapter adapter = new ListingRecyclerAdapter(event);
             _recycler.setAdapter(adapter);

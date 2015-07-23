@@ -66,6 +66,10 @@ public abstract class FragmentStackManager {
                 _activity.unsetInsets();
             }
         }
+        replace();
+    }
+
+    public void replace(){
         _fragment_manager.beginTransaction().replace(_landing_view, _current_fragment, _current_fragment_tag)
                 .setCustomAnimations(0, 0)
                 .commit();

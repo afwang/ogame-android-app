@@ -33,6 +33,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.R;
@@ -66,6 +67,7 @@ public class HomeActivity extends SystemFittableActivity {
     @OnClick(R.id.main)
     public void onOverView() {
         goToOverview();
+        closeDrawer();
     }
 
     @OnClick(R.id.resource)
@@ -270,6 +272,7 @@ public class HomeActivity extends SystemFittableActivity {
             args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.universe);
             args.putString(OverviewFragment.USERNAME_KEY, activeAccount.username);
 
+            Toast.makeText(this, args + "", Toast.LENGTH_SHORT).show();
             push(Constants.OVERVIEW_INDEX, args);
         }
     }
@@ -341,6 +344,11 @@ public class HomeActivity extends SystemFittableActivity {
     }
 
     private void push(int type) {
-        push(type, ListingFragmentWithEvent.createBundleInstance(type));
+        try {
+            push(type, ListingFragmentWithEvent.createBundleInstance(type));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        closeDrawer();
     }
 }

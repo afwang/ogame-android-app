@@ -7,16 +7,16 @@
     <View
         android:id="@+id/header"
         android:layout_width="1px"
-        android:layout_height="@dimen/default_margin_middle" />
+        android:layout_height="@dimen/default_margin" />
 
     <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/default_margin_middle"
+        android:layout_marginBottom="@dimen/default_margin"
         android:layout_marginLeft="@dimen/default_margin"
         android:layout_marginRight="@dimen/default_margin"
-        android:layout_marginTop="@dimen/default_margin"
+        android:layout_marginTop="0dp"
         android:clickable="true"
         card_view:cardCornerRadius="4dp">
 
@@ -31,12 +31,43 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/default_margin" />
 
-            <com.devspark.robototextview.widget.RobotoTextView
-                android:id="@+id/level"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/default_margin" />
+                android:layout_margin="@dimen/default_margin"
+                android:orientation="horizontal">
 
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/level"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/cost_metal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/default_margin"
+                    android:layout_weight="1"
+                    android:text="@string/cost_metal" />
+
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/cost_crystal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/default_margin"
+                    android:layout_weight="1"
+                    android:text="@string/cost_crystal" />
+
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/cost_deuterium"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/default_margin"
+                    android:layout_weight="1"
+                    android:text="@string/cost_deuterium" />
+
+            </LinearLayout>
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </LinearLayout>

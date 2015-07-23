@@ -2,6 +2,7 @@ package com.wikaba.ogapp.ui.main;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.widget.Toast;
 
 import com.wikaba.ogapp.ui.listings.ListingFragmentWithEvent;
 import com.wikaba.ogapp.ui.overview.OverviewFragment;
@@ -39,11 +40,13 @@ public class HomeFragmentStackManager extends FragmentStackManager {
                 _current_fragment = createInternalFragment();
                 break;
             default:
+                Toast.makeText(_activity, "OverViewFragment " + new_index + arguments, Toast.LENGTH_SHORT).show();
                 _current_fragment = new OverviewFragment();
         }
         _current_fragment.setArguments(arguments);
 
         commitIndex(new_index);
+        replace();
     }
 
     @Override

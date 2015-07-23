@@ -26,8 +26,20 @@ public class ListingRecyclerAdapter extends RecyclerView.Adapter {
     public class ListingHolder extends RecyclerView.ViewHolder {
         private AbstractItemInformation _item;
 
+        @Bind(R.id.header)
+        public View _header;
+
         @Bind(R.id.name)
         public TextView _name;
+
+        @Bind(R.id.cost_metal)
+        public TextView _metal;
+
+        @Bind(R.id.cost_crystal)
+        public TextView _crystal;
+
+        @Bind(R.id.cost_deuterium)
+        public TextView _deuterium;
 
         @Bind(R.id.level)
         public TextView _level;
@@ -97,7 +109,13 @@ public class ListingRecyclerAdapter extends RecyclerView.Adapter {
             v.setAbstractItemInformation(information);
             v._name.setText(information.getItemRepresentation().getResourceString());
             v._level.setText(Long.toString(information.getLevelOrCount()));
-
+            v._header.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
+            v._metal.setText(v.itemView.getContext().getString(R.string.cost_metal,
+                    information.getMetalCost()));
+            v._crystal.setText(v.itemView.getContext().getString(R.string.cost_crystal,
+                    information.getCrystalCost()));
+            v._deuterium.setText(v.itemView.getContext().getString(R.string.cost_deuterium,
+                    information.getDeuteriumCost()));
         }
     }
 
