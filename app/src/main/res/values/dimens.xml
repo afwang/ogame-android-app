@@ -25,5 +25,6 @@
     <dimen name="fleet_event_textview_margin">5dp</dimen>
     <dimen name="fleet_event_ship_text">10dp</dimen>
     <dimen name="default_middle_margin">8dp</dimen>
+    <dimen name="navigation_drawer_width">240dp</dimen>
 
 </resources>

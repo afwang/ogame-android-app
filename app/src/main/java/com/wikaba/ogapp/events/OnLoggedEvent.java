@@ -20,7 +20,6 @@
 package com.wikaba.ogapp.events;
 
 import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.utils.AccountCredentials;
@@ -36,30 +35,15 @@ public class OnLoggedEvent {
     private List<FleetEvent> _fleet_events;
     private List<ResourceItem> _resources_information;
     private AccountCredentials _credentials;
-    List<AbstractItemInformation> _resources;
-    List<AbstractItemInformation> _building;
-    List<AbstractItemInformation> _research;
-    List<AbstractItemInformation> _shipyard;
-    List<AbstractItemInformation> _defense;
 
     public OnLoggedEvent(boolean state, AccountCredentials credentials, OgameAgent agent,
                          List<FleetEvent> fleet_events,
-                         List<ResourceItem> resources_information,
-                         List<AbstractItemInformation> resources,
-                         List<AbstractItemInformation> building,
-                         List<AbstractItemInformation> research,
-                         List<AbstractItemInformation> shipyard,
-                         List<AbstractItemInformation> defense) {
+                         List<ResourceItem> resources_information) {
         _credentials = credentials;
         _state = state;
         _agent = agent;
         _fleet_events = fleet_events;
         _resources_information = resources_information;
-        _resources = resources;
-        _building = building;
-        _research = research;
-        _shipyard = shipyard;
-        _defense = defense;
     }
 
     public boolean isConnected() {
@@ -80,25 +64,5 @@ public class OnLoggedEvent {
 
     public AccountCredentials getCredentials() {
         return _credentials;
-    }
-
-    public List<AbstractItemInformation> getResources() {
-        return _resources;
-    }
-
-    public List<AbstractItemInformation> getBuildings() {
-        return _building;
-    }
-
-    public List<AbstractItemInformation> getResearchs() {
-        return _research;
-    }
-
-    public List<AbstractItemInformation> getShipyard() {
-        return _shipyard;
-    }
-
-    public List<AbstractItemInformation> getDefenses() {
-        return _defense;
     }
 }

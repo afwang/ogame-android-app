@@ -33,6 +33,13 @@
 <string name="remove">Remove account</string>
 <!-- overview.xml strings -->
 <string name="switch_accounts">Switch account</string>
+<!-- Main left menu -->
+<string name="overview">Overview</string>
+<string name="resources">Resources</string>
+<string name="buildings">Buildings</string>
+<string name="researchs">Researchs</string>
+<string name="shipyard">Shipyard</string>
+<string name="defenses">Defenses</string>
 <!-- OverviewFragment's needed strings -->
 <string name="overview_outgoing">-></string>
 <string name="overview_incoming">--</string>

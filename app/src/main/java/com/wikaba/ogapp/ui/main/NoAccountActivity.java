@@ -31,7 +31,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.gc.materialdesign.views.ButtonRectangle;
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.R;
@@ -42,6 +41,7 @@ import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.FragmentStackManager;
 import com.wikaba.ogapp.utils.SystemFittableActivity;
+import com.wikaba.ogapp.views.ButtonRectangle;
 
 import java.util.ArrayList;
 

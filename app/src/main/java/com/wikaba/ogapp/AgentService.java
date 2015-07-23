@@ -27,6 +27,7 @@ import android.support.v4.util.LongSparseArray;
 import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
@@ -35,7 +36,15 @@ import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
+import com.wikaba.ogapp.events.abstracts.OnAbstractListInformationLoaded;
+import com.wikaba.ogapp.events.contents.OnBuildingLoaded;
+import com.wikaba.ogapp.events.contents.OnDefensesLoaded;
+import com.wikaba.ogapp.events.contents.OnResearchsLoaded;
+import com.wikaba.ogapp.events.contents.OnResourceRequestToLoadEvent;
+import com.wikaba.ogapp.events.contents.OnResourcesLoaded;
+import com.wikaba.ogapp.events.contents.OnShipyardsLoaded;
 import com.wikaba.ogapp.utils.AccountCredentials;
+import com.wikaba.ogapp.utils.Constants;
 
 import java.net.CookieHandler;
 import java.net.CookieStore;
@@ -175,11 +184,6 @@ public class AgentService extends Service {
                         credentials.passwd, credentials.lang);
                 List<FleetEvent> events = null;
                 List<ResourceItem> current_resources = null;
-                List<AbstractItemInformation> resources = null;
-                List<AbstractItemInformation> building = null;
-                List<AbstractItemInformation> research = null;
-                List<AbstractItemInformation> shipyard = null;
-                List<AbstractItemInformation> defense = null;
                 if (logged) {
                     try {
                         events = agent.getFleetEvents();
@@ -194,24 +198,76 @@ public class AgentService extends Service {
                         e.printStackTrace();
                     }
 
-                    try {
-                        resources = agent.getItemFromPage(ItemRepresentationFactory.getResourceConstants());
-                        building = agent.getItemFromPage(ItemRepresentationFactory.getBuildingConstants());
-                        research = agent.getItemFromPage(ItemRepresentationFactory.getResearchConstants());
-                        shipyard = agent.getItemFromPage(ItemRepresentationFactory.getShipConstants());
-                        defense = agent.getItemFromPage(ItemRepresentationFactory.getDefenseConstants());
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
+                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
+                            Constants.RESOURCES_INDEX,
+                            ItemRepresentationFactory.getResourceConstants()));
+
+                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
+                            Constants.BUILDING_INDEX,
+                            ItemRepresentationFactory.getBuildingConstants()));
+
+                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
+                            Constants.RESEARCH_INDEX,
+                            ItemRepresentationFactory.getResearchConstants()));
+
+                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
+                            Constants.SHIPYARD_INDEX,
+                            ItemRepresentationFactory.getShipConstants()));
+
+                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
+                            Constants.DEFENSE_INDEX,
+                            ItemRepresentationFactory.getDefenseConstants()));
                 }
                 EventBus.getDefault().postSticky(new OnLoginEvent(false));
                 EventBus.getDefault().postSticky(new OnLoggedEvent(logged, credentials,
-                        agent, events, current_resources,
-                        resources, building, research, shipyard, defense));
+                        agent, events, current_resources));
+            } else {
+                //cancel the call ?
+                //EventBus.getDefault().postSticky(new OnResourcesLoaded(agent, null, false));
+                //EventBus.getDefault().postSticky(new OnBuildingLoaded(agent, null, false));
+                //EventBus.getDefault().postSticky(new OnResearchsLoaded(agent, null, false));
+                //EventBus.getDefault().postSticky(new OnShipyardsLoaded(agent, null, false));
+                //EventBus.getDefault().postSticky(new OnDefensesLoaded(agent, null, false));
+                //for now, the previous calls are commented out, so we must in UI
+                //check if the saved Sticky events is corresponding to the current logged
             }
             //no post event here
         }
         // or here
         //since the only way to be ok is via the current poststicky/post
+    }
+
+    @Subscribe(threadMode = ThreadMode.Async)
+    public void onResourceRequestToLoading(OnResourceRequestToLoadEvent event) {
+        OnAbstractListInformationLoaded resource_request_to_load = null;
+        ItemRepresentationConstant content = event.getContent();
+        List<AbstractItemInformation> retrieved = event.getOgameAgent().getItemFromPage(content);
+
+        switch (event.getRequested()) {
+            case Constants.RESOURCES_INDEX:
+                resource_request_to_load = new OnResourcesLoaded(event.getOgameAgent(),
+                        retrieved, retrieved != null && retrieved.size() > 0);
+                break;
+            case Constants.BUILDING_INDEX:
+                resource_request_to_load = new OnBuildingLoaded(event.getOgameAgent(),
+                        retrieved, retrieved != null && retrieved.size() > 0);
+                break;
+            case Constants.RESEARCH_INDEX:
+                resource_request_to_load = new OnResearchsLoaded(event.getOgameAgent(),
+                        retrieved, retrieved != null && retrieved.size() > 0);
+                break;
+            case Constants.SHIPYARD_INDEX:
+                resource_request_to_load = new OnShipyardsLoaded(event.getOgameAgent(),
+                        retrieved, retrieved != null && retrieved.size() > 0);
+                break;
+            case Constants.DEFENSE_INDEX:
+                resource_request_to_load = new OnDefensesLoaded(event.getOgameAgent(),
+                        retrieved, retrieved != null && retrieved.size() > 0);
+                break;
+        }
+
+        if (resource_request_to_load != null) {
+            EventBus.getDefault().postSticky(resource_request_to_load);
+        }
     }
 }

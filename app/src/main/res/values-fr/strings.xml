@@ -33,6 +33,13 @@
 <string name="remove">Supprimer le compte</string>
 <!-- overview.xml strings -->
 <string name="switch_accounts">Changer de compte</string>
+<!-- Main left menu -->
+<string name="overview">Vue Générale</string>
+<string name="resources">Ressources</string>
+<string name="buildings">Batiments</string>
+<string name="researchs">Recherches</string>
+<string name="shipyard">Chantier Spatial</string>
+<string name="defenses">Défenses</string>
 <!-- OverviewFragment's needed strings -->
 <string name="overview_outgoing">-></string>
 <string name="overview_incoming">--</string>
