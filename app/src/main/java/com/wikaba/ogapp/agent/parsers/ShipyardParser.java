@@ -1,21 +1,13 @@
 package com.wikaba.ogapp.agent.parsers;
 
-import com.wikaba.ogapp.agent.OgameResources;
-import com.wikaba.ogapp.agent.models.BuildingInformation;
-
-import java.io.InputStream;
+import com.wikaba.ogapp.agent.models.ShipInformation;
 
 /**
  * Created by kevinleperf on 22/07/15.
  */
-public class ShipyardParser extends AbstractParser<BuildingInformation> {
+public class ShipyardParser extends DefaultItemParser<ShipInformation> {
     @Override
-    public BuildingInformation parse(InputStream stream, OgameResources resources) {
-        return parse(consumeStream(stream), resources);
-    }
-
-    @Override
-    public BuildingInformation parse(String raw, OgameResources resources) {
-        return null;
+    protected ShipInformation createDefaultItemInformationInstance() {
+        return new ShipInformation();
     }
 }

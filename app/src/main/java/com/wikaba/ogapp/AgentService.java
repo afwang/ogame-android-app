@@ -23,16 +23,13 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.util.LongSparseArray;
-import android.util.Log;
 
 import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.agent.constants.BuildingConstants;
 import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
-import com.wikaba.ogapp.agent.models.ItemRepresentation;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
@@ -177,7 +174,12 @@ public class AgentService extends Service {
                 boolean logged = agent.login(credentials.universe, credentials.username,
                         credentials.passwd, credentials.lang);
                 List<FleetEvent> events = null;
-                List<ResourceItem> resources = null;
+                List<ResourceItem> current_resources = null;
+                List<AbstractItemInformation> resources = null;
+                List<AbstractItemInformation> building = null;
+                List<AbstractItemInformation> research = null;
+                List<AbstractItemInformation> shipyard = null;
+                List<AbstractItemInformation> defense = null;
                 if (logged) {
                     try {
                         events = agent.getFleetEvents();
@@ -185,25 +187,27 @@ public class AgentService extends Service {
                         //impossible since we are here when it is all ok
                     }
 
-                    String raw_res = agent.getResourcePagesContent();
                     try {
-                        resources = agent.getResourcesFromResourcePageContent(raw_res);
-
-                        Log.d("AgentService", "resources = " + resources);
+                        String raw_res = agent.getResourcePagesContent();
+                        current_resources = agent.getResourcesFromResourcePageContent(raw_res);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
 
-                    try{
-                        List<AbstractItemInformation> building = agent
-                                .getItemFromPage(ItemRepresentationFactory.getBuildingConstants());
-                    }catch(Exception exception){
-
+                    try {
+                        resources = agent.getItemFromPage(ItemRepresentationFactory.getResourceConstants());
+                        building = agent.getItemFromPage(ItemRepresentationFactory.getBuildingConstants());
+                        research = agent.getItemFromPage(ItemRepresentationFactory.getResearchConstants());
+                        shipyard = agent.getItemFromPage(ItemRepresentationFactory.getShipConstants());
+                        defense = agent.getItemFromPage(ItemRepresentationFactory.getDefenseConstants());
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
                     }
                 }
                 EventBus.getDefault().postSticky(new OnLoginEvent(false));
                 EventBus.getDefault().postSticky(new OnLoggedEvent(logged, credentials,
-                        agent, events, resources));
+                        agent, events, current_resources,
+                        resources, building, research, shipyard, defense));
             }
             //no post event here
         }

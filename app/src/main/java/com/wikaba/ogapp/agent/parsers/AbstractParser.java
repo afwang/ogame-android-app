@@ -151,4 +151,22 @@ public abstract class AbstractParser<T> {
         }
         return false;
     }
+
+    protected long extractDurationFromString(String string) {
+        if (string == null || string.length() == 0) {
+            return 0;
+        }
+
+        long result = optLong(string.replaceAll("[^\\d.]", ""));
+        if (result == 0) return 0;
+
+        if (string.indexOf("j") >= 0) {
+            result *= 24 * 60 * 60;
+        } else if (string.indexOf("h") >= 0) {
+            result *= 60 * 60;
+        } else if (string.indexOf("m") >= 0) {
+            result *= 60;
+        }
+        return result;
+    }
 }

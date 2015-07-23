@@ -1,21 +1,21 @@
 package com.wikaba.ogapp.agent.parsers;
 
 import com.wikaba.ogapp.agent.OgameResources;
-import com.wikaba.ogapp.agent.models.BuildingInformation;
+import com.wikaba.ogapp.agent.models.DefenseInformation;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.InputStream;
 
 /**
  * Created by kevinleperf on 22/07/15.
  */
-public class DefenseParser extends AbstractParser<BuildingInformation> {
+public class DefenseParser extends DefaultItemParser<DefenseInformation> {
     @Override
-    public BuildingInformation parse(InputStream stream, OgameResources resources) {
-        return parse(consumeStream(stream), resources);
-    }
-
-    @Override
-    public BuildingInformation parse(String raw, OgameResources resources) {
-        return null;
+    protected DefenseInformation createDefaultItemInformationInstance() {
+        return new DefenseInformation();
     }
 }

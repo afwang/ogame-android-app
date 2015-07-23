@@ -350,8 +350,10 @@ public class OgameAgent {
             List<AbstractItemInformation> items = new ArrayList<>();
             IWebservice instance = _universe_adapter.create(IWebservice.class);
             List<ItemRepresentation> list = item_to_fetch.toList();
+
             Response response;
             AbstractItemInformation tmp_information;
+
             for (ItemRepresentation item : list) {
                 response = instance.getSinglePageFromCategory(item.getPage(), 1, item.getIndex());
                 tmp_information = item.getParser()
@@ -364,7 +366,7 @@ public class OgameAgent {
 
             return items;
         } catch (RetrofitError error) {
-
+            error.printStackTrace();
         }
         return null;
 
@@ -380,7 +382,6 @@ public class OgameAgent {
      */
     public List<FleetEvent> getOverviewData() throws LoggedOutException {
         List<FleetEvent> overviewData;
-        Log.d("TAG", "having root = " + serverUri);
         IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
@@ -438,7 +439,6 @@ public class OgameAgent {
                 out.append(line);
                 out.append(newLine);
             }
-            System.out.println(out);
         } catch (IOException e) {
             e.printStackTrace();
         }
