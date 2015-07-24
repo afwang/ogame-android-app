@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="universe_names">
+        <item>@string/antares</item>
+        <item>@string/betelgeuse</item>
+        <item>@string/electra</item>
+        <item>@string/jupiter</item>
+        <item>@string/nekkar</item>
+        <item>@string/orion</item>
+        <item>@string/pegasus</item>
+        <item>@string/quantum</item>
+        <item>@string/rigel</item>
+        <item>@string/sirius</item>
+        <item>@string/taurus</item>
+        <item>@string/ursa</item>
+        <item>@string/vega</item>
+        <item>@string/wasat</item>
+        <item>@string/xalynth</item>
+        <item>@string/yakini</item>
+        <item>@string/zagadra</item>
+        <item>@string/uni1</item>
+        <item>@string/uni20</item>
+        <item>@string/uni30</item>
+        <item>@string/uni35</item>
+        <item>@string/uni44</item>
+    </string-array>
+</resources>

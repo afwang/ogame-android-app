@@ -39,9 +39,9 @@ public interface IWebservice {
     //@Headers("Accept-Language: en-US")
     @POST("/main/login")
     Response loginStep1(@Field("kid") String kid,
-                               @Field("uni") String uni,
-                               @Field("login") String login,
-                               @Field("pass") String pass);
+                        @Field("uni") String uni,
+                        @Field("login") String login,
+                        @Field("pass") String pass);
 
     @GET("/game/reg/login2.php")
     @Headers({"Accept-Language: en-US", "Accept: text/html"})
@@ -55,5 +55,11 @@ public interface IWebservice {
 
     @GET("/game/index.php")
     Response getSinglePageWithAjaxParameter(@Query("page") String page_name,
-                                                   @Query("ajax") int ajax);
+                                            @Query("ajax") int ajax);
+
+    @Headers({"X-Requested-With: XMLHttpRequest"})
+    @GET("/game/index.php")
+    Response getSinglePageFromCategory(@Query("page") String page_name,
+                                       @Query("ajax") int ajax,
+                                       @Query("type") int category);
 }

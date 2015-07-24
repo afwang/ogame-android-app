@@ -19,8 +19,6 @@
 
 package com.wikaba.ogapp.database;
 
-import android.util.Log;
-
 import de.greenrobot.dao.AbstractDao;
 import eu.codlab.sharedmutex.Mutex;
 
@@ -35,7 +33,10 @@ public abstract class AbstractController<T extends AbstractDao> {
 
     protected AbstractController() {
         synchronized (object) {
-            if (_mutex == null) _mutex = new Mutex("ogame_mutex");
+            try {
+                if (_mutex == null) _mutex = new Mutex("ogame_mutex");
+            } catch (UnsatisfiedLinkError exception) {
+            }
         }
     }
 
@@ -48,12 +49,10 @@ public abstract class AbstractController<T extends AbstractDao> {
     }
 
     protected void lock() {
-        _mutex.lock();
-        Log.e("AbstractController", "locking");
+        if (_mutex != null) _mutex.lock();
     }
 
     protected void unlock() {
-        Log.e("AbstractController", "unlocking");
-        _mutex.unlock();
+        if (_mutex != null) _mutex.unlock();
     }
 }
