@@ -23,4 +23,10 @@ public class Constants {
         LOADED,
         ERROR
     }
+
+    public enum Buildable {
+        DISABLED,
+        IMPOSSIBLE,
+        BUILDABLE
+    }
 }

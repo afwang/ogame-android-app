@@ -23,8 +23,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.text.InputType;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -48,7 +46,6 @@ import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoginRequested;
-import com.wikaba.ogapp.loaders.AccountsLoader;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 
@@ -61,8 +58,7 @@ import de.greenrobot.event.EventBus;
 
 @Deprecated
 public class NoAccountFragment extends Fragment
-        implements LoaderManager.LoaderCallbacks<ArrayList<AccountCredentials>>,
-        AdapterView.OnItemClickListener {
+        implements AdapterView.OnItemClickListener {
 
     private static final int ALL_ACCS_LOADER_ID = 0;
 
@@ -108,8 +104,6 @@ public class NoAccountFragment extends Fragment
         String[] uniNames = getResources().getStringArray(R.array.universe_names);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
         uniSpinner.setAdapter(adapter);
-
-        getLoaderManager().initLoader(ALL_ACCS_LOADER_ID, null, this);
 
         registerForContextMenu(existingAccs);
 
@@ -179,23 +173,6 @@ public class NoAccountFragment extends Fragment
         act.setActiveAccount(cred);
         //act.goToLogin();
         EventBus.getDefault().post(new OnLoginRequested(cred));
-    }
-
-    @Override
-    public Loader<ArrayList<AccountCredentials>> onCreateLoader(int id, Bundle args) {
-        return new AccountsLoader(act);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<ArrayList<AccountCredentials>> loader, ArrayList<AccountCredentials> data) {
-        AccountAdapter adapter = new AccountAdapter(act, data);
-        existingAccs.setAdapter(adapter);
-        existingAccs.setOnItemClickListener(this);
-        allAccounts = data;
-    }
-
-    @Override
-    public void onLoaderReset(Loader<ArrayList<AccountCredentials>> loader) {
     }
 
     public static class AccountAdapter extends BaseAdapter {

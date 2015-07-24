@@ -172,7 +172,7 @@ public class OverviewFragment extends Fragment
     public void retrieveFleetFromActivity() {
         reload.setVisibility(View.VISIBLE);
 
-        List<FleetEvent> events = act.getCurrentFleetEvents();
+        List<FleetEvent> events = act.getCurrentOverviewData()._fleet_event;
 
         Resources res = getResources();
         if (events == null) {

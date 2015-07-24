@@ -26,8 +26,8 @@ import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.interfaces.IWebservice;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
-import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.ItemRepresentation;
+import com.wikaba.ogapp.agent.models.OverviewData;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.agent.parsers.FleetEventParser;
 import com.wikaba.ogapp.agent.parsers.ResourcesParser;
@@ -381,8 +381,8 @@ public class OgameAgent {
      * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
      * will have non-null instance variables.
      */
-    public List<FleetEvent> getOverviewData() throws LoggedOutException {
-        List<FleetEvent> overviewData;
+    public OverviewData getOverviewData() throws LoggedOutException {
+        OverviewData overviewData;
         IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
@@ -393,7 +393,8 @@ public class OgameAgent {
             throw new LoggedOutException("Agent's cookies are no longer valid");
         }
 
-        if (overviewData != null && overviewData.size() == 0) {
+        if (overviewData != null && (overviewData._fleet_event == null ||
+                overviewData._fleet_event.size() == 0)) {
             overviewData = getFleetEvents();
         }
 
@@ -407,7 +408,7 @@ public class OgameAgent {
      * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
      * will have non-null instance variables.
      */
-    public List<FleetEvent> getFleetEvents() throws LoggedOutException {
+    public OverviewData getFleetEvents() throws LoggedOutException {
         IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
@@ -424,7 +425,7 @@ public class OgameAgent {
      * @return If no errors occurred while extracting the data, a list of @NotNull fleet movements with details
      * is returned. Otherwvise, null is returned
      */
-    private List<FleetEvent> consumeFleetEventFrom(Response response) {
+    private OverviewData consumeFleetEventFrom(Response response) {
         return parseEvents(consumeResponseToString(response));
     }
 
@@ -458,7 +459,7 @@ public class OgameAgent {
      * @return list of mission events parsed from HTML InputStream. Returns empty list if no events.
      * Null on error.
      */
-    private List<FleetEvent> parseEvents(InputStream inputStream) {
+    private OverviewData parseEvents(InputStream inputStream) {
         String response = "";
         try {
             StringBuilder strb = new StringBuilder();
@@ -475,7 +476,7 @@ public class OgameAgent {
         return null;
     }
 
-    private List<FleetEvent> parseEvents(StringBuilder response) {
+    private OverviewData parseEvents(StringBuilder response) {
         String sub_result = response.toString().replaceAll("&(?![A-Za-z]+;)", "&amp;");
         response = new StringBuilder(sub_result);
         //Removing javascript:
@@ -486,7 +487,8 @@ public class OgameAgent {
         removeSection(response, "<div id=\"mmonetbar\" class=\"mmoogame\">", "</script>");
 
 
-        return _fleet_event_parser.parse(response.toString(), null);
+        return _fleet_event_parser.parse
+                (response.toString(), null);
     }
 
     /**

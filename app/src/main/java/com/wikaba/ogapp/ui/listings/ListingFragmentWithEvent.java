@@ -19,22 +19,29 @@
 
 package com.wikaba.ogapp.ui.listings;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.wikaba.ogapp.R;
+import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
+import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.events.abstracts.OnAbstractListInformationLoaded;
 import com.wikaba.ogapp.events.contents.OnBuildingLoaded;
 import com.wikaba.ogapp.events.contents.OnDefensesLoaded;
 import com.wikaba.ogapp.events.contents.OnResearchsLoaded;
+import com.wikaba.ogapp.events.contents.OnResourceRequestToLoadEvent;
 import com.wikaba.ogapp.events.contents.OnResourcesLoaded;
 import com.wikaba.ogapp.events.contents.OnShipyardsLoaded;
+import com.wikaba.ogapp.ui.main.HomeActivity;
+import com.wikaba.ogapp.utils.Constants;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -60,6 +67,9 @@ public class ListingFragmentWithEvent extends Fragment {
 
     private int _type;
 
+    @Bind(R.id.refresh_layout)
+    SwipeRefreshLayout _refresh_layout;
+
     @Bind(R.id.recycler)
     protected RecyclerView _recycler;
 
@@ -79,6 +89,38 @@ public class ListingFragmentWithEvent extends Fragment {
         manager.setOrientation(LinearLayoutManager.VERTICAL);
 
         _recycler.setLayoutManager(manager);
+        _refresh_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Activity activity = getActivity();
+
+                if (activity != null) {
+                    OgameAgent agent = ((HomeActivity) activity).getCurrentOgameAgent();
+                    int t = getType();
+                    ItemRepresentationConstant load;
+                    if (getType() >= 0) {
+                        switch (t) {
+                            case Constants.BUILDING_INDEX:
+                                load = ItemRepresentationFactory.getBuildingConstants();
+                                break;
+                            case Constants.RESEARCH_INDEX:
+                                load = ItemRepresentationFactory.getResearchConstants();
+                                break;
+                            case Constants.SHIPYARD_INDEX:
+                                load = ItemRepresentationFactory.getShipConstants();
+                                break;
+                            case Constants.DEFENSE_INDEX:
+                                load = ItemRepresentationFactory.getDefenseConstants();
+                                break;
+                            default:
+                                load = ItemRepresentationFactory.getResourceConstants();
+                                break;
+                        }
+                        EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent, t, load));
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -99,6 +141,10 @@ public class ListingFragmentWithEvent extends Fragment {
 
     protected RecyclerView getRecyclerView() {
         return _recycler;
+    }
+
+    private int getType() {
+        return _type;
     }
 
     @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
@@ -127,6 +173,12 @@ public class ListingFragmentWithEvent extends Fragment {
     }
 
     public void onEventForRecycler(OnAbstractListInformationLoaded event) {
+        if (event != null && Constants.Status.LOADING.equals(event.getStatus())) {
+            _refresh_layout.setRefreshing(true);
+        } else {
+            _refresh_layout.setRefreshing(false);
+        }
+
         if (event.getType() == _type) {
             ListingRecyclerAdapter adapter = new ListingRecyclerAdapter(event);
             _recycler.setAdapter(adapter);

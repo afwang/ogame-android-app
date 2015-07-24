@@ -31,6 +31,7 @@ import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.OverviewData;
 import com.wikaba.ogapp.agent.models.ResourceItem;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
@@ -139,7 +140,7 @@ public class AgentService extends Service {
      * @param account Account to use to log in
      * @return list of fleet events from overview screen. Returns null on error.
      */
-    public List<FleetEvent> getFleetEvents(AccountCredentials account) {
+    public OverviewData getFleetEvents(AccountCredentials account) {
         OgameAgent agent = ogameSessions.get(account.id);
         if (agent == null) {
             loginToAccount(account);
@@ -150,7 +151,7 @@ public class AgentService extends Service {
             return null;
         }
 
-        List<FleetEvent> events = null;
+        OverviewData events = null;
         try {
             events = agent.getOverviewData();
         } catch (LoggedOutException e) {
@@ -182,7 +183,7 @@ public class AgentService extends Service {
             if (!agent.isLogin()) {
                 boolean logged = agent.login(credentials.universe, credentials.username,
                         credentials.passwd, credentials.lang);
-                List<FleetEvent> events = null;
+                OverviewData events = null;
                 List<ResourceItem> current_resources = null;
                 if (logged) {
                     try {

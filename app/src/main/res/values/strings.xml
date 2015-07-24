@@ -156,4 +156,7 @@
 <string name="cost_metal">%1$d m</string>
 <string name="cost_crystal">%1$d c</string>
 <string name="cost_deuterium">%1$d d</string>
+<string name="buildable">Build</string>
+<string name="disabled">Disabled</string>
+<string name="impossible">Impossible</string>
 </resources>

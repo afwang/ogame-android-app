@@ -9,16 +9,16 @@ import com.wikaba.ogapp.agent.models.ItemRepresentation;
  */
 
 public class DefenseConstants extends ItemRepresentationConstant {
-    public final ItemRepresentation ROCKET_LAUNCHER = ItemRepresentationFactory.createDefense(401, R.string.rocket_launcher);
-    public final ItemRepresentation LIGHT_LASER = ItemRepresentationFactory.createDefense(402, R.string.light_laser);
-    public final ItemRepresentation HEAVY_LASER = ItemRepresentationFactory.createDefense(403, R.string.heavy_laser);
-    public final ItemRepresentation GAUSS_CANNON = ItemRepresentationFactory.createDefense(404, R.string.gauss_cannon);
-    public final ItemRepresentation ION_CANNON = ItemRepresentationFactory.createDefense(405, R.string.ion_cannon);
-    public final ItemRepresentation PLASMA_TURRET = ItemRepresentationFactory.createDefense(406, R.string.plasma_turret);
-    public final ItemRepresentation SMALL_SHIELD_DOME = ItemRepresentationFactory.createDefense(407, R.string.small_shield_dome);
-    public final ItemRepresentation LARGE_SHIELD_DOME = ItemRepresentationFactory.createDefense(408, R.string.large_shield_dome);
-    public final ItemRepresentation ANTI_BALLISTIC_MISSILE = ItemRepresentationFactory.createDefense(502, R.string.anti_ballistic_missile);
-    public final ItemRepresentation INTERPLANETARY_MISSILE = ItemRepresentationFactory.createDefense(503, R.string.interplanetary_missile);
+    public final ItemRepresentation ROCKET_LAUNCHER = ItemRepresentationFactory.createDefense(401, R.string.rocket_launcher, R.drawable.defense_401);
+    public final ItemRepresentation LIGHT_LASER = ItemRepresentationFactory.createDefense(402, R.string.light_laser, R.drawable.defense_402);
+    public final ItemRepresentation HEAVY_LASER = ItemRepresentationFactory.createDefense(403, R.string.heavy_laser, R.drawable.defense_403);
+    public final ItemRepresentation GAUSS_CANNON = ItemRepresentationFactory.createDefense(404, R.string.gauss_cannon, R.drawable.defense_404);
+    public final ItemRepresentation ION_CANNON = ItemRepresentationFactory.createDefense(405, R.string.ion_cannon, R.drawable.defense_405);
+    public final ItemRepresentation PLASMA_TURRET = ItemRepresentationFactory.createDefense(406, R.string.plasma_turret, R.drawable.defense_406);
+    public final ItemRepresentation SMALL_SHIELD_DOME = ItemRepresentationFactory.createDefense(407, R.string.small_shield_dome, R.drawable.defense_407);
+    public final ItemRepresentation LARGE_SHIELD_DOME = ItemRepresentationFactory.createDefense(408, R.string.large_shield_dome, R.drawable.defense_408);
+    public final ItemRepresentation ANTI_BALLISTIC_MISSILE = ItemRepresentationFactory.createDefense(502, R.string.anti_ballistic_missile, R.drawable.defense_502);
+    public final ItemRepresentation INTERPLANETARY_MISSILE = ItemRepresentationFactory.createDefense(503, R.string.interplanetary_missile, R.drawable.defense_503);
 
     {
         _items.add(ROCKET_LAUNCHER);

@@ -1,5 +1,7 @@
 package com.wikaba.ogapp.agent.models;
 
+import com.wikaba.ogapp.utils.Constants;
+
 /**
  * Created by kevinleperf on 22/07/15.
  */
@@ -10,7 +12,7 @@ public abstract class AbstractItemInformation {
     private long _metal_cost;
     private long _crystal_cost;
     private long _deuterium_cost;
-    private boolean _activable;
+    private Constants.Buildable _buildable;
     private long _possible_in_seconds;
 
     public void setDuration(long duration) {
@@ -53,12 +55,12 @@ public abstract class AbstractItemInformation {
         return _deuterium_cost;
     }
 
-    public void setActivable(boolean activable) {
-        _activable = activable;
+    public void setBuildable(Constants.Buildable buildable) {
+        _buildable = buildable;
     }
 
-    public boolean isActivable() {
-        return _activable;
+    public Constants.Buildable getBuildableStatus() {
+        return _buildable;
     }
 
     public void setCurrentCardinal(long currentCardinal) {

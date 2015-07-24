@@ -39,6 +39,7 @@ import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.OverviewData;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.ui.listings.ListingFragmentWithEvent;
 import com.wikaba.ogapp.ui.login.NoAccountActivity;
@@ -324,8 +325,8 @@ public class HomeActivity extends SystemFittableActivity {
         return _current_logged_event != null ? _current_logged_event.getOgameAgent() : null;
     }
 
-    public List<FleetEvent> getCurrentFleetEvents() {
-        return _current_logged_event != null ? _current_logged_event.getFleetEvents() : null;
+    public OverviewData getCurrentOverviewData() {
+        return _current_logged_event != null ? _current_logged_event.getOverviewData() : null;
     }
 
     private void startLoginActivity() {
