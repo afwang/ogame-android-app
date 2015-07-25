@@ -1,7 +1,8 @@
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.agent.parsers.pages;
 
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaba.ogapp.agent.models.DefenseInformation;
+import com.wikaba.ogapp.agent.parsers.DefaultItemParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

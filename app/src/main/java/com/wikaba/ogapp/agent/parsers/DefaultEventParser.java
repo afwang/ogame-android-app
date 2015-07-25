@@ -20,6 +20,7 @@
 package com.wikaba.ogapp.agent.parsers;
 
 import com.wikaba.ogapp.agent.OgameResources;
+import com.wikaba.ogapp.agent.parsers.pages.FleetEventParser;
 
 import java.io.InputStream;
 

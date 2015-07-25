@@ -30,9 +30,8 @@ import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
-import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.OverviewData;
-import com.wikaba.ogapp.agent.models.ResourceItem;
+import com.wikaba.ogapp.agent.models.PlanetResources;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
@@ -184,7 +183,7 @@ public class AgentService extends Service {
                 boolean logged = agent.login(credentials.universe, credentials.username,
                         credentials.passwd, credentials.lang);
                 OverviewData events = null;
-                List<ResourceItem> current_resources = null;
+                PlanetResources resources = null;
                 if (logged) {
                     try {
                         events = agent.getFleetEvents();
@@ -193,8 +192,7 @@ public class AgentService extends Service {
                     }
 
                     try {
-                        String raw_res = agent.getResourcePagesContent();
-                        current_resources = agent.getResourcesFromResourcePageContent(raw_res);
+                        resources = agent.getResourcePagesContent();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -221,16 +219,7 @@ public class AgentService extends Service {
                 }
                 EventBus.getDefault().postSticky(new OnLoginEvent(false));
                 EventBus.getDefault().postSticky(new OnLoggedEvent(logged, credentials,
-                        agent, events, current_resources));
-            } else {
-                //cancel the call ?
-                //EventBus.getDefault().postSticky(new OnResourcesLoaded(agent, null, false));
-                //EventBus.getDefault().postSticky(new OnBuildingLoaded(agent, null, false));
-                //EventBus.getDefault().postSticky(new OnResearchsLoaded(agent, null, false));
-                //EventBus.getDefault().postSticky(new OnShipyardsLoaded(agent, null, false));
-                //EventBus.getDefault().postSticky(new OnDefensesLoaded(agent, null, false));
-                //for now, the previous calls are commented out, so we must in UI
-                //check if the saved Sticky events is corresponding to the current logged
+                        agent, events, resources));
             }
             //no post event here
         }

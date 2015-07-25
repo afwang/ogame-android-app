@@ -8,10 +8,10 @@ import com.wikaba.ogapp.agent.constants.ShipConstants;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.ItemRepresentation;
 import com.wikaba.ogapp.agent.parsers.AbstractParser;
-import com.wikaba.ogapp.agent.parsers.BuildingParser;
-import com.wikaba.ogapp.agent.parsers.DefenseParser;
-import com.wikaba.ogapp.agent.parsers.ResearchParser;
-import com.wikaba.ogapp.agent.parsers.ShipyardParser;
+import com.wikaba.ogapp.agent.parsers.pages.BuildingParser;
+import com.wikaba.ogapp.agent.parsers.pages.DefenseParser;
+import com.wikaba.ogapp.agent.parsers.pages.ResearchParser;
+import com.wikaba.ogapp.agent.parsers.pages.ShipyardParser;
 import com.wikaba.ogapp.utils.Constants;
 
 /**

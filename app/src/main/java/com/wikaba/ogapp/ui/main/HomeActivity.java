@@ -33,13 +33,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.OverviewData;
+import com.wikaba.ogapp.agent.models.PlanetResources;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.ui.listings.ListingFragmentWithEvent;
 import com.wikaba.ogapp.ui.login.NoAccountActivity;
@@ -48,8 +48,6 @@ import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.Constants;
 import com.wikaba.ogapp.utils.FragmentStackManager;
 import com.wikaba.ogapp.utils.SystemFittableActivity;
-
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -64,6 +62,29 @@ public class HomeActivity extends SystemFittableActivity {
     @Bind(R.id.drawerLayout)
     protected DrawerLayout mDrawerLayout;
 
+    @Bind(R.id.metal_main_update)
+    protected TextView _metal_main;
+
+    @Bind(R.id.crystal_main_update)
+    protected TextView _crystal_main;
+
+    @Bind(R.id.deuterium_main_update)
+    protected TextView _deuterium_main;
+
+    @OnClick(R.id.metal_main)
+    public void onMetalMainClicked() {
+        //TODO SNACKBAR WITH PRODUCTION INFORMATION
+    }
+
+    @OnClick(R.id.crystal_main)
+    public void onCrystalMainClicked() {
+        //TODO SNACKBAR WITH PRODUCTION INFORMATION
+    }
+
+    @OnClick(R.id.deuterium_main)
+    public void onDeuteriumMainClicked() {
+        //TODO SNACKBAR WITH PRODUCTION INFORMATION
+    }
 
     @OnClick(R.id.main)
     public void onOverView() {
@@ -282,6 +303,12 @@ public class HomeActivity extends SystemFittableActivity {
         if (event.isConnected()) {
             _current_logged_event = event;
             activeAccount = event.getCredentials();
+
+            PlanetResources resource = _current_logged_event.getPlanetResources();
+
+            _metal_main.setText(getString(R.string.cost_metal, resource.metal.current_quantity));
+            _crystal_main.setText(getString(R.string.cost_crystal, resource.crystal.current_quantity));
+            _deuterium_main.setText(getString(R.string.cost_deuterium, resource.deuterium.current_quantity));
 
             goToOverview();
         } else {

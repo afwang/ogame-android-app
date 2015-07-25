@@ -47,6 +47,14 @@ public interface IWebservice {
     @Headers({"Accept-Language: en-US", "Accept: text/html"})
     Response loginStep2(@Query("data") String data);
 
+    @Headers({"Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Encoding:gzip,deflate,sdch",
+            "Accept-Language:fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4",
+            "Cache-Control:max-age=0",
+            "Connection:keep-alive",
+            "Referer:http://fr.ogame.gameforge.com/",
+            "User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36"
+    })
     @GET("/game/index.php")
     Response loginStep3(@Query("page") String page);
 

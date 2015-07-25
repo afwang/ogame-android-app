@@ -21,10 +21,8 @@ package com.wikaba.ogapp.events;
 
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.models.OverviewData;
-import com.wikaba.ogapp.agent.models.ResourceItem;
+import com.wikaba.ogapp.agent.models.PlanetResources;
 import com.wikaba.ogapp.utils.AccountCredentials;
-
-import java.util.List;
 
 /**
  * Created by kevinleperf on 19/07/15.
@@ -33,12 +31,12 @@ public class OnLoggedEvent {
     private boolean _state;
     private OgameAgent _agent;
     private OverviewData _events;
-    private List<ResourceItem> _resources_information;
+    private PlanetResources _resources_information;
     private AccountCredentials _credentials;
 
     public OnLoggedEvent(boolean state, AccountCredentials credentials, OgameAgent agent,
                          OverviewData events,
-                         List<ResourceItem> resources_information) {
+                         PlanetResources resources_information) {
         _credentials = credentials;
         _state = state;
         _agent = agent;
@@ -58,7 +56,7 @@ public class OnLoggedEvent {
         return _events;
     }
 
-    public List<ResourceItem> getResourceItems() {
+    public PlanetResources getPlanetResources() {
         return _resources_information;
     }
 

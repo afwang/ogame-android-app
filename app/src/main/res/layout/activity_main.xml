@@ -57,6 +57,121 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
+                        android:id="@+id/metal_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@drawable/main_left"
+                        android:clickable="true"
+                        android:orientation="horizontal">
+
+                        <com.wikaba.ogapp.views.IconTextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:gravity="center_vertical|center_horizontal"
+                            android:text="a"
+                            android:textColor="@color/black"
+                            android:textSize="24sp"
+                            android:visibility="invisible" />
+
+                        <com.devspark.robototextview.widget.RobotoTextView
+                            android:id="@+id/metal_main_update"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:text="metal"
+                            android:textColor="@color/black" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="@dimen/navigation_drawer_width"
+                    android:layout_height="50dp"
+                    android:background="@color/white"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/crystal_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@drawable/main_left"
+                        android:clickable="true"
+                        android:orientation="horizontal">
+
+                        <com.wikaba.ogapp.views.IconTextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:gravity="center_vertical|center_horizontal"
+                            android:text="a"
+                            android:textColor="@color/black"
+                            android:textSize="24sp"
+                            android:visibility="invisible" />
+
+                        <com.devspark.robototextview.widget.RobotoTextView
+                            android:id="@+id/crystal_main_update"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:text="crystal"
+                            android:textColor="@color/black" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="@dimen/navigation_drawer_width"
+                    android:layout_height="50dp"
+                    android:background="@color/white"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/deuterium_main"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:background="@drawable/main_left"
+                        android:clickable="true"
+                        android:orientation="horizontal">
+
+                        <com.wikaba.ogapp.views.IconTextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center_vertical|center_horizontal"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:gravity="center_vertical|center_horizontal"
+                            android:text="a"
+                            android:textColor="@color/black"
+                            android:textSize="24sp"
+                            android:visibility="invisible" />
+
+                        <com.devspark.robototextview.widget.RobotoTextView
+                            android:id="@+id/deuterium_main_update"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:text="deuterium"
+                            android:textColor="@color/black" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="@dimen/navigation_drawer_width"
+                    android:layout_height="50dp"
+                    android:background="@color/white"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
                         android:id="@+id/main"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
