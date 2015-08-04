@@ -1,9 +1,8 @@
 package com.wikaba.ogapp.agent.parsers;
 
-import android.util.Log;
-
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
+import com.wikaba.ogapp.utils.Constants;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,6 +26,7 @@ public abstract class DefaultItemParser<T extends AbstractItemInformation> exten
     public T parse(String raw, OgameResources resources) {
         T information = createDefaultItemInformationInstance();
         information.setCurrentCardinal(0);
+        information.setBuildable(Constants.Buildable.BUILDABLE);
 
         Document document = Jsoup.parse(raw);
         Elements divs = document.getElementsByTag("div");
@@ -104,6 +104,8 @@ public abstract class DefaultItemParser<T extends AbstractItemInformation> exten
         if (divs != null) {
             for (Element div : divs) {
                 if (div.hasClass("cost")) cost = optLong(stripTags(div.childNodes()).trim());
+                if (div.hasClass("overmark"))
+                    information.setBuildable(Constants.Buildable.IMPOSSIBLE);
             }
         }
 
@@ -118,11 +120,11 @@ public abstract class DefaultItemParser<T extends AbstractItemInformation> exten
         if (a == null) return;
 
         if (a.hasClass("build-it_disabled")) {
-            information.setActivable(false);
+            information.setBuildable(Constants.Buildable.DISABLED);
         } else if (a.hasClass("build-it_premium")) {
-            information.setActivable(true);//but can not build for now
+            //information.setActivable(true);//but can not build for now
         } else {
-            information.setActivable(true);//and can build
+            //
         }
     }
 }

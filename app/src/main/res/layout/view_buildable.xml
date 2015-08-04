@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -23,50 +24,98 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <com.devspark.robototextview.widget.RobotoTextView
-                android:id="@+id/name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/default_margin" />
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginBottom="@dimen/default_margin"
+                android:layout_marginLeft="@dimen/default_margin"
+                android:layout_marginTop="@dimen/default_margin"
+                android:src="@drawable/ship_203" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <com.devspark.robototextview.widget.RobotoTextView
+                    android:id="@+id/name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/default_margin" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/default_margin"
+                    android:orientation="horizontal">
+
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/level"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/cost_metal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="@dimen/default_margin"
+                        android:layout_weight="1"
+                        android:text="@string/cost_metal" />
+
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/cost_crystal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="@dimen/default_margin"
+                        android:layout_weight="1"
+                        android:text="@string/cost_crystal" />
+
+                    <com.devspark.robototextview.widget.RobotoTextView
+                        android:id="@+id/cost_deuterium"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="@dimen/default_margin"
+                        android:layout_weight="1"
+                        android:text="@string/cost_deuterium" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_margin="@dimen/default_margin"
-                android:orientation="horizontal">
+                android:gravity="center_vertical"
+                android:orientation="vertical">
 
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/level"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
+                <com.wikaba.ogapp.views.ButtonRectangle
+                    android:id="@+id/buildable"
+                    android:visibility="gone"
+                    android:layout_width="95dp"
+                    android:layout_height="40dp"
+                    android:text="@string/buildable"
+                    app:background="@color/colorPrimary" />
 
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/cost_metal"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/default_margin"
-                    android:layout_weight="1"
-                    android:text="@string/cost_metal" />
+                <com.wikaba.ogapp.views.ButtonRectangle
+                    android:id="@+id/impossible"
+                    android:visibility="gone"
+                    android:layout_width="95dp"
+                    android:layout_height="40dp"
+                    android:text="@string/impossible"
+                    app:background="@color/gray" />
 
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/cost_crystal"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/default_margin"
-                    android:layout_weight="1"
-                    android:text="@string/cost_crystal" />
-
-                <com.devspark.robototextview.widget.RobotoTextView
-                    android:id="@+id/cost_deuterium"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/default_margin"
-                    android:layout_weight="1"
-                    android:text="@string/cost_deuterium" />
-
+                <com.wikaba.ogapp.views.ButtonRectangle
+                    android:id="@+id/disabled"
+                    android:visibility="gone"
+                    android:layout_width="95dp"
+                    android:layout_height="40dp"
+                    android:text="@string/disabled"
+                    app:background="@color/gray" />
             </LinearLayout>
         </LinearLayout>
     </android.support.v7.widget.CardView>

@@ -8,10 +8,10 @@ import com.wikaba.ogapp.agent.constants.ShipConstants;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.ItemRepresentation;
 import com.wikaba.ogapp.agent.parsers.AbstractParser;
-import com.wikaba.ogapp.agent.parsers.BuildingParser;
-import com.wikaba.ogapp.agent.parsers.DefenseParser;
-import com.wikaba.ogapp.agent.parsers.ResearchParser;
-import com.wikaba.ogapp.agent.parsers.ShipyardParser;
+import com.wikaba.ogapp.agent.parsers.pages.BuildingParser;
+import com.wikaba.ogapp.agent.parsers.pages.DefenseParser;
+import com.wikaba.ogapp.agent.parsers.pages.ResearchParser;
+import com.wikaba.ogapp.agent.parsers.pages.ShipyardParser;
 import com.wikaba.ogapp.utils.Constants;
 
 /**
@@ -24,30 +24,30 @@ public class ItemRepresentationFactory {
     private static final ResourceConstants _static_resource = new ResourceConstants();
     private static final ShipConstants _static_ship = new ShipConstants();
 
-    public static ItemRepresentation createResource(int index, int resource) {
-        return create(Constants.RESOURCES, index, resource, new BuildingParser());
+    public static ItemRepresentation createResource(int index, int resource, int drawable) {
+        return create(Constants.RESOURCES, index, resource, drawable, new BuildingParser());
     }
 
-    public static ItemRepresentation createBuilding(int index, int resource) {
-        return create(Constants.BUILDING, index, resource, new BuildingParser());
+    public static ItemRepresentation createBuilding(int index, int resource, int drawable) {
+        return create(Constants.BUILDING, index, resource, drawable, new BuildingParser());
     }
 
-    public static ItemRepresentation createShip(int index, int resource) {
-        return create(Constants.SHIPYARD, index, resource, new ShipyardParser());
+    public static ItemRepresentation createShip(int index, int resource, int drawable) {
+        return create(Constants.SHIPYARD, index, resource, drawable, new ShipyardParser());
     }
 
-    public static ItemRepresentation createDefense(int index, int resource) {
-        return create(Constants.DEFENSE, index, resource, new DefenseParser());
+    public static ItemRepresentation createDefense(int index, int resource, int drawable) {
+        return create(Constants.DEFENSE, index, resource, drawable, new DefenseParser());
     }
 
-    public static ItemRepresentation createResearch(int index, int resource) {
-        return create(Constants.RESEARCH, index, resource, new ResearchParser());
+    public static ItemRepresentation createResearch(int index, int resource, int drawable) {
+        return create(Constants.RESEARCH, index, resource, drawable, new ResearchParser());
     }
 
 
-    private static ItemRepresentation create(String page, int index, int resource,
+    private static ItemRepresentation create(String page, int index, int resource, int drawable,
                                              AbstractParser<? extends AbstractItemInformation> parser) {
-        return new ItemRepresentation(page, index, resource, parser);
+        return new ItemRepresentation(page, index, resource, drawable, parser);
     }
 
     public static final BuildingConstants getBuildingConstants() {

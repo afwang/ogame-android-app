@@ -17,13 +17,14 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.agent.parsers.pages;
 
 import com.wikaba.ogapp.agent.FleetAndResources;
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.FleetResources;
 import com.wikaba.ogapp.agent.models.LinkHTML;
+import com.wikaba.ogapp.agent.parsers.AbstractParser;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;

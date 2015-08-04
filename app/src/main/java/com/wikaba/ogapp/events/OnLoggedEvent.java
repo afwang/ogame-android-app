@@ -20,11 +20,9 @@
 package com.wikaba.ogapp.events;
 
 import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.agent.models.FleetEvent;
-import com.wikaba.ogapp.agent.models.ResourceItem;
+import com.wikaba.ogapp.agent.models.OverviewData;
+import com.wikaba.ogapp.agent.models.PlanetResources;
 import com.wikaba.ogapp.utils.AccountCredentials;
-
-import java.util.List;
 
 /**
  * Created by kevinleperf on 19/07/15.
@@ -32,17 +30,17 @@ import java.util.List;
 public class OnLoggedEvent {
     private boolean _state;
     private OgameAgent _agent;
-    private List<FleetEvent> _fleet_events;
-    private List<ResourceItem> _resources_information;
+    private OverviewData _events;
+    private PlanetResources _resources_information;
     private AccountCredentials _credentials;
 
     public OnLoggedEvent(boolean state, AccountCredentials credentials, OgameAgent agent,
-                         List<FleetEvent> fleet_events,
-                         List<ResourceItem> resources_information) {
+                         OverviewData events,
+                         PlanetResources resources_information) {
         _credentials = credentials;
         _state = state;
         _agent = agent;
-        _fleet_events = fleet_events;
+        _events = events;
         _resources_information = resources_information;
     }
 
@@ -54,11 +52,11 @@ public class OnLoggedEvent {
         return _agent;
     }
 
-    public List<FleetEvent> getFleetEvents() {
-        return _fleet_events;
+    public OverviewData getOverviewData() {
+        return _events;
     }
 
-    public List<ResourceItem> getResourceItems() {
+    public PlanetResources getPlanetResources() {
         return _resources_information;
     }
 

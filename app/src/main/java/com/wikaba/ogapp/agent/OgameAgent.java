@@ -26,15 +26,15 @@ import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
 import com.wikaba.ogapp.agent.interfaces.IWebservice;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
-import com.wikaba.ogapp.agent.models.FleetEvent;
 import com.wikaba.ogapp.agent.models.ItemRepresentation;
-import com.wikaba.ogapp.agent.models.ResourceItem;
-import com.wikaba.ogapp.agent.parsers.FleetEventParser;
-import com.wikaba.ogapp.agent.parsers.ResourcesParser;
+import com.wikaba.ogapp.agent.models.OverviewData;
+import com.wikaba.ogapp.agent.models.PlanetResources;
+import com.wikaba.ogapp.agent.parsers.PlanetResourceParser;
+import com.wikaba.ogapp.agent.parsers.pages.FleetEventParser;
+import com.wikaba.ogapp.agent.parsers.pages.ResourcesParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
@@ -77,6 +77,12 @@ public class OgameAgent {
     private boolean _is_login;
     private String serverUri;
 
+
+    private String _temporary_universe;
+    private String _username;
+    private String _password;
+    private String _lang;
+
     public OgameAgent(String universe, String lang) {
         if (universe == null) {
             throw new IllegalArgumentException("OgameAgent constructor argument is null");
@@ -88,6 +94,7 @@ public class OgameAgent {
         serverUri = "http://" + String.format(NameToURI.getDomain(universe), lang);
 
         _universe_adapter = createLoginAdapter(serverUri);
+
     }
 
     private RestAdapter createLoginAdapter(String base) {
@@ -165,6 +172,11 @@ public class OgameAgent {
      * @return true on successful login, false on failure
      */
     public boolean login(String universe, String username, String password, String lang) {
+        _temporary_universe = universe;
+        _username = username;
+        _password = password;
+        _lang = lang;
+
         _is_login = true;
         interceptor.cleanCookie();
 
@@ -294,13 +306,6 @@ public class OgameAgent {
             if (answer != null && answer.getStatus() == HttpURLConnection.HTTP_OK) {
                 successfulResponse = true;
                 System.out.println("Everything went okay! Response " + answer.getStatus());
-
-                List<Header> headers = answer.getHeaders();
-
-                Header locationHeader = getHeader(headers, "Location");
-                if (locationHeader != null) {
-                    uri = locationHeader.getValue();
-                }
             } else {
                 successfulResponse = false;
                 System.err.println("Something went wrong!");
@@ -331,21 +336,34 @@ public class OgameAgent {
         return _is_login;
     }
 
-    public String getResourcePagesContent() {
-        try {
-            IWebservice instance = _universe_adapter.create(IWebservice.class);
-            return consumeResponseToString(instance.getSinglePage("resources")).toString();
-        } catch (RetrofitError error) {
-
-        }
-        return null;
+    public PlanetResources getResourcePagesContent() throws LoggedOutException {
+        return getResourcePagesContent(true);
     }
 
-    public List<ResourceItem> getResourcesFromResourcePageContent(String page) {
-        return _resources_parser.parse(page, null);
+    private PlanetResources getResourcePagesContent(boolean retry) throws LoggedOutException {
+        try {
+            IWebservice instance = _universe_adapter.create(IWebservice.class);
+            String res = consumeResponseToString(instance.getSinglePage("resources")).toString();
+            PlanetResourceParser parser = new PlanetResourceParser();
+            return parser.parse(res, null);
+        } catch (RetrofitError error) {
+            if (error != null && error.getResponse() != null && error.getResponse().getStatus() == 302) {
+                error.printStackTrace();
+                if (retry) {
+                    login(_temporary_universe, _username, _password, _lang);
+                    return getResourcePagesContent(false);
+                }
+            }
+            throw new LoggedOutException("Agent's cookies are no longer valid");
+        }
     }
 
     public List<AbstractItemInformation> getItemFromPage(ItemRepresentationConstant item_to_fetch) {
+        return getItemFromPage(item_to_fetch, true);
+    }
+
+    private List<AbstractItemInformation> getItemFromPage(ItemRepresentationConstant item_to_fetch,
+                                                          boolean retry) {
         try {
             List<AbstractItemInformation> items = new ArrayList<>();
             IWebservice instance = _universe_adapter.create(IWebservice.class);
@@ -356,8 +374,10 @@ public class OgameAgent {
 
             for (ItemRepresentation item : list) {
                 response = instance.getSinglePageFromCategory(item.getPage(), 1, item.getIndex());
+                String raw = consumeResponseToString(response).toString();
                 tmp_information = item.getParser()
-                        .parse(consumeResponseToString(response).toString(), null);
+                        .parse(raw, null);
+
 
                 if (tmp_information != null) {
                     tmp_information.setItemRepresentation(item);
@@ -367,10 +387,17 @@ public class OgameAgent {
 
             return items;
         } catch (RetrofitError error) {
-            error.printStackTrace();
+            if (error != null && error.getResponse() != null && error.getResponse().getStatus() == 302) {
+                error.printStackTrace();
+                if (retry) {
+                    login(_temporary_universe, _username, _password, _lang);
+                    return getItemFromPage(item_to_fetch, false);
+                }
+                return null;
+            } else {
+                return new ArrayList<>();
+            }
         }
-        return null;
-
     }
 
     /**
@@ -381,8 +408,12 @@ public class OgameAgent {
      * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
      * will have non-null instance variables.
      */
-    public List<FleetEvent> getOverviewData() throws LoggedOutException {
-        List<FleetEvent> overviewData;
+    public OverviewData getOverviewData() throws LoggedOutException {
+        return getOverviewData(true);
+    }
+
+    private OverviewData getOverviewData(boolean retry) throws LoggedOutException {
+        OverviewData overviewData = null;
         IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
@@ -390,10 +421,18 @@ public class OgameAgent {
             overviewData = consumeFleetEventFrom(overview);
         } catch (RetrofitError error) {
             error.printStackTrace();
+            if (error != null && error.getResponse() != null && error.getResponse().getStatus() == 302) {
+                error.printStackTrace();
+                if (retry) {
+                    login(_temporary_universe, _username, _password, _lang);
+                    return getOverviewData(false);
+                }
+            }
             throw new LoggedOutException("Agent's cookies are no longer valid");
         }
 
-        if (overviewData != null && overviewData.size() == 0) {
+        if (overviewData == null || overviewData._fleet_event == null ||
+                overviewData._fleet_event.size() == 0) {
             overviewData = getFleetEvents();
         }
 
@@ -407,13 +446,24 @@ public class OgameAgent {
      * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
      * will have non-null instance variables.
      */
-    public List<FleetEvent> getFleetEvents() throws LoggedOutException {
+    public OverviewData getFleetEvents() throws LoggedOutException {
+        return getFleetEvents(true);
+    }
+
+    private OverviewData getFleetEvents(boolean retry) throws LoggedOutException {
         IWebservice instance = _universe_adapter.create(IWebservice.class);
 
         try {
             Response overview = instance.getSinglePageWithAjaxParameter("eventList", 1);
             return consumeFleetEventFrom(overview);
         } catch (RetrofitError error) {
+            if (error != null && error.getResponse() != null && error.getResponse().getStatus() == 302) {
+                error.printStackTrace();
+                if (retry) {
+                    login(_temporary_universe, _username, _password, _lang);
+                    return getFleetEvents(false);
+                }
+            }
             throw new LoggedOutException("Agent's cookies are no longer valid");
         }
     }
@@ -424,7 +474,7 @@ public class OgameAgent {
      * @return If no errors occurred while extracting the data, a list of @NotNull fleet movements with details
      * is returned. Otherwvise, null is returned
      */
-    private List<FleetEvent> consumeFleetEventFrom(Response response) {
+    private OverviewData consumeFleetEventFrom(Response response) {
         return parseEvents(consumeResponseToString(response));
     }
 
@@ -446,36 +496,7 @@ public class OgameAgent {
         return out;
     }
 
-    /**
-     * Uses an XMLPullParser to parse an HTML file presented as an InputStream for fleet events.
-     * <p/>
-     * Pre-condition: inputStream must not be closed.
-     * <p/>
-     * Post-condition: inputStream remains unclosed. The caller must close it themselves.
-     *
-     * @param inputStream - Input stream from HttpURLConnection after a successful connection.
-     *                    inputStream contains the HTML response from the Ogame server.
-     * @return list of mission events parsed from HTML InputStream. Returns empty list if no events.
-     * Null on error.
-     */
-    private List<FleetEvent> parseEvents(InputStream inputStream) {
-        String response = "";
-        try {
-            StringBuilder strb = new StringBuilder();
-            char[] buffer = new char[1024];
-            InputStreamReader isr = new InputStreamReader(inputStream);
-            while ((isr.read(buffer)) > 0) {
-                strb.append(buffer);
-            }
-            return parseEvents(strb);
-        } catch (IOException e) {
-            System.err.println("Error reading the response: " + e + '\n' + e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private List<FleetEvent> parseEvents(StringBuilder response) {
+    private OverviewData parseEvents(StringBuilder response) {
         String sub_result = response.toString().replaceAll("&(?![A-Za-z]+;)", "&amp;");
         response = new StringBuilder(sub_result);
         //Removing javascript:
@@ -486,7 +507,8 @@ public class OgameAgent {
         removeSection(response, "<div id=\"mmonetbar\" class=\"mmoogame\">", "</script>");
 
 
-        return _fleet_event_parser.parse(response.toString(), null);
+        return _fleet_event_parser.parse
+                (response.toString(), null);
     }
 
     /**

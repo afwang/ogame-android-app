@@ -17,10 +17,12 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent.parsers;
+package com.wikaba.ogapp.agent.parsers.pages;
 
 import com.wikaba.ogapp.agent.OgameResources;
 import com.wikaba.ogapp.agent.models.FleetEvent;
+import com.wikaba.ogapp.agent.models.OverviewData;
+import com.wikaba.ogapp.agent.parsers.AbstractParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,16 +33,124 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FleetEventParser extends AbstractParser<List<FleetEvent>> {
+public class FleetEventParser extends AbstractParser<OverviewData> {
 
-    public List<FleetEvent> parse(InputStream stream, OgameResources ressources) {
+    public OverviewData parse(InputStream stream, OgameResources ressources) {
         return parse(consumeStream(stream).toString(), ressources);
     }
 
-    public List<FleetEvent> parse(String raw, OgameResources ressources) {
-        List<FleetEvent> eventList = new LinkedList<>();
+    public OverviewData parse(String raw, OgameResources ressources) {
+
+        OverviewData data = new OverviewData();
 
         Document document = Jsoup.parse(raw);
+        data._fleet_event = getFleetEvent(document);
+
+        Elements div_content_boxs = document.getElementsByClass("content-box-s");
+
+        int index = 0;
+        for (Element div_content_box : div_content_boxs) {
+            if (div_content_box != null) {
+                Element content = div_content_box.getElementsByClass("content").first();
+                if (content != null) {
+                    Element table = content.getElementsByTag("table").first();
+                    if (table != null) {
+                        Element tbody = content.getElementsByTag("tbody").first();
+                        if (tbody != null) {
+                            Elements trs = tbody.getElementsByTag("tr");
+                            switch (index) {
+                                case 0:
+                                    extractBuildingInProgress(data, trs);
+                                    break;
+                                case 1:
+                                    extractResearchInProgress(data, trs);
+                                    break;
+                                case 2:
+                                    extractShipInProgress(data, trs);
+                                    break;
+                                default://nothing
+                            }
+                        }
+                    }
+                }
+            }
+            index++;
+        }
+
+        return data;
+    }
+
+    private void extractShipInProgress(OverviewData data, Elements trs) {
+        for (Element tr : trs) {
+            Elements divs = tr.getElementsByClass("shipSumCount");
+            for (Element div : divs) {
+                if (div != null) {
+                    data._current_ship_count = optLong(div.text());
+                    break;
+                }
+            }
+
+            Element a = tr.getElementsByTag("a").first();
+            if (a != null) {
+                String href = a.attr("href");
+                if (href != null && href.indexOf("shipyard") > 0) {
+                    String[] split = href.split("\\?");
+                    if (split.length > 1) {
+                        for (int i = 1; i < split.length; i++) {
+                            if (split[i].indexOf("openTech") >= 0) {
+                                split = split[i].split("=");
+                                if (split.length > 1) {
+                                    data._current_ship_id = optLong(split[1]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractResearchInProgress(OverviewData data, Elements trs) {
+        extractBuildingInProgress(data, trs);
+    }
+
+    private void extractBuildingInProgress(OverviewData data, Elements trs) {
+        for (Element tr : trs) {
+            Element a = tr.getElementsByTag("a").first();
+            if (a != null && a.attr("onclick").length() > 0) {
+                String information = a.attr("onclick");
+                if (information.indexOf(",") >= 0) {
+                    //have information
+                    String[] split = information.split(",");
+                    if (split.length > 0) {
+                        information = split[0];
+                        if (information.indexOf("(") >= 0) {
+                            split = information.split("\\(");
+                            if (split.length > 1) {
+                                data._current_building_id = optLong(split[1]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Elements spans = tr.getElementsByTag("span");
+            for (Element span : spans) {
+                if (span != null && span.hasClass("level")) {
+                    String text = span.text();
+                    if (text != null) {
+                        String[] split = span.text().trim().split(" ");
+                        if (split.length > 1) {
+                            data._current_building_level = optLong(split[1]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private List<FleetEvent> getFleetEvent(Document document) {
+        List<FleetEvent> eventList = new LinkedList<>();
 
         Element table_event = null;
         if (document != null) {

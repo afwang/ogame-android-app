@@ -4,12 +4,14 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.events.abstracts.OnAbstractListInformationLoaded;
 import com.wikaba.ogapp.utils.Constants;
+import com.wikaba.ogapp.views.ButtonRectangle;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -43,6 +45,18 @@ public class ListingRecyclerAdapter extends RecyclerView.Adapter {
 
         @Bind(R.id.level)
         public TextView _level;
+
+        @Bind(R.id.icon)
+        public ImageView _icon;
+
+        @Bind(R.id.buildable)
+        public ButtonRectangle _buildable;
+
+        @Bind(R.id.impossible)
+        public ButtonRectangle _impossible;
+
+        @Bind(R.id.disabled)
+        public ButtonRectangle _disabled;
 
 
         public ListingHolder(View itemView) {
@@ -106,6 +120,11 @@ public class ListingRecyclerAdapter extends RecyclerView.Adapter {
             AbstractItemInformation information = _loaded_information.getListOfItemRetrieved()
                     .get(position);
 
+            Constants.Buildable build = information.getBuildableStatus();
+            Constants.Buildable buildable = Constants.Buildable.BUILDABLE;
+            Constants.Buildable impossible = Constants.Buildable.IMPOSSIBLE;
+            Constants.Buildable disabled = Constants.Buildable.DISABLED;
+
             v.setAbstractItemInformation(information);
             v._name.setText(information.getItemRepresentation().getResourceString());
             v._level.setText(Long.toString(information.getLevelOrCount()));
@@ -116,6 +135,11 @@ public class ListingRecyclerAdapter extends RecyclerView.Adapter {
                     information.getCrystalCost()));
             v._deuterium.setText(v.itemView.getContext().getString(R.string.cost_deuterium,
                     information.getDeuteriumCost()));
+            v._icon.setImageResource(information.getItemRepresentation().getResourceDrawable());
+
+            v._buildable.setVisibility(buildable.equals(build) ? View.VISIBLE : View.GONE);
+            v._impossible.setVisibility(impossible.equals(build) ? View.VISIBLE : View.GONE);
+            v._disabled.setVisibility(disabled.equals(build) ? View.VISIBLE : View.GONE);
         }
     }
 
