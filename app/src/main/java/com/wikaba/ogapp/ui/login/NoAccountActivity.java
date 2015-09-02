@@ -20,6 +20,7 @@ package com.wikaba.ogapp.ui.login;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Debug;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.text.InputType;
@@ -98,6 +99,7 @@ public class NoAccountActivity extends SystemFittableActivity
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Debug.startMethodTracing();
 		super.onCreate(savedInstanceState);
 
 		unsetInsets();
@@ -183,6 +185,7 @@ public class NoAccountActivity extends SystemFittableActivity
 
 		Intent service = new Intent(this, AgentService.class);
 		startService(service);
+		Debug.stopMethodTracing();
 	}
 
 	@Override
