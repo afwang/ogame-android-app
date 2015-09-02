@@ -29,11 +29,9 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/nasa_hubble" />
+    <!--Do not load the ImageView for the background here, since it -->
+    <!--will occur on the UI thread. We'll be making a lengthier process-->
+    <!--to load the nasa_hubble background-->
 
     <LinearLayout
         android:id="@+id/container"
