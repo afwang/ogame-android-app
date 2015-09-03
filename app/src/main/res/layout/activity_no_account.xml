@@ -29,41 +29,34 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
-    <!--Do not load the ImageView for the background here, since it -->
-    <!--will occur on the UI thread. We'll be making a lengthier process-->
-    <!--to load the nasa_hubble background-->
-
     <LinearLayout
-        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical">
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1px"
-            android:layout_weight="1" />
+        <EditText
+            android:id="@+id/username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/default_middle_margin"
+            android:background="@drawable/btn_corner"
+            android:ems="10"
+            android:hint="@string/username"
+            android:padding="5dp" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="4"
-            android:orientation="vertical">
-
-            <EditText
-                android:id="@+id/username"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:background="@drawable/btn_corner"
-                android:ems="10"
-                android:hint="@string/username"
-                android:padding="5dp" />
+            android:layout_marginTop="@dimen/default_middle_margin"
+            android:background="@drawable/btn_corner"
+            android:orientation="horizontal"
+            android:padding="5dp">
 
             <EditText
                 android:id="@+id/password"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/default_middle_margin"
                 android:background="@drawable/btn_corner"
@@ -72,86 +65,50 @@
                 android:inputType="textPassword"
                 android:padding="5dp" />
 
-            <EditText
-                android:id="@+id/lang"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:background="@drawable/btn_corner"
-                android:ems="10"
-                android:hint="@string/lang"
-                android:padding="5dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:background="@drawable/btn_corner"
-                android:orientation="horizontal"
-                android:padding="5dp">
-
-                <Spinner
-                    android:id="@+id/uniSelect"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:prompt="@string/universe" />
-
-                <CheckBox
-                    android:id="@+id/pw_checkbox"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:layout_gravity="start"
-                    android:text="@string/show_password_checkbox" />
-
-            </LinearLayout>
-
-            <com.wikaba.ogapp.views.ButtonRectangle
-                android:id="@+id/login"
+            <CheckBox
+                android:id="@+id/pw_checkbox"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:text="@string/login"
-                app:background="@color/colorPrimary" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:background="@drawable/btn_corner"
-                android:orientation="vertical"
-                android:padding="5dp">
+                android:layout_gravity="end"
+                android:text="@string/show_password_checkbox" />
 
-                <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:text="@string/existing_accounts"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
-
-                <Spinner
-                    android:id="@+id/existingAccList"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:prompt="@string/existing_accounts" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="1px"
-                android:layout_height="1px"
-                android:focusable="true"
-                android:focusableInTouchMode="true">
-
-                <requestFocus />
-            </View>
         </LinearLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1px"
-            android:layout_weight="1" />
+        <EditText
+            android:id="@+id/lang"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/default_middle_margin"
+            android:background="@drawable/btn_corner"
+            android:ems="10"
+            android:hint="@string/lang"
+            android:padding="5dp" />
+
+        <Spinner
+            android:id="@+id/uniSelect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:prompt="@string/universe"
+            android:background="#ffffff"
+            android:layout_margin="5dp" />
+
+        <com.wikaba.ogapp.views.ButtonRectangle
+            android:id="@+id/login"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/default_middle_margin"
+            android:text="@string/login"
+            app:background="@color/colorPrimary" />
+
+        <Spinner
+            android:id="@+id/existingAccList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:prompt="@string/existing_accounts"
+            style="@style/AppTheme"
+            android:background="#ffffff" />
     </LinearLayout>
 </FrameLayout>

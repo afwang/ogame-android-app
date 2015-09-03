@@ -18,13 +18,14 @@
  */
 package com.wikaba.ogapp.ui.login;
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
+import android.support.v4.app.ActivityManagerCompat;
 import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -42,7 +43,6 @@ import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
-import com.wikaba.ogapp.loaders.BackgroundImageLoader;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.FragmentStackManager;
@@ -61,12 +61,9 @@ import de.greenrobot.event.ThreadMode;
 /**
  * Created by kevinleperf on 03/07/15.
  */
-public class NoAccountActivity extends SystemFittableActivity
-		implements LoaderManager.LoaderCallbacks<ImageView> {
-
+public class NoAccountActivity extends SystemFittableActivity {
 
 	private static final int ALL_ACCS_LOADER_ID = 0;
-	private static final int BACKGROUND_LOADER_ID = 1;
 
 	private MaterialDialog _login_progress;
 
@@ -137,7 +134,20 @@ public class NoAccountActivity extends SystemFittableActivity
 			}
 		});
 
-		getSupportLoaderManager().initLoader(BACKGROUND_LOADER_ID, null, this);
+		ActivityManager am = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+		boolean isLowRam = ActivityManagerCompat.isLowRamDevice(am);
+		if(!isLowRam) {
+			//Load the background image
+			ImageView img = new ImageView(this);
+			img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+			ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+					ViewGroup.LayoutParams.MATCH_PARENT,
+					ViewGroup.LayoutParams.MATCH_PARENT
+			);
+			img.setLayoutParams(layoutParams);
+			img.setImageResource(R.drawable.nasa_hubble);
+			parentFrame.addView(img, 0);
+		}
 	}
 
 	@Override
@@ -190,12 +200,6 @@ public class NoAccountActivity extends SystemFittableActivity
 		EventBus.getDefault().unregister(this);
 		dismissLogin();
 		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		getSupportLoaderManager().destroyLoader(BACKGROUND_LOADER_ID);
 	}
 
 	@Override
@@ -302,25 +306,5 @@ public class NoAccountActivity extends SystemFittableActivity
 		startActivity(intent);
 		finish();
 		overridePendingTransition(0, 0);
-	}
-
-	@Override
-	public Loader<ImageView> onCreateLoader(int id, Bundle args) {
-		//Load the background image
-		return new BackgroundImageLoader(ApplicationController.getInstance(), R.drawable.nasa_hubble);
-	}
-
-	@Override
-	public void onLoadFinished(Loader<ImageView> loader, ImageView data) {
-		if(data == null) {
-			return;
-		}
-
-		//Add the background as the lowest layer to the FrameLayout.
-		parentFrame.addView(data, 0);
-	}
-
-	@Override
-	public void onLoaderReset(Loader<ImageView> loader) {
 	}
 }
