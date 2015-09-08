@@ -18,21 +18,22 @@
 
 package com.wikaba.ogapp;
 
-import android.app.Service;
+import android.app.IntentService;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.IBinder;
-import android.support.v4.util.LongSparseArray;
 
+import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.CustomCookieManager;
 import com.wikaba.ogapp.agent.LoggedOutException;
 import com.wikaba.ogapp.agent.OgameAgent;
 import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
+import com.wikaba.ogapp.agent.constants.OgameAgentState;
 import com.wikaba.ogapp.agent.factories.ItemRepresentationFactory;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.OverviewData;
 import com.wikaba.ogapp.agent.models.PlanetResources;
 import com.wikaba.ogapp.database.CookiesManager;
+import com.wikaba.ogapp.events.OnAgentUpdateEvent;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
@@ -46,223 +47,145 @@ import com.wikaba.ogapp.events.contents.OnShipyardsLoaded;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.Constants;
 
-import java.net.CookieHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
 import de.greenrobot.event.ThreadMode;
 
-public class AgentService extends Service {
-    static final String LOGTAG = "AgentService";
+public class AgentService extends IntentService {
+	public static final Logger logger = LoggerFactory.getLogger(AgentService.class);
 
-    private IBinder mBinder;
-    private LongSparseArray<OgameAgent> ogameSessions;
-    private volatile CookiesManager cookiesManager;
+	public static final Lock clientLock = new ReentrantLock();
+	private volatile static OkHttpClient httpClient;
 
-    public AgentService() {
-    }
+	public AgentService() {
+		super(AgentService.class.getName());
+	}
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		EventBus.getDefault().register(this);
+	}
 
-        EventBus.getDefault().register(this);
+	@Override
+	protected void onHandleIntent(Intent intent) {
+		if(httpClient == null) {
+			initHttpClient();
+		}
+		int actionCode = intent.getIntExtra(AgentActions.AGENT_ACTION_KEY, -1);
+		int ogameAgentKey = intent.getIntExtra(AgentActions.OGAME_AGENT_KEY, -1);
+		OgameAgent agent = OgameAgentManager.getInstance().get(ogameAgentKey);
+		if(agent == null) {
+			logger.info("The OgameAgent object we've been asked to use is no longer available.\n{}",
+					"Perhaps the object was removed from the manager while we were working on something else.");
+			return;
+		}
+		boolean agentUpdated = true;
+		switch(actionCode) {
+			case AgentActions.LOGIN:
+				//TODO: Log in on the agent.
+				loginToAccount(agent);
+				break;
+			case AgentActions.OVERVIEW:
+				//TODO: load overview screen
+				//TODO: Update OgameAgent with new data.
+				break;
+			case AgentActions.RESOURCES:
+				//TODO: load resources screen
+				//TODO: Update OgameAgent with new data.
+				break;
+			default:
+				logger.error("Invalid AgentAction code sent to AgentService: {}", actionCode);
+				agentUpdated = false;
+		}
+		EventBus.getDefault().post(new OnAgentUpdateEvent(ogameAgentKey, agentUpdated));
+	}
 
-        if (ogameSessions == null) {
-            ogameSessions = new LongSparseArray<OgameAgent>();
-        }
+	private void initHttpClient() {
+		try {
+			clientLock.lock();
+			if(httpClient == null) {
+				httpClient = new OkHttpClient();
+				CustomCookieManager cm = retrieveCookies();
+				httpClient.setCookieHandler(cm);
+			}
+		} finally {
+			clientLock.unlock();
+		}
+	}
 
-        if (cookiesManager == null) {
-            cookiesManager = ApplicationController.getInstance().getCookiesManager();
-        }
+	/**
+	 * Retrieve all cookies from database.
+	 */
+	private CustomCookieManager retrieveCookies() {
+		CookiesManager cookieDbMan = ApplicationController.getInstance().getCookiesManager();
+		CustomCookieManager cm = new CustomCookieManager();
+		CookieStore cs = cm.getCookieStore();
+		ArrayList<HttpCookie> cookieList = cookieDbMan.getAllHttpCookies();
+		for (Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
+			HttpCookie cookie = cookieIter.next();
+			cs.add(null, cookie);
+		}
+		return cm;
+	}
 
-        CustomCookieManager cookieman = new CustomCookieManager();
-        CookieStore cookiestore = cookieman.getCookieStore();
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		EventBus.getDefault().unregister(this);
+	}
 
-        //Retrieve all cookies from database.
-        //Warning: This is currently done on the main thread.
-        ArrayList<HttpCookie> cookieList = cookiesManager.getAllHttpCookies();
-        for (Iterator<HttpCookie> cookieIter = cookieList.iterator(); cookieIter.hasNext(); ) {
-            HttpCookie cookie = cookieIter.next();
-            cookiestore.add(null, cookie);
-        }
+	/**
+	 * Login on the given agent.
+	 *
+	 * @param agent Agent to login on.
+	 * @return True if login completed successfully. False otherwise.
+	 */
+	private boolean loginToAccount(OgameAgent agent) {
+		if (agent == null) {
+			return false;
+		}
+		return agent.login();
+	}
 
-        CookieHandler.setDefault(cookieman);
-    }
+	/**
+	 * <p>Returns the fleet events parsed from the overview event screen.</p>
+	 *
+	 * @param agent OgameAgent account to use to log in
+	 * @return list of fleet events from overview screen. Returns null on error.
+	 */
+	private OverviewData loadOverview(OgameAgent agent) {
+		if(agent == null || agent.getState() == OgameAgentState.LOGGED_OUT) {
+			return null;
+		}
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        if (mBinder == null) {
-            mBinder = new AgentServiceBinder();
-        }
-        return mBinder;
-    }
-
-    @Override
-    public void onDestroy() {
-        EventBus.getDefault().unregister(this);
-
-        CustomCookieManager cookieman = (CustomCookieManager) CookieHandler.getDefault();
-        CookieStore cookiestore = cookieman.getCookieStore();
-        List<HttpCookie> cookies = cookiestore.getCookies();
-        cookiesManager.saveCookies(cookies);
-        //TODO IN THE CONTROLLER MANAGE COOKIES WITH ONLY PROPER VALUES WITH THE LRUCACHE
-        //AND STORE, MORE EFFICIENT
-        super.onDestroy();
-    }
-
-    /**
-     * <p>Logs in to the specified account (from database) using a software agent
-     * for Ogame.</p>
-     *
-     * @param account AccountCredentials to use to log in
-     * @return True if acquiring session cookies (logging in) for the account
-     * completed successfully. False otherwise.
-     */
-    public boolean loginToAccount(AccountCredentials account) {
-        OgameAgent agent = ogameSessions.get(account.id);
-        if (agent == null) {
-            agent = new OgameAgent(account.universe, account.lang);
-            ogameSessions.put(account.id, agent);
-        }
-        return true;
-    }
-
-    /**
-     * <p>Returns the fleet events parsed from the overview event screen.</p>
-     *
-     * @param account Account to use to log in
-     * @return list of fleet events from overview screen. Returns null on error.
-     */
-    public OverviewData getFleetEvents(AccountCredentials account) {
-        OgameAgent agent = ogameSessions.get(account.id);
-        if (agent == null) {
-            loginToAccount(account);
-            agent = ogameSessions.get(account.id);
-        }
-
-        if (agent == null) {
-            return null;
-        }
-
-        OverviewData events = null;
-        try {
-            events = agent.getOverviewData();
-        } catch (LoggedOutException e) {
-            e.printStackTrace();
-            //Log in and try again!
-            agent.login(account.universe, account.username, account.passwd, account.lang);
-            try {
-                events = agent.getOverviewData();
-            } catch (LoggedOutException e1) {
-                e1.printStackTrace();
-            }
-        }
-        return events;
-    }
-
-    public class AgentServiceBinder extends Binder {
-        public AgentService getService() {
-            return AgentService.this;
-        }
-    }
-
-    @Subscribe(threadMode = ThreadMode.Async)
-    public void onRequestLogin(OnLoginRequested login_request) {
-        EventBus.getDefault().postSticky(new OnLoginEvent(true));
-        synchronized (this) {
-            AccountCredentials credentials = login_request.getAccountCredentials();
-            loginToAccount(credentials);
-            OgameAgent agent = ogameSessions.get(credentials.id);
-            if (!agent.isLogin()) {
-                boolean logged = agent.login(credentials.universe, credentials.username,
-                        credentials.passwd, credentials.lang);
-                OverviewData events = null;
-                PlanetResources resources = null;
-                if (logged) {
-                    try {
-                        events = agent.getFleetEvents();
-                    } catch (LoggedOutException exception) {
-                        //impossible since we are here when it is all ok
-                    }
-
-                    try {
-                        resources = agent.getResourcePagesContent();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
-                            Constants.RESOURCES_INDEX,
-                            ItemRepresentationFactory.getResourceConstants()));
-
-                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
-                            Constants.BUILDING_INDEX,
-                            ItemRepresentationFactory.getBuildingConstants()));
-
-                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
-                            Constants.RESEARCH_INDEX,
-                            ItemRepresentationFactory.getResearchConstants()));
-
-                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
-                            Constants.SHIPYARD_INDEX,
-                            ItemRepresentationFactory.getShipConstants()));
-
-                    EventBus.getDefault().post(new OnResourceRequestToLoadEvent(agent,
-                            Constants.DEFENSE_INDEX,
-                            ItemRepresentationFactory.getDefenseConstants()));
-                }
-                EventBus.getDefault().postSticky(new OnLoginEvent(false));
-                EventBus.getDefault().postSticky(new OnLoggedEvent(logged, credentials,
-                        agent, events, resources));
-            }
-            //no post event here
-        }
-        // or here
-        //since the only way to be ok is via the current poststicky/post
-    }
-
-    @Subscribe(threadMode = ThreadMode.Async)
-    public void onResourceRequestToLoading(OnResourceRequestToLoadEvent event) {
-        OnAbstractListInformationLoaded resource_request_to_load = null;
-
-        switch (event.getRequested()) {
-            case Constants.RESOURCES_INDEX:
-                resource_request_to_load = new OnResourcesLoaded(event.getOgameAgent(),
-                        event.getRequested(), null, Constants.Status.LOADING);
-                break;
-            case Constants.BUILDING_INDEX:
-                resource_request_to_load = new OnBuildingLoaded(event.getOgameAgent(),
-                        event.getRequested(), null, Constants.Status.LOADING);
-                break;
-            case Constants.RESEARCH_INDEX:
-                resource_request_to_load = new OnResearchsLoaded(event.getOgameAgent(),
-                        event.getRequested(), null, Constants.Status.LOADING);
-                break;
-            case Constants.SHIPYARD_INDEX:
-                resource_request_to_load = new OnShipyardsLoaded(event.getOgameAgent(),
-                        event.getRequested(), null, Constants.Status.LOADING);
-                break;
-            case Constants.DEFENSE_INDEX:
-                resource_request_to_load = new OnDefensesLoaded(event.getOgameAgent(),
-                        event.getRequested(), null, Constants.Status.LOADING);
-                break;
-        }
-
-        if (resource_request_to_load != null) {
-            EventBus.getDefault().postSticky(resource_request_to_load);
-
-            ItemRepresentationConstant content = event.getContent();
-            List<AbstractItemInformation> retrieved = event.getOgameAgent().getItemFromPage(content);
-            resource_request_to_load.setRetrieved(retrieved);
-            resource_request_to_load.setStatus(Constants.Status.LOADED);
-
-            EventBus.getDefault().postSticky(resource_request_to_load);
-        }
-    }
+		OverviewData events = null;
+		try {
+			events = agent.loadOverviewData();
+		} catch (LoggedOutException e) {
+			logger.info("We got logged out by the server. Logging in and trying to load overview");
+			//Log in and try again!
+			agent.login();
+			try {
+				events = agent.loadOverviewData();
+			} catch (LoggedOutException e1) {
+				logger.error(
+						"We couldn't load overview data even after relogging in. Something is wrong.",
+						e1
+				);
+			}
+		}
+		return events;
+	}
 }

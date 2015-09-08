@@ -17,15 +17,19 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp.agent;
+package com.wikaba.ogapp;
 
 import android.support.v4.util.LongSparseArray;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.wikaba.ogapp.agent.OgameAgent;
+import com.wikaba.ogapp.utils.AccountCredentials;
 
 /**
  * <p>This class manages the OgameAgent objects. An integer key is used to map to each agent
  * object. The integer key only grows in size, so we do not need to worry about a consumer
  * get()ing an outdated version of an OgameAgent object (unless we have an integer overflow, but
- * that won't happen since users don't really have 2+ billion Ogame accounts)</p>
+ * that won't happen since users don't really have 2+ billion Ogame accounts).</p>
  *
  * Created by afwang on 9/3/15.
  */
@@ -44,15 +48,31 @@ public class OgameAgentManager {
 		return instance;
 	}
 
-	public void add(OgameAgent theAgent) {
+	/**
+	 * Build the OgameAgent with the given AccountCredentials.
+	 * @param credentials
+	 * @return the integer (long) key for the OgameAgent within this OgameAgentManager's map
+	 */
+	public long buildOgameAgent(AccountCredentials credentials, OkHttpClient httpClient) {
+		OgameAgent newAgent = new OgameAgent(
+				credentials.username,
+				credentials.passwd,
+				credentials.universe,
+				credentials.lang,
+				httpClient
+		);
+		long id = credentials.id;
 		synchronized(agents) {
-			agents.append(key, theAgent);
-			key++;
+			agents.append(id, newAgent);
 		}
+		return id;
 	}
 
 	public OgameAgent get(long key) {
 		OgameAgent anAgent = null;
+		//We must synchronize here since there's no guarantee that
+		//LongSparseArray's get() method is thread-safe across all
+		//implementations of Android.
 		synchronized(agents) {
 			anAgent = agents.get(key);
 		}
@@ -60,6 +80,9 @@ public class OgameAgentManager {
 	}
 
 	public void remove(long key) {
+		//We must synchronize here since there's no guarantee that
+		//LongSparseArray's remove() method is thread-safe across all
+		//implementations of Android.
 		synchronized(agents) {
 			agents.remove(key);
 		}

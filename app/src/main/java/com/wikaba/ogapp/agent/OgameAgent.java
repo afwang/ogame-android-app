@@ -23,6 +23,7 @@ package com.wikaba.ogapp.agent;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.ResponseBody;
 import com.wikaba.ogapp.agent.constants.ItemRepresentationConstant;
+import com.wikaba.ogapp.agent.constants.OgameAgentState;
 import com.wikaba.ogapp.agent.interfaces.IWebservice;
 import com.wikaba.ogapp.agent.models.AbstractItemInformation;
 import com.wikaba.ogapp.agent.models.ItemRepresentation;
@@ -58,8 +59,6 @@ public class OgameAgent {
 	public static final Logger logger = LoggerFactory.getLogger(OgameAgent.class);
 
 	public static final String LOGIN_URL_ROOT = "http://%s.ogame.gameforge.com/";
-	public static final String LOGIN_URL = "http://fr.ogame.gameforge.com/main/login";
-	public static final String EVENTLIST_ENDPOINT = "/game/index.php?page=eventList&ajax=1";
 
 	private OkHttpClient httpClient;
 	private IWebservice callCreator;
@@ -74,17 +73,41 @@ public class OgameAgent {
 	private String username;
 	private String password;
 	private String lang;
-	private int pageId;
+	private int agentState;
 	private Object lastRetrievedData;
 
-	public OgameAgent(AccountCredentials accountInfo, OkHttpClient client) {
-		username = accountInfo.username;
-		password = accountInfo.passwd;
-		lang = accountInfo.lang;
-		universe = accountInfo.universe;
-		pageId = -1;
+	/**
+	 * <p>Create an OgameAgent object with the given credentials and HTTP client.
+	 * The client should be configured with a CookieHandler that can handle Ogame's cookies.</p>
+	 *
+	 * <p>There is a bug where the CookieHandler's CookieStore will drop some essential cookies needed for
+	 * Ogame. This is the case in older versions of Java 6, where some non-standard cookie attributes
+	 * cause the CookieStore to drop the cookie (by throwing an Exception) rather than silently ignoring
+	 * the non-standard cookie attribute. If you just need a CookieHandler without wanting to write
+	 * one of your own that can work with Ogame's cookies, consider using {@link CustomCookieManager}</p>
+	 * @param username Username of the account to associate this OgameAgent with
+	 * @param passwd Password of the account to associate this OgameAgent with
+	 * @param universe Universe name of account
+	 * @param lang Language of the Universe
+	 * @param client HTTP client used to make requests for playing the game
+	 * @throws IllegalArgumentException if any of the parameters are null.
+	 */
+	public OgameAgent(String username, String passwd, String universe, String lang, OkHttpClient client) {
+		if(username == null
+			|| passwd == null
+			|| universe == null
+			|| lang == null
+			|| client == null) {
+			throw new IllegalArgumentException("None of the parameters passed to OgameAgent constructor can be null");
+		}
+
+		this.username = username;
+		this.password = passwd;
+		this.lang = lang;
+		this.universe = universe;
+		agentState = OgameAgentState.LOGGED_OUT;
 		lastRetrievedData = null;
-		universe = String.format(NameToURI.getDomain(universe), lang);
+		this.universe = String.format(NameToURI.getDomain(this.universe), lang);
 		serverUri = "http://" + universe;
 		httpClient = client;
 		Retrofit adapterBuilder = createAdapter(serverUri);
@@ -101,7 +124,7 @@ public class OgameAgent {
 
 		//TODO getDOmain(), fr to String universe, String language
 
-		pageId = -1;
+		agentState = OgameAgentState.LOGGED_OUT;
 		lastRetrievedData = null;
 		this.universe = String.format(NameToURI.getDomain(universe), lang);
 		serverUri = "http://" + universe;
@@ -128,10 +151,6 @@ public class OgameAgent {
 	 * @return true on successful login, false on failure
 	 */
 	public boolean login() {
-		_is_login = true;
-
-		final int timeoutMillis = 30 * 1000;
-
 		boolean successfulResponse;
 
 		String uri = String.format(LOGIN_URL_ROOT, lang);
@@ -150,25 +169,25 @@ public class OgameAgent {
 
 		if (answer != null) {
 			int code = answer.code();
-			successfulResponse = code == HttpURLConnection.HTTP_OK
-				|| (code >= 300 && code < 400);
+			successfulResponse = code == HttpURLConnection.HTTP_OK;
+			agentState = OgameAgentState.LOGGED_IN;
 		} else {
 			successfulResponse = false;
 			logger.error("Could not perform login");
+			agentState = OgameAgentState.LOGGED_OUT;
 		}
 		logger.debug("END FIRST REQUEST (login)");
 
-		_is_login = false;
 		return successfulResponse;
 	}
 
 	/**
-	 * Tell if the current Agent is currently performing a request of login
+	 * Returns the state of this OgameAgent. A description of states is listed in {@link OgameAgentState}.
 	 *
-	 * @return
+	 * @return the current state of this OgameAgent
 	 */
-	public boolean isLogin() {
-		return _is_login;
+	public int getState() {
+		return agentState;
 	}
 
 	public PlanetResources getResourcePagesContent() throws LoggedOutException {
@@ -221,17 +240,14 @@ public class OgameAgent {
 
 	/**
 	 * Emulate a user clicking the "Overview" link in the navigation bar/column. Also parse fleet
-	 * movement data from the returned response (if available).
+	 * movement data from the returned response (if available). This method will make a network
+	 * request to retrieve the data. The data will be
 	 *
 	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
 	 * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
 	 * will have non-null instance variables.
 	 */
-	public OverviewData getOverviewData() throws LoggedOutException {
-		return getOverviewData(true);
-	}
-
-	private OverviewData getOverviewData(boolean retry) throws LoggedOutException {
+	public OverviewData loadOverviewData() throws LoggedOutException {
 		OverviewData overviewData = null;
 
 		try {
@@ -248,29 +264,55 @@ public class OgameAgent {
 			overviewData = getFleetEvents();
 		}
 
+		agentState = OgameAgentState.AT_OVERVIEW;
+		lastRetrievedData = overviewData;
+
 		return overviewData;
 	}
 
 	/**
-	 * Parse fleet movement data from the returned response from EVENTLIST_ENDPOINT.
+	 * Returns the cached result from loadOverviewData. No other load*() methods should be
+	 * called between loadOverviewData() and this method. Otherwise, an IllegalStateException
+	 * will be thrown
+	 * @return cached OverviewData result from the last call to loadOverviewData
+	 * @throws IllegalStateException if a different load*() method was called between loadOverviewData
+	 * 		and this method.
+	 */
+	public OverviewData getOverviewData() {
+		if(agentState != OgameAgentState.AT_OVERVIEW) {
+			throw new IllegalStateException(
+					"OgameAgent object has not called loadOverviewData immediately before getOverviewData");
+		}
+		OverviewData data = (OverviewData)lastRetrievedData;
+		return data;
+	}
+
+	/**
+	 * <p>Parse fleet movement data from the returned response from the event list endpoint. Ogame
+	 * provides a convenient javascript call so that the fleet events can be retrieved on any page.</p>
+	 *
+	 * <p>TODO: Currently, the agent assumes the game behaves the way it does in Ogame legacy. That is,
+	 * the only way to view the fleet events is through the overview. This method should be made
+	 * public in the future to support returning fleet events on any page. This is not done at the
+	 * current moment since fleet event data is bundled with an OverviewData object.</p>
 	 *
 	 * @return If no errors occurred while extracting the data, a list of fleet movements with details
 	 * is returned. Otherwise, null is returned. Every FleetEvent entry in the returned List
 	 * will have non-null instance variables.
 	 */
-	public OverviewData getFleetEvents() throws LoggedOutException {
-		return getFleetEvents(true);
-	}
-
-	private OverviewData getFleetEvents(boolean retry) throws LoggedOutException {
+	private OverviewData getFleetEvents() throws LoggedOutException {
+		OverviewData data = null;
 		try {
 			Call<ResponseBody> fleetEventsCall = callCreator.getSinglePageWithAjaxParameter("eventList", 1);
 			Response<ResponseBody> fleetEventsResp = fleetEventsCall.execute();
-			return consumeFleetEventFrom(fleetEventsResp);
+			data = consumeFleetEventFrom(fleetEventsResp);
+			agentState = OgameAgentState.AT_OVERVIEW;
+			lastRetrievedData = data;
 		} catch(IOException e) {
 			logger.error("Could not retrieve fleet events", e);
 			throw new LoggedOutException("Agent's cookies are no longer valid");
 		}
+		return data;
 	}
 
 	/**

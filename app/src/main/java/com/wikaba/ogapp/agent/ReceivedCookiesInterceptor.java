@@ -19,7 +19,6 @@
 
 package com.wikaba.ogapp.agent;
 
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
