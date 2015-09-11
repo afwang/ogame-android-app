@@ -58,167 +58,167 @@ import de.greenrobot.event.EventBus;
 
 @Deprecated
 public class NoAccountFragment extends Fragment
-        implements AdapterView.OnItemClickListener {
+		implements AdapterView.OnItemClickListener {
 
-    private static final int ALL_ACCS_LOADER_ID = 0;
+	private static final int ALL_ACCS_LOADER_ID = 0;
 
-    @Bind(R.id.uniSelect)
-    protected Spinner uniSpinner;
+	@Bind(R.id.uniSelect)
+	protected Spinner uniSpinner;
 
-    @Bind(R.id.username)
-    protected EditText usernameField;
+	@Bind(R.id.username)
+	protected EditText usernameField;
 
-    @Bind(R.id.password)
-    protected EditText passwdField;
+	@Bind(R.id.password)
+	protected EditText passwdField;
 
-    @Bind(R.id.lang)
-    protected EditText langField;
+	@Bind(R.id.lang)
+	protected EditText langField;
 
-    @Bind(R.id.login)
-    protected Button loginButton;
+	@Bind(R.id.login)
+	protected Button loginButton;
 
-    @Bind(R.id.pw_checkbox)
-    protected CheckBox pwCheckBox;
+	@Bind(R.id.pw_checkbox)
+	protected CheckBox pwCheckBox;
 
-    @Bind(R.id.existingAccList)
-    protected ListView existingAccs;
+	@Bind(R.id.existingAccList)
+	protected ListView existingAccs;
 
-    private HomeActivity act;
-    private ArrayList<AccountCredentials> allAccounts;
+	private HomeActivity act;
+	private ArrayList<AccountCredentials> allAccounts;
 
-    public NoAccountFragment() {
-    }
+	public NoAccountFragment() {
+	}
 
-    @Override
-    public void onAttach(Activity act) {
-        super.onAttach(act);
-        this.act = (HomeActivity) act;
-    }
+	@Override
+	public void onAttach(Activity act) {
+		super.onAttach(act);
+		this.act = (HomeActivity) act;
+	}
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_no_acc, parent, false);
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+		View root = inflater.inflate(R.layout.fragment_no_acc, parent, false);
 
-        ButterKnife.bind(this, root);
+		ButterKnife.bind(this, root);
 
-        String[] uniNames = getResources().getStringArray(R.array.universe_names);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
-        uniSpinner.setAdapter(adapter);
+		String[] uniNames = getResources().getStringArray(R.array.universe_names);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1, uniNames);
+		uniSpinner.setAdapter(adapter);
 
-        registerForContextMenu(existingAccs);
+		registerForContextMenu(existingAccs);
 
-        return root;
-    }
+		return root;
+	}
 
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        MenuInflater inflater = act.getMenuInflater();
-        inflater.inflate(R.menu.accounts, menu);
-    }
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		MenuInflater inflater = act.getMenuInflater();
+		inflater.inflate(R.menu.accounts, menu);
+	}
 
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.remove) {
-            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-            int rowPosition = info.position;
-            AccountCredentials creds = allAccounts.get(rowPosition);
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		int itemId = item.getItemId();
+		if (itemId == R.id.remove) {
+			AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+			int rowPosition = info.position;
+			AccountCredentials creds = allAccounts.get(rowPosition);
 
-            AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
-            dbmanager.removeAccount(creds.universe, creds.username);
-            allAccounts.remove(rowPosition);
-            AccountAdapter adapter = (AccountAdapter) existingAccs.getAdapter();
-            adapter.notifyDataSetChanged();
-            return true;
-        }
-        return super.onContextItemSelected(item);
-    }
+			AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
+			dbmanager.removeAccount(creds.getUniverse(), creds.getUsername());
+			allAccounts.remove(rowPosition);
+			AccountAdapter adapter = (AccountAdapter) existingAccs.getAdapter();
+			adapter.notifyDataSetChanged();
+			return true;
+		}
+		return super.onContextItemSelected(item);
+	}
 
-    @OnClick(R.id.login)
-    public void onLoginClicked() {
-        String username = usernameField.getText().toString();
-        String passwd = passwdField.getText().toString();
-        String lang = langField.getText().toString();
-        if (lang == null || lang.length() == 0) lang = "en";
-        View selectedView = uniSpinner.getSelectedView();
-        if (selectedView == null) {
-            Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+	@OnClick(R.id.login)
+	public void onLoginClicked() {
+		String username = usernameField.getText().toString();
+		String passwd = passwdField.getText().toString();
+		String lang = langField.getText().toString();
+		if (lang == null || lang.length() == 0) lang = "en";
+		View selectedView = uniSpinner.getSelectedView();
+		if (selectedView == null) {
+			Toast.makeText(act, "Please select a valid universe.", Toast.LENGTH_SHORT).show();
+			return;
+		}
 
-        TextView selectedText = (TextView) selectedView;
-        String universe = selectedText.getText().toString();
+		TextView selectedText = (TextView) selectedView;
+		String universe = selectedText.getText().toString();
 
-        AccountCredentials acc = new AccountCredentials();
-        acc.universe = universe;
-        acc.username = username;
-        acc.passwd = passwd;
-        acc.lang = lang;
-        //act.addAccount(acc);
-    }
+		AccountCredentials acc = new AccountCredentials();
+		acc.setUniverse(universe);
+		acc.setUsername(username);
+		acc.setPasswd(passwd);
+		acc.setLang(lang);
+		//act.addAccount(acc);
+	}
 
-    @OnClick(R.id.pw_checkbox)
-    public void onPasswordCheckBoxClicked() {
-        int inputType = (pwCheckBox.isChecked()) ?
-                (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-                : (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        passwdField.setInputType(inputType);
-    }
+	@OnClick(R.id.pw_checkbox)
+	public void onPasswordCheckBoxClicked() {
+		int inputType = (pwCheckBox.isChecked()) ?
+				(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+				: (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+		passwdField.setInputType(inputType);
+	}
 
-    @Deprecated
-    @Override
-    public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-        AccountCredentials cred = allAccounts.get(position);
-        act.setActiveAccount(cred);
-        //act.goToLogin();
-        EventBus.getDefault().post(new OnLoginRequested(cred));
-    }
+	@Deprecated
+	@Override
+	public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+		AccountCredentials cred = allAccounts.get(position);
+		act.setActiveAccount(cred);
+		//act.goToLogin();
+		EventBus.getDefault().post(new OnLoginRequested(cred));
+	}
 
-    public static class AccountAdapter extends BaseAdapter {
-        private ArrayList<AccountCredentials> accs;
-        private Context ctx;
+	public static class AccountAdapter extends BaseAdapter {
+		private ArrayList<AccountCredentials> accs;
+		private Context ctx;
 
-        public AccountAdapter(Context cont, ArrayList<AccountCredentials> accs) {
-            this.accs = accs;
-            ctx = cont;
-        }
+		public AccountAdapter(Context cont, ArrayList<AccountCredentials> accs) {
+			this.accs = accs;
+			ctx = cont;
+		}
 
-        @Override
-        public int getCount() {
-            return accs.size();
-        }
+		@Override
+		public int getCount() {
+			return accs.size();
+		}
 
-        @Override
-        public Object getItem(int position) {
-            return accs.get(position);
-        }
+		@Override
+		public Object getItem(int position) {
+			return accs.get(position);
+		}
 
-        @Override
-        public long getItemId(int position) {
-            return -1;
-        }
+		@Override
+		public long getItemId(int position) {
+			return -1;
+		}
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            TextView v = null;
-            if (convertView == null) {
-                LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = (TextView) inflater.inflate(R.layout.account_text_view, parent, false);
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			TextView v = null;
+			if (convertView == null) {
+				LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+				v = (TextView) inflater.inflate(R.layout.account_text_view, parent, false);
 
-            } else {
-                v = (TextView) convertView;
-            }
+			} else {
+				v = (TextView) convertView;
+			}
 
-            StringBuilder strb = new StringBuilder();
-            AccountCredentials creds = accs.get(position);
-            strb.append(creds.username)
-                    .append(" in ")
-                    .append(creds.universe);
+			StringBuilder strb = new StringBuilder();
+			AccountCredentials creds = accs.get(position);
+			strb.append(creds.getUsername())
+					.append(" in ")
+					.append(creds.getUniverse());
 
-            v.setText(strb.toString());
+			v.setText(strb.toString());
 
-            return v;
-        }
-    }
+			return v;
+		}
+	}
 }

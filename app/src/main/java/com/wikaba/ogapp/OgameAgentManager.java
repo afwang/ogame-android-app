@@ -27,7 +27,7 @@ import com.wikaba.ogapp.utils.AccountCredentials;
 
 /**
  * <p>This class manages the OgameAgent objects. An integer key is used to map to each agent
- * object. The integer key only grows in size, so we do not need to worry about a consumer
+ * object. The integer key is the same key as the database key for each account.
  * get()ing an outdated version of an OgameAgent object (unless we have an integer overflow, but
  * that won't happen since users don't really have 2+ billion Ogame accounts).</p>
  *
@@ -36,11 +36,9 @@ import com.wikaba.ogapp.utils.AccountCredentials;
 public class OgameAgentManager {
 	private static final OgameAgentManager instance = new OgameAgentManager();
 
-	private volatile long key;
-	private volatile LongSparseArray<OgameAgent> agents;
+	private LongSparseArray<OgameAgent> agents;
 
 	private OgameAgentManager() {
-		key = 0;
 		agents = new LongSparseArray<>();
 	}
 
@@ -49,25 +47,13 @@ public class OgameAgentManager {
 	}
 
 	/**
-	 * Build the OgameAgent with the given AccountCredentials.
-	 * @param credentials
-	 * @return the integer (long) key for the OgameAgent within this OgameAgentManager's map
+	 * Retrieves the OgameAgent object tied to the given (long) integer {@code key}. If the
+	 * agent does not exist in this Manager's internal storage, then null will be returned.
+	 *
+	 * @param key key of the OgameAgent object. This should have been received from the client
+	 * 		when building or adding the OgameAgent object to this manager.
+	 * @return OgameAgent object associated with the given key. Null otherwise.
 	 */
-	public long buildOgameAgent(AccountCredentials credentials, OkHttpClient httpClient) {
-		OgameAgent newAgent = new OgameAgent(
-				credentials.username,
-				credentials.passwd,
-				credentials.universe,
-				credentials.lang,
-				httpClient
-		);
-		long id = credentials.id;
-		synchronized(agents) {
-			agents.append(id, newAgent);
-		}
-		return id;
-	}
-
 	public OgameAgent get(long key) {
 		OgameAgent anAgent = null;
 		//We must synchronize here since there's no guarantee that
@@ -79,6 +65,55 @@ public class OgameAgentManager {
 		return anAgent;
 	}
 
+	/**
+	 * <p>If an OgameAgent associated with the given ID in {@code credentials} is already managed
+	 * by this instance of OgameAgentManager, then the key to that OgameAgent object is returned.</p>
+	 *
+	 * <p>Otherwise, an atomic operation takes place:
+	 * <ol>
+	 * 		<li>An OgameAgent object is built with the given credentials and OkHttpClient.</li>
+	 * 		<li>The object is registered to by managed by this manager.</li>
+	 * </ol>
+	 * </p>
+	 *
+	 * <p>The key used to register the object with the manager is returned.</p>
+	 * @param credentials
+	 * @param client
+	 * @return
+	 */
+	public long getOrBuild(AccountCredentials credentials, OkHttpClient client) {
+		long id = credentials.getId();
+		OgameAgent test = get(id);
+		if(test != null) {
+			return id;
+		}
+
+		OgameAgent newAgent = new OgameAgent(
+				credentials.getUsername(),
+				credentials.getPasswd(),
+				credentials.getUniverse(),
+				credentials.getLang(),
+				client
+		);
+		synchronized(agents) {
+			//Check once more to ensure that the agent is not part of the LongSparseArray.
+			//There may be another concurrent call to getOrBuild that added the same object
+			//before us.
+			test = agents.get(id);
+			if(test == null) {
+				agents.append(id, newAgent);
+			}
+		}
+		return id;
+	}
+
+	/**
+	 * Removes the OgameAgent object tied to the given (long) integer {@code key} from this
+	 * manager.
+	 *
+	 * @param key key of the OgameAgent object. This should have been received from the client
+	 * 		when building or adding the OgameAgent object to this manager.
+	 */
 	public void remove(long key) {
 		//We must synchronize here since there's no guarantee that
 		//LongSparseArray's remove() method is thread-safe across all

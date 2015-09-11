@@ -111,7 +111,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 		accountNames[0] = getString(R.string.select_an_account);
 		int i = 1;
 		for (AccountCredentials cred : existingAccountsCredentials) {
-			accountNames[i] = String.format(account_spinner, cred.username, cred.universe);
+			accountNames[i] = String.format(account_spinner, cred.getUsername(), cred.getUniverse());
 			i++;
 		}
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, accountNames);
@@ -211,7 +211,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 			AccountCredentials creds = existingAccountsCredentials.get(rowPosition);
 
 			AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
-			dbmanager.removeAccount(creds.universe, creds.username);
+			dbmanager.removeAccount(creds.getUniverse(), creds.getUsername());
 			existingAccountsCredentials.remove(rowPosition);
 
 			//TODO NOTIFY SPINNER CHANGE
@@ -236,10 +236,10 @@ public class NoAccountActivity extends SystemFittableActivity {
 		String universe = selectedText.getText().toString();
 
 		AccountCredentials acc = new AccountCredentials();
-		acc.universe = universe;
-		acc.username = username;
-		acc.passwd = passwd;
-		acc.lang = lang;
+		acc.setUniverse(universe);
+		acc.setUsername(username);
+		acc.setPasswd(passwd);
+		acc.setLang(lang);
 		addAccount(acc);
 	}
 
@@ -251,17 +251,16 @@ public class NoAccountActivity extends SystemFittableActivity {
 		passwdField.setInputType(inputType);
 	}
 
-
 	public void addAccount(AccountCredentials creds) {
 		AccountsManager manager = ApplicationController.getInstance().getAccountsManager();
-		long accountRowId = manager.addAccount(creds.universe, creds.username, creds.passwd, creds.lang);
+		long accountRowId = manager.addAccount(creds.getUniverse(), creds.getUsername(), creds.getPasswd(), creds.getLang());
 
 		if (accountRowId < 0) {
 			return;
 		}
 
 		AccountCredentials activeAccount = new AccountCredentials(creds);
-		activeAccount.id = accountRowId;
+		activeAccount.setId(accountRowId);
 
 		//TODO OPEN LOADER
 		EventBus.getDefault().post(new OnLoginRequested(activeAccount));

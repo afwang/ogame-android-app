@@ -1,20 +1,20 @@
 /*
-    Copyright 2014 Alexander Wang
-    
-    This file is part of Ogame on Android.
+	Copyright 2014 Alexander Wang
 
-    Ogame on Android is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This file is part of Ogame on Android.
 
-    Ogame on Android is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Ogame on Android is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+	Ogame on Android is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package com.wikaba.ogapp.ui.main;
@@ -57,325 +57,314 @@ import de.greenrobot.event.Subscribe;
 import de.greenrobot.event.ThreadMode;
 
 public class HomeActivity extends SystemFittableActivity {
-    private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
+	private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
 
-    @Bind(R.id.drawerLayout)
-    protected DrawerLayout mDrawerLayout;
+	@Bind(R.id.drawerLayout)
+	protected DrawerLayout mDrawerLayout;
 
-    @Bind(R.id.metal_main_update)
-    protected TextView _metal_main;
+	@Bind(R.id.metal_main_update)
+	protected TextView _metal_main;
 
-    @Bind(R.id.crystal_main_update)
-    protected TextView _crystal_main;
+	@Bind(R.id.crystal_main_update)
+	protected TextView _crystal_main;
 
-    @Bind(R.id.deuterium_main_update)
-    protected TextView _deuterium_main;
+	@Bind(R.id.deuterium_main_update)
+	protected TextView _deuterium_main;
 
-    @OnClick(R.id.metal_main)
-    public void onMetalMainClicked() {
-        //TODO SNACKBAR WITH PRODUCTION INFORMATION
-    }
+	@OnClick(R.id.metal_main)
+	public void onMetalMainClicked() {
+		//TODO SNACKBAR WITH PRODUCTION INFORMATION
+	}
 
-    @OnClick(R.id.crystal_main)
-    public void onCrystalMainClicked() {
-        //TODO SNACKBAR WITH PRODUCTION INFORMATION
-    }
+	@OnClick(R.id.crystal_main)
+	public void onCrystalMainClicked() {
+		//TODO SNACKBAR WITH PRODUCTION INFORMATION
+	}
 
-    @OnClick(R.id.deuterium_main)
-    public void onDeuteriumMainClicked() {
-        //TODO SNACKBAR WITH PRODUCTION INFORMATION
-    }
+	@OnClick(R.id.deuterium_main)
+	public void onDeuteriumMainClicked() {
+		//TODO SNACKBAR WITH PRODUCTION INFORMATION
+	}
 
-    @OnClick(R.id.main)
-    public void onOverView() {
-        goToOverview();
-        closeDrawer();
-    }
+	@OnClick(R.id.main)
+	public void onOverView() {
+		goToOverview();
+		closeDrawer();
+	}
 
-    @OnClick(R.id.resource)
-    public void onResourceClick() {
-        push(Constants.RESOURCES_INDEX);
-    }
+	@OnClick(R.id.resource)
+	public void onResourceClick() {
+		push(Constants.RESOURCES_INDEX);
+	}
 
-    @OnClick(R.id.building)
-    public void onBuildingClick() {
-        push(Constants.BUILDING_INDEX);
-    }
+	@OnClick(R.id.building)
+	public void onBuildingClick() {
+		push(Constants.BUILDING_INDEX);
+	}
 
-    @OnClick(R.id.research)
-    public void onResearchClick() {
-        push(Constants.RESEARCH_INDEX);
-    }
+	@OnClick(R.id.research)
+	public void onResearchClick() {
+		push(Constants.RESEARCH_INDEX);
+	}
 
-    @OnClick(R.id.shipyard)
-    public void onShipyardCLick() {
-        push(Constants.SHIPYARD_INDEX);
-    }
+	@OnClick(R.id.shipyard)
+	public void onShipyardCLick() {
+		push(Constants.SHIPYARD_INDEX);
+	}
 
-    @OnClick(R.id.defense)
-    public void onDefenseClick() {
-        push(Constants.DEFENSE_INDEX);
-    }
+	@OnClick(R.id.defense)
+	public void onDefenseClick() {
+		push(Constants.DEFENSE_INDEX);
+	}
 
-    private AccountCredentials activeAccount;
-    private OnLoggedEvent _current_logged_event;
+	private AccountCredentials activeAccount;
+	private OnLoggedEvent _current_logged_event;
 
-    private ServiceConnection agentServiceConn = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            AgentService.AgentServiceBinder binder = (AgentService.AgentServiceBinder) service;
-            mAgent = binder.getService();
-            mBound = true;
-            //TODO POST EVENT CONNECTED TO SERVICE
-        }
+	private ServiceConnection agentServiceConn = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			mBound = true;
+			//TODO POST EVENT CONNECTED TO SERVICE
+		}
 
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mBound = false;
-            mAgent = null;
-            //TODO POST EVENT DISCONNECT FROM SERVICE
-        }
-    };
-    private AgentService mAgent;
-    private boolean mBound;
-    protected View mMenuView;
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			mBound = false;
+			mAgent = null;
+			//TODO POST EVENT DISCONNECT FROM SERVICE
+		}
+	};
+	private AgentService mAgent;
+	private boolean mBound;
+	protected View mMenuView;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		//setContentView(R.layout.activity_main);
 
 
-        _actionbar_toggle = new ActionBarDrawerToggle(
-                this,
-                mDrawerLayout,         /* DrawerLayout object */
-                getToolbar(),
-                0,
-                0) {
+		_actionbar_toggle = new ActionBarDrawerToggle(
+				this,
+				mDrawerLayout,         /* DrawerLayout object */
+				getToolbar(),
+				0,
+				0) {
 
-            /**
-             * Called when a drawer has settled in a completely closed state.
-             */
-            public void onDrawerClosed(View view) {
-                super.onDrawerClosed(view);
-            }
+			/**
+			 * Called when a drawer has settled in a completely closed state.
+			 */
+			public void onDrawerClosed(View view) {
+				super.onDrawerClosed(view);
+			}
 
-            /**
-             * Called when a drawer has settled in a completely open state.
-             */
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                hideKeyboard(mDrawerLayout);
-            }
-        };
+			/**
+			 * Called when a drawer has settled in a completely open state.
+			 */
+			public void onDrawerOpened(View drawerView) {
+				super.onDrawerOpened(drawerView);
+				hideKeyboard(mDrawerLayout);
+			}
+		};
 
-        mDrawerLayout.setDrawerListener(_actionbar_toggle);
-
-
-        //no creation since the register on eventbus will created for us the event
-        mBound = false;
-    }
-
-    @Override
-    public void setContentView(int layoutResID) {
-        super.setContentView(layoutResID);
-        ButterKnife.bind(this);
-        setupToolbar();
-        setupDrawer();
-    }
-
-    @Override
-    public int getContentView() {
-        return R.layout.activity_main;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
-
-        setupToolbar();
-        setupDrawer();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Intent bindingIntent = new Intent(this, AgentService.class);
-        startService(bindingIntent); //start it consistently
-        bindService(bindingIntent, agentServiceConn, Context.BIND_AUTO_CREATE);
-        //and bind to it
-    }
-
-    @Override
-    protected void onPause() {
-        EventBus.getDefault().unregister(this);
-        super.onPause();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (activeAccount != null) {
-            outState.putParcelable(ACCOUNT_KEY, activeAccount);
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unbindService(agentServiceConn);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isDrawerOpen()) {
-            closeDrawer();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        _actionbar_toggle.onConfigurationChanged(newConfig);
-    }
-
-    private boolean isDrawerOpen() {
-        return mDrawerLayout.isDrawerOpen(GravityCompat.START);
-    }
-
-    private void setupDrawer() {
-        mMenuView = new View(this);
-        mMenuView.setBackgroundColor(Color.TRANSPARENT);
-        mMenuView.setPadding(0, getPaddingInsetTop(false), 0, 0);
+		mDrawerLayout.setDrawerListener(_actionbar_toggle);
 
 
-        getToolbar().setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    mDrawerLayout.closeDrawer(GravityCompat.START);
-                } else {
-                    mDrawerLayout.openDrawer(GravityCompat.START);
-                }
-            }
-        });
-    }
+		//no creation since the register on eventbus will created for us the event
+		mBound = false;
+	}
 
-    protected void setupToolbar() {
-        Toolbar toolbar = getToolbar();
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-            toolbar.setNavigationIcon(R.drawable.ic_menu_white);
-            toolbar.setTitleTextColor(getResources().getColor(R.color.white));
-        }
-    }
+	@Override
+	public void setContentView(int layoutResID) {
+		super.setContentView(layoutResID);
+		ButterKnife.bind(this);
+		setupToolbar();
+		setupDrawer();
+	}
 
-    private void closeDrawer() {
-        mDrawerLayout.closeDrawer(GravityCompat.START);
-    }
+	@Override
+	public int getContentView() {
+		return R.layout.activity_main;
+	}
 
-    private void hideKeyboard(View view) {
-        if (view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
-        }
-    }
+	@Override
+	public void onResume() {
+		super.onResume();
+		EventBus.getDefault().register(this);
 
-    public void goToAccountSelector() {
-        EventBus.getDefault().postSticky(new OnLoggedEvent(false, null, null, null, null));
-    }
+		setupToolbar();
+		setupDrawer();
+	}
 
-    public void goToOverview() {
-        if (activeAccount != null) {
-            Bundle args = new Bundle();
-            args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.universe);
-            args.putString(OverviewFragment.USERNAME_KEY, activeAccount.username);
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Intent bindingIntent = new Intent(this, AgentService.class);
+		startService(bindingIntent); //start it consistently
+		bindService(bindingIntent, agentServiceConn, Context.BIND_AUTO_CREATE);
+		//and bind to it
+	}
 
-            push(Constants.OVERVIEW_INDEX, args);
-        }
-    }
+	@Override
+	protected void onPause() {
+		EventBus.getDefault().unregister(this);
+		super.onPause();
+	}
 
-    @Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
-    public void onEventLogged(OnLoggedEvent event) {
-        if (event.isConnected()) {
-            _current_logged_event = event;
-            activeAccount = event.getCredentials();
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		if (activeAccount != null) {
+			outState.putParcelable(ACCOUNT_KEY, activeAccount);
+		}
+	}
 
-            PlanetResources resource = _current_logged_event.getPlanetResources();
+	@Override
+	protected void onStop() {
+		super.onStop();
+		unbindService(agentServiceConn);
+	}
 
-            _metal_main.setText(getString(R.string.cost_metal, resource.metal.current_quantity));
-            _crystal_main.setText(getString(R.string.cost_crystal, resource.crystal.current_quantity));
-            _deuterium_main.setText(getString(R.string.cost_deuterium, resource.deuterium.current_quantity));
+	@Override
+	public void onBackPressed() {
+		if (isDrawerOpen()) {
+			closeDrawer();
+		} else {
+			super.onBackPressed();
+		}
+	}
 
-            goToOverview();
-        } else {
-            startLoginActivity();
-        }
-    }
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		_actionbar_toggle.onConfigurationChanged(newConfig);
+	}
 
-    public void setActiveAccount(AccountCredentials acc) {
-        this.activeAccount = acc;
-    }
+	private boolean isDrawerOpen() {
+		return mDrawerLayout.isDrawerOpen(GravityCompat.START);
+	}
 
-    public AccountCredentials getAccountCredentials() {
-        AccountCredentials creds = new AccountCredentials();
-        creds.universe = activeAccount.universe;
-        creds.username = activeAccount.username;
-        creds.passwd = activeAccount.passwd;
-        creds.lang = activeAccount.lang;
-        return creds;
-    }
-
-    /**
-     * Check if this Activity is bound to the AgentService yet
-     *
-     * @return true if the Activity is bound, false otherwise
-     */
-    public boolean isBound() {
-        return mBound;
-    }
-
-    /**
-     * Return the AgentService that is bound to this activity
-     *
-     * @return the AgentService bound to this activity
-     */
-    public AgentService getAgentService() {
-        return mAgent;
-    }
-
-    public OgameAgent getCurrentOgameAgent() {
-
-        return _current_logged_event != null ? _current_logged_event.getOgameAgent() : null;
-    }
-
-    public OverviewData getCurrentOverviewData() {
-        return _current_logged_event != null ? _current_logged_event.getOverviewData() : null;
-    }
-
-    private void startLoginActivity() {
-        Intent intent = new Intent(this, NoAccountActivity.class);
-        startActivity(intent);
-        finish();
-        overridePendingTransition(0, 0);
-    }
+	private void setupDrawer() {
+		mMenuView = new View(this);
+		mMenuView.setBackgroundColor(Color.TRANSPARENT);
+		mMenuView.setPadding(0, getPaddingInsetTop(false), 0, 0);
 
 
-    //Manager used to push / pop Fragments
-    @Override
-    protected FragmentStackManager getFragmentStackManager() {
-        return new HomeFragmentStackManager(this, R.id.container);
-    }
+		getToolbar().setNavigationOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+					mDrawerLayout.closeDrawer(GravityCompat.START);
+				} else {
+					mDrawerLayout.openDrawer(GravityCompat.START);
+				}
+			}
+		});
+	}
 
-    private void push(int type) {
-        try {
-            push(type, ListingFragmentWithEvent.createBundleInstance(type));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        closeDrawer();
-    }
+	protected void setupToolbar() {
+		Toolbar toolbar = getToolbar();
+		if (toolbar != null) {
+			setSupportActionBar(toolbar);
+			toolbar.setNavigationIcon(R.drawable.ic_menu_white);
+			toolbar.setTitleTextColor(getResources().getColor(R.color.white));
+		}
+	}
+
+	private void closeDrawer() {
+		mDrawerLayout.closeDrawer(GravityCompat.START);
+	}
+
+	private void hideKeyboard(View view) {
+		if (view != null) {
+			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+		}
+	}
+
+	public void goToAccountSelector() {
+		EventBus.getDefault().postSticky(new OnLoggedEvent(false, null, null, null, null));
+	}
+
+	public void goToOverview() {
+		if (activeAccount != null) {
+			Bundle args = new Bundle();
+			args.putString(OverviewFragment.UNIVERSE_KEY, activeAccount.getUniverse());
+			args.putString(OverviewFragment.USERNAME_KEY, activeAccount.getUsername());
+
+			push(Constants.OVERVIEW_INDEX, args);
+		}
+	}
+
+	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
+	public void onEventLogged(OnLoggedEvent event) {
+		if (event.isConnected()) {
+			_current_logged_event = event;
+			activeAccount = event.getCredentials();
+
+			PlanetResources resource = _current_logged_event.getPlanetResources();
+
+			_metal_main.setText(getString(R.string.cost_metal, resource.metal.current_quantity));
+			_crystal_main.setText(getString(R.string.cost_crystal, resource.crystal.current_quantity));
+			_deuterium_main.setText(getString(R.string.cost_deuterium, resource.deuterium.current_quantity));
+
+			goToOverview();
+		} else {
+			startLoginActivity();
+		}
+	}
+
+	public void setActiveAccount(AccountCredentials acc) {
+		this.activeAccount = acc;
+	}
+
+	/**
+	 * Check if this Activity is bound to the AgentService yet
+	 *
+	 * @return true if the Activity is bound, false otherwise
+	 */
+	public boolean isBound() {
+		return mBound;
+	}
+
+	/**
+	 * Return the AgentService that is bound to this activity
+	 *
+	 * @return the AgentService bound to this activity
+	 */
+	public AgentService getAgentService() {
+		return mAgent;
+	}
+
+	public OgameAgent getCurrentOgameAgent() {
+
+		return _current_logged_event != null ? _current_logged_event.getOgameAgent() : null;
+	}
+
+	public OverviewData getCurrentOverviewData() {
+		return _current_logged_event != null ? _current_logged_event.getOverviewData() : null;
+	}
+
+	private void startLoginActivity() {
+		Intent intent = new Intent(this, NoAccountActivity.class);
+		startActivity(intent);
+		finish();
+		overridePendingTransition(0, 0);
+	}
+
+
+	//Manager used to push / pop Fragments
+	@Override
+	protected FragmentStackManager getFragmentStackManager() {
+		return new HomeFragmentStackManager(this, R.id.container);
+	}
+
+	private void push(int type) {
+		try {
+			push(type, ListingFragmentWithEvent.createBundleInstance(type));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		closeDrawer();
+	}
 }
