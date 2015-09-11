@@ -18,6 +18,7 @@
  */
 package com.wikaba.ogapp.ui.login;
 
+import android.accounts.Account;
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -36,8 +37,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.wikaba.ogapp.AgentActions;
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.ApplicationController;
+import com.wikaba.ogapp.OgameAgentManager;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnLoggedEvent;
@@ -62,8 +65,6 @@ import de.greenrobot.event.ThreadMode;
  * Created by kevinleperf on 03/07/15.
  */
 public class NoAccountActivity extends SystemFittableActivity {
-
-	private static final int ALL_ACCS_LOADER_ID = 0;
 
 	private MaterialDialog _login_progress;
 
@@ -106,7 +107,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 		uniSpinner.setAdapter(adapter);
 
 		String account_spinner = getString(R.string.account_spinner);
-		existingAccountsCredentials = AccountsManager.getInstance(this).getAllAccountCredentials();
+		existingAccountsCredentials = AccountsManager.getInstance().getAllAccountCredentials();
 		String[] accountNames = new String[existingAccountsCredentials.size() + 1];
 		accountNames[0] = getString(R.string.select_an_account);
 		int i = 1;
@@ -124,7 +125,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 				if (position >= 0) {
 					AccountCredentials cred = existingAccountsCredentials.get(position);
 					//TODO ?
-					EventBus.getDefault().postSticky(new OnLoginRequested(cred));
+					loginToAccount(cred);
 				}
 			}
 
@@ -210,7 +211,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 			int rowPosition = info.position;
 			AccountCredentials creds = existingAccountsCredentials.get(rowPosition);
 
-			AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
+			AccountsManager dbmanager = AccountsManager.getInstance();
 			dbmanager.removeAccount(creds.getUniverse(), creds.getUsername());
 			existingAccountsCredentials.remove(rowPosition);
 
@@ -225,7 +226,9 @@ public class NoAccountActivity extends SystemFittableActivity {
 		String username = usernameField.getText().toString().trim();
 		String passwd = passwdField.getText().toString().trim();
 		String lang = langField.getText().toString().trim();
-		if (lang == null || lang.length() == 0) lang = "en";
+		if (lang == null || lang.length() == 0) {
+			lang = "en";
+		}
 		View selectedView = uniSpinner.getSelectedView();
 		if (selectedView == null || username.length() == 0 || passwd.length() == 0) {
 			//TODO SHOW SNACKBAR
@@ -240,7 +243,15 @@ public class NoAccountActivity extends SystemFittableActivity {
 		acc.setUsername(username);
 		acc.setPasswd(passwd);
 		acc.setLang(lang);
-		addAccount(acc);
+		loginToAccount(acc);
+	}
+
+	private void loginToAccount(AccountCredentials credentials) {
+		Intent i = new Intent(this, AgentService.class);
+		i.putExtra(AgentActions.ACCOUNT_CREDENTIAL_KEY, credentials);
+		i.putExtra(AgentActions.OGAME_AGENT_KEY, credentials.getId());
+		i.putExtra(AgentActions.AGENT_ACTION_KEY, AgentActions.LOGIN);
+		startService(i);
 	}
 
 	@OnClick(R.id.pw_checkbox)
@@ -249,21 +260,6 @@ public class NoAccountActivity extends SystemFittableActivity {
 				(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
 				: (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		passwdField.setInputType(inputType);
-	}
-
-	public void addAccount(AccountCredentials creds) {
-		AccountsManager manager = ApplicationController.getInstance().getAccountsManager();
-		long accountRowId = manager.addAccount(creds.getUniverse(), creds.getUsername(), creds.getPasswd(), creds.getLang());
-
-		if (accountRowId < 0) {
-			return;
-		}
-
-		AccountCredentials activeAccount = new AccountCredentials(creds);
-		activeAccount.setId(accountRowId);
-
-		//TODO OPEN LOADER
-		EventBus.getDefault().post(new OnLoginRequested(activeAccount));
 	}
 
 	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)

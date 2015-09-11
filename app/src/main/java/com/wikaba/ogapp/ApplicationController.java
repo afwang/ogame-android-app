@@ -36,9 +36,6 @@ public class ApplicationController extends Application {
 	}
 
 	private DatabaseManager _database_manager;
-	private AccountsManager _accounts_manager;
-	private CookiesManager _cookies_manager;
-
 
 	@Override
 	public void onCreate() {
@@ -47,17 +44,5 @@ public class ApplicationController extends Application {
 		_static_application_controller = this;
 		_database_manager = DatabaseManager.getInstance();
 		_database_manager.startSession(this);
-		_accounts_manager = AccountsManager.getInstance(this);
-		_cookies_manager = CookiesManager.getInstance(this);
 	}
-
-	public AccountsManager getAccountsManager() {
-		return _accounts_manager;
-	}
-
-	public CookiesManager getCookiesManager() {
-		return _cookies_manager;
-	}
-
-
 }

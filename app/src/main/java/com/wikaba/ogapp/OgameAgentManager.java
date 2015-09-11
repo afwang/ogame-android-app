@@ -83,6 +83,9 @@ public class OgameAgentManager {
 	 */
 	public long getOrBuild(AccountCredentials credentials, OkHttpClient client) {
 		long id = credentials.getId();
+		if(id < 0) {
+			return -1;
+		}
 		OgameAgent test = get(id);
 		if(test != null) {
 			return id;

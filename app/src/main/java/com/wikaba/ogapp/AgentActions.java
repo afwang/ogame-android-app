@@ -27,6 +27,7 @@ package com.wikaba.ogapp;
 public class AgentActions {
 	public static final String AGENT_ACTION_KEY = "com.wikaba.ogapp.AGENT_ACTION";
 	public static final String OGAME_AGENT_KEY = "com.wikaga.ogapp.OGAME_AGENT";
+	public static final String ACCOUNT_CREDENTIAL_KEY = "com.wikaba.ogapp.ACCOUNT_CREDENTIALS";
 
 	public static final int LOGIN = 0;
 	public static final int OVERVIEW = 1;

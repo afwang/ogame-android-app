@@ -36,26 +36,14 @@ import greendao.AccountsDao;
 public class AccountsManager extends AbstractController<AccountsDao> {
 	private static LruCache<String, Accounts> _lru = new LruCache<>(20);
 
-	private static AccountsManager _instance;
-
-	private Context _context;
+	private final static AccountsManager instance = new AccountsManager();
 
 	private String getHashMapKey(String universe, String username) {
 		return String.format("%s_%s", universe, username);
 	}
 
-	private AccountsManager(Context context) {
-		super();
-		_context = context;
-	}
-
-	private static AccountsManager createNewInstance(Context context) {
-		return new AccountsManager(context);
-	}
-
-	public static AccountsManager getInstance(Context context) {
-		if (_instance == null) _instance = createNewInstance(context);
-		return _instance;
+	public static AccountsManager getInstance() {
+		return instance;
 	}
 
 	public boolean hasAccount(String universe, String username) {
