@@ -21,7 +21,7 @@ package com.wikaba.ogapp.events;
  * Created by afwang on 9/7/15.
  */
 public class OnAgentUpdateEvent {
-	private int agentKey;
+	private long agentKey;
 	private boolean updateSucceeded;
 
 	public OnAgentUpdateEvent() {
@@ -34,7 +34,7 @@ public class OnAgentUpdateEvent {
 		updateSucceeded = true;
 	}
 
-	public OnAgentUpdateEvent(int agentManagerKey, boolean wasUpdateSuccessful) {
+	public OnAgentUpdateEvent(long agentManagerKey, boolean wasUpdateSuccessful) {
 		agentKey = agentManagerKey;
 		updateSucceeded = wasUpdateSuccessful;
 	}
@@ -43,7 +43,7 @@ public class OnAgentUpdateEvent {
 		return updateSucceeded;
 	}
 
-	public int getAgentManagerKey() {
+	public long getAgentManagerKey() {
 		return agentKey;
 	}
 }

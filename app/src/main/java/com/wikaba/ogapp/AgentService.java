@@ -69,7 +69,7 @@ public class AgentService extends IntentService {
 		}
 		//Begin branching the codepaths depending on what we're asked to do.
 		int actionCode = intent.getIntExtra(AgentActions.AGENT_ACTION_KEY, -1);
-		int ogameAgentKey = intent.getIntExtra(AgentActions.OGAME_AGENT_KEY, -1);
+		long ogameAgentKey = intent.getLongExtra(AgentActions.OGAME_AGENT_KEY, -1);
 		OgameAgent agent = OgameAgentManager.getInstance().get(ogameAgentKey);
 		if(agent == null) {
 			AccountCredentials credentials = intent.getParcelableExtra(AgentActions.ACCOUNT_CREDENTIAL_KEY);
@@ -79,9 +79,10 @@ public class AgentService extends IntentService {
 				return;
 			}
 			addAccount(credentials);
-			buildOgameAgent(credentials);
+			ogameAgentKey = buildOgameAgent(credentials);
 			agent = OgameAgentManager.getInstance().get(ogameAgentKey);
 			if(agent == null)  {
+				//TODO: Send a Toast saying there was trouble creating the OgameAgent object
 				return;
 			}
 		}
@@ -89,7 +90,8 @@ public class AgentService extends IntentService {
 		boolean agentUpdated = true;
 		switch(actionCode) {
 			case AgentActions.LOGIN:
-				if(loginToAccount(agent)) {
+				agentUpdated = loginToAccount(agent);
+				if(agentUpdated) {
 					List<HttpCookie> cookieList = getCookiesFromStore();
 					CookiesManager.getInstance().saveCookies(cookieList);
 				}
@@ -106,7 +108,7 @@ public class AgentService extends IntentService {
 				logger.error("Invalid AgentAction code sent to AgentService: {}", actionCode);
 				agentUpdated = false;
 		}
-		EventBus.getDefault().post(new OnAgentUpdateEvent(ogameAgentKey, agentUpdated));
+		EventBus.getDefault().postSticky(new OnAgentUpdateEvent(ogameAgentKey, agentUpdated));
 	}
 
 	private void initHttpClient() {
@@ -199,12 +201,12 @@ public class AgentService extends IntentService {
 		return events;
 	}
 
-	private void buildOgameAgent(AccountCredentials credentials) {
+	private long buildOgameAgent(AccountCredentials credentials) {
 		OgameAgentManager ogm = OgameAgentManager.getInstance();
 		if(httpClient == null) {
 			initHttpClient();
 		}
-		ogm.getOrBuild(credentials, httpClient);
+		return ogm.getOrBuild(credentials, httpClient);
 	}
 
 	private long addAccount(AccountCredentials credentials) {

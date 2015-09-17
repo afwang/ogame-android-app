@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
+import com.wikaba.ogapp.AgentActions;
 import com.wikaba.ogapp.AgentService;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.agent.OgameAgent;
@@ -57,7 +58,7 @@ import de.greenrobot.event.Subscribe;
 import de.greenrobot.event.ThreadMode;
 
 public class HomeActivity extends SystemFittableActivity {
-	private static final String ACCOUNT_KEY = "com.wikaba.ogapp.HomeActivity.activeAccount";
+	public static final String ACCOUNT_KEY = AgentActions.OGAME_AGENT_KEY;
 
 	@Bind(R.id.drawerLayout)
 	protected DrawerLayout mDrawerLayout;

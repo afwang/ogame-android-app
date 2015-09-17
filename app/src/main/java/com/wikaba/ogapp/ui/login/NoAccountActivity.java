@@ -43,6 +43,7 @@ import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.OgameAgentManager;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
+import com.wikaba.ogapp.events.OnAgentUpdateEvent;
 import com.wikaba.ogapp.events.OnLoggedEvent;
 import com.wikaba.ogapp.events.OnLoginEvent;
 import com.wikaba.ogapp.events.OnLoginRequested;
@@ -243,6 +244,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 		acc.setUsername(username);
 		acc.setPasswd(passwd);
 		acc.setLang(lang);
+		//TODO: Replace screen with ProgressBar
 		loginToAccount(acc);
 	}
 
@@ -263,30 +265,20 @@ public class NoAccountActivity extends SystemFittableActivity {
 	}
 
 	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
-	public void onProgressLogin(OnLoginEvent event) {
-		if (event.isPendingLogin()) {
-			if (_login_progress == null || !_login_progress.isShowing()) {
-				_login_progress = new MaterialDialog.Builder(this)
-						.title(R.string.login)
-						.content(R.string.please_wait)
-						.progress(true, 0)
-						.cancelable(false)
-						.show();
-			}
-		} else {
-			dismissLogin();
+	public void onAgentUpdated(OnAgentUpdateEvent event) {
+		EventBus.getDefault().removeStickyEvent(event);
+		boolean loggedIn = event.getWasSuccessful();
+		if(!loggedIn) {
+			//TODO: Return state of the activity to initial state (login fields ready)
+			//TODO: Send toast saying we were unable to log in.
+			return;
 		}
-	}
 
-	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
-	public void onLoggedEvent(OnLoggedEvent event) {
-		if (event.isConnected()) {
-			startOverviewActivity();
-		} else {
-			//possible race condition with http service returning false so dismiss any dialog possible
-			//which could prevent app usability during onCOnfigurationChanged
-			dismissLogin();
-		}
+		long agentKey = event.getAgentManagerKey();
+		Intent i = new Intent(this, HomeActivity.class);
+		i.putExtra(HomeActivity.ACCOUNT_KEY, agentKey);
+		i.setFlags(i.getFlags() | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		startActivity(i);
 	}
 
 	private void dismissLogin() {
@@ -294,12 +286,5 @@ public class NoAccountActivity extends SystemFittableActivity {
 			_login_progress.dismiss();
 		}
 		_login_progress = null;
-	}
-
-	private void startOverviewActivity() {
-		Intent intent = new Intent(this, HomeActivity.class);
-		startActivity(intent);
-		finish();
-		overridePendingTransition(0, 0);
 	}
 }
