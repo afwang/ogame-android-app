@@ -17,13 +17,15 @@
 	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.wikaba.ogapp;
+package com.wikaba.ogapp.utils;
 
 import android.support.v4.util.LongSparseArray;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.OgameAgent;
-import com.wikaba.ogapp.utils.AccountCredentials;
+
+import de.greenrobot.event.EventBus;
+import de.greenrobot.event.EventBusBuilder;
 
 /**
  * <p>This class manages the OgameAgent objects. An integer key is used to map to each agent
@@ -36,7 +38,7 @@ import com.wikaba.ogapp.utils.AccountCredentials;
 public class OgameAgentManager {
 	private static final OgameAgentManager instance = new OgameAgentManager();
 
-	private LongSparseArray<OgameAgent> agents;
+	private LongSparseArray<OgameAgentWrapper> agents;
 
 	private OgameAgentManager() {
 		agents = new LongSparseArray<>();
@@ -60,7 +62,10 @@ public class OgameAgentManager {
 		//LongSparseArray's get() method is thread-safe across all
 		//implementations of Android.
 		synchronized(agents) {
-			anAgent = agents.get(key);
+			OgameAgentWrapper wrapper = agents.get(key);
+			if(wrapper != null) {
+				anAgent = wrapper.getAgent();
+			}
 		}
 		return anAgent;
 	}
@@ -98,13 +103,16 @@ public class OgameAgentManager {
 				credentials.getLang(),
 				client
 		);
+		EventBusBuilder busBuilder = EventBus.builder();
+		EventBus agentBus = busBuilder.build();
 		synchronized(agents) {
 			//Check once more to ensure that the agent is not part of the LongSparseArray.
 			//There may be another concurrent call to getOrBuild that added the same object
 			//before us.
-			test = agents.get(id);
-			if(test == null) {
-				agents.append(id, newAgent);
+			OgameAgentWrapper wrapper = agents.get(id);
+			if(wrapper == null) {
+				wrapper = new OgameAgentWrapper(newAgent, agentBus);
+				agents.append(id, wrapper);
 			}
 		}
 		return id;

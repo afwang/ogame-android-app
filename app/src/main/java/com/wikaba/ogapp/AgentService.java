@@ -20,7 +20,6 @@ package com.wikaba.ogapp;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.Parcelable;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.wikaba.ogapp.agent.CustomCookieManager;
@@ -32,6 +31,7 @@ import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.events.OnAgentUpdateEvent;
 import com.wikaba.ogapp.utils.AccountCredentials;
+import com.wikaba.ogapp.utils.OgameAgentManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -18,7 +18,6 @@
  */
 package com.wikaba.ogapp.ui.login;
 
-import android.accounts.Account;
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -39,14 +38,9 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.wikaba.ogapp.AgentActions;
 import com.wikaba.ogapp.AgentService;
-import com.wikaba.ogapp.ApplicationController;
-import com.wikaba.ogapp.OgameAgentManager;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
 import com.wikaba.ogapp.events.OnAgentUpdateEvent;
-import com.wikaba.ogapp.events.OnLoggedEvent;
-import com.wikaba.ogapp.events.OnLoginEvent;
-import com.wikaba.ogapp.events.OnLoginRequested;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.FragmentStackManager;
