@@ -25,19 +25,18 @@ import com.wikaba.ogapp.utils.AccountCredentials;
  * Created by kevinleperf on 19/07/15.
  */
 public class OnLoginRequested {
-    private AccountCredentials _account_crendentials;
+	private AccountCredentials accountCrendentials;
 
+	public OnLoginRequested(AccountCredentials credentials) {
+		accountCrendentials = credentials;
+	}
 
-    public OnLoginRequested(AccountCredentials credentials) {
-        _account_crendentials = credentials;
-    }
-
-    public AccountCredentials getAccountCredentials() {
-        return _account_crendentials;
-    }
+	public AccountCredentials getAccountCredentials() {
+		return accountCrendentials;
+	}
 
 	@Override
-	public String toString(){
-		return _account_crendentials.toString();
+	public String toString() {
+		return accountCrendentials.toString();
 	}
 }

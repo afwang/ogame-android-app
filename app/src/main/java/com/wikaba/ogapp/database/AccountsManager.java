@@ -34,133 +34,121 @@ import greendao.AccountsDao;
  * Created by kevinleperf on 28/06/13.
  */
 public class AccountsManager extends AbstractController<AccountsDao> {
-    private static LruCache<String, Accounts> _lru = new LruCache<>(20);
+	private static LruCache<String, Accounts> _lru = new LruCache<>(20);
 
-    private static AccountsManager _instance;
+	private final static AccountsManager instance = new AccountsManager();
 
-    private Context _context;
+	private String getHashMapKey(String universe, String username) {
+		return String.format("%s_%s", universe, username);
+	}
 
-    private String getHashMapKey(String universe, String username) {
-        return String.format("%s_%s", universe, username);
-    }
+	public static AccountsManager getInstance() {
+		return instance;
+	}
 
-    private AccountsManager(Context context) {
-        super();
-        _context = context;
-    }
+	public boolean hasAccount(String universe, String username) {
+		return getAccount(universe, username) != null;
+	}
 
-    private static AccountsManager createNewInstance(Context context) {
-        return new AccountsManager(context);
-    }
+	public long addAccount(String universe, String username, String password, String lang) {
+		return addAccount(new Accounts(0l, universe, username, password, lang));
+	}
 
-    public static AccountsManager getInstance(Context context) {
-        if (_instance == null) _instance = createNewInstance(context);
-        return _instance;
-    }
+	public long addAccount(Accounts account) {
+		lock();
+		Accounts acc = getAccount(account.getUniverse(), account.getUsername());
+		if (acc == null) {
+			acc = new Accounts();
+			acc.setId(null);//config.getId());
+			acc.setUniverse(account.getUniverse());
+			acc.setUsername(account.getUsername());
+			acc.setLang(account.getLang());
+		}
+		acc.setPassword(account.getPassword());
 
-    public boolean hasAccount(String universe, String username) {
-        return getAccount(universe, username) != null;
-    }
+		long result = getDao().insertOrReplace(acc);
+		unlock();
+		return result;
+	}
 
-    public long addAccount(String universe, String username, String password, String lang) {
-        return addAccount(new Accounts(0l, universe, username, password, lang));
-    }
+	public Accounts getAccount(String universe, String username) {
+		Accounts cache = _lru.get(getHashMapKey(universe, username));
+		if (cache == null) {
+			cache = getDao().queryBuilder()
+					.where(AccountsDao.Properties.Universe.eq(universe),
+							AccountsDao.Properties.Username.eq(username))
+					.unique();
+			if (cache != null) {
+				_lru.put(getHashMapKey(universe, username), cache);
+			}
+		}
+		return cache;
+	}
 
-    public long addAccount(Accounts account) {
-        lock();
-        Accounts acc = getAccount(account.getUniverse(), account.getUsername());
-        if (acc == null) {
-            acc = new Accounts();
-            acc.setId(null);//config.getId());
-            acc.setUniverse(account.getUniverse());
-            acc.setUsername(account.getUsername());
-            acc.setLang(account.getLang());
-        }
-        acc.setPassword(account.getPassword());
+	public Accounts getAccount(long row_id) {
+		Accounts accounts = getDao().queryBuilder()
+				.where(AccountsDao.Properties.Id.eq(row_id))
+				.unique();
 
-        long result = getDao().insertOrReplace(acc);
-        unlock();
-        return result;
-    }
+		return accounts;
+	}
 
-    public Accounts getAccount(String universe, String username) {
-        Accounts cache = _lru.get(getHashMapKey(universe, username));
-        if (cache == null) {
-            cache = getDao().queryBuilder()
-                    .where(AccountsDao.Properties.Universe.eq(universe),
-                            AccountsDao.Properties.Username.eq(username))
-                    .unique();
-            if (cache != null) {
-                _lru.put(getHashMapKey(universe, username), cache);
-            }
-        }
-        return cache;
-    }
+	public AccountCredentials getAccountCredentials(long row_id) {
+		return getAccountCredentials(getAccount(row_id));
+	}
 
-    public Accounts getAccount(long row_id) {
-        Accounts accounts = getDao().queryBuilder()
-                .where(AccountsDao.Properties.Id.eq(row_id))
-                .unique();
+	public AccountCredentials getAccountCredentials(String universe, String username) {
+		return getAccountCredentials(getAccount(universe, username));
+	}
 
-        return accounts;
-    }
+	public AccountCredentials getAccountCredentials(Accounts account) {
+		if (account != null) {
+			AccountCredentials credentials = new AccountCredentials();
+			credentials.setId(account.getId());
+			credentials.setPasswd(account.getPassword());
+			credentials.setUniverse(account.getUniverse());
+			credentials.setUsername(account.getUsername());
+			credentials.setLang(account.getLang());
 
-    public AccountCredentials getAccountCredentials(long row_id) {
-        return getAccountCredentials(getAccount(row_id));
-    }
+			return credentials;
+		}
+		return null;
+	}
 
-    public AccountCredentials getAccountCredentials(String universe, String username) {
-        return getAccountCredentials(getAccount(universe, username));
-    }
+	public ArrayList<AccountCredentials> getAllAccountCredentials() {
+		List<Accounts> list = findAll();
+		ArrayList<AccountCredentials> credentials = new ArrayList<>(list.size());
 
-    public AccountCredentials getAccountCredentials(Accounts account) {
-        if (account != null) {
-            AccountCredentials credentials = new AccountCredentials();
-            credentials.id = account.getId();
-            credentials.passwd = account.getPassword();
-            credentials.universe = account.getUniverse();
-            credentials.username = account.getUsername();
-            credentials.lang = account.getLang();
+		for (Accounts acc : list) {
+			AccountCredentials credential = new AccountCredentials();
+			credential.setId(acc.getId());
+			credential.setPasswd(acc.getPassword());
+			credential.setUniverse(acc.getUniverse());
+			credential.setUsername(acc.getUsername());
+			credential.setLang(acc.getLang());
+			credentials.add(credential);
+		}
+		return credentials;
+	}
 
-            return credentials;
-        }
-        return null;
-    }
+	public boolean removeAccount(String universe, String username) {
+		Accounts account = getAccount(universe, username);
 
-    public ArrayList<AccountCredentials> getAllAccountCredentials() {
-        List<Accounts> list = findAll();
-        ArrayList<AccountCredentials> credentials = new ArrayList<>(list.size());
+		if (account != null) {
+			getDao().delete(account);
+			_lru.evictAll(); //TODO evict only the account
+			return true;
+		}
+		return false;
+	}
 
-        for (Accounts acc : list) {
-            AccountCredentials credential = new AccountCredentials();
-            credential.username = acc.getUsername();
-            credential.universe = acc.getUniverse();
-            credential.passwd = acc.getPassword();
-            credential.lang = acc.getLang();
-            credential.id = acc.getId();
-            credentials.add(credential);
-        }
-        return credentials;
-    }
+	public AccountsDao getDao() {
+		return DatabaseManager.getInstance().getSession().getAccountsDao();
+	}
 
-    public boolean removeAccount(String universe, String username) {
-        Accounts account = getAccount(universe, username);
-
-        if (account != null) {
-            getDao().delete(account);
-            _lru.evictAll(); //TODO evict only the account
-            return true;
-        }
-        return false;
-    }
-
-    public AccountsDao getDao() {
-        return DatabaseManager.getInstance().getSession().getAccountsDao();
-    }
-
-    public List<Accounts> findAll() {
-        List<Accounts> list = getDao().loadAll();
-        //TODO PUT EACH IN CACHE
-        return list;
-    }
+	public List<Accounts> findAll() {
+		List<Accounts> list = getDao().loadAll();
+		//TODO PUT EACH IN CACHE
+		return list;
+	}
 }

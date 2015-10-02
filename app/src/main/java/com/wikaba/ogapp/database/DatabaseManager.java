@@ -23,110 +23,102 @@ import greendao.DaoSession;
  * controllers
  */
 public class DatabaseManager {
-    private static final String DATABASE_NAME = "ogame_orm";
-    private static DaoSession sDaoSession;
+	private static final String DATABASE_NAME = "ogame_orm";
+	private static DaoSession sDaoSession;
 
-    private static DatabaseManager ourInstance = new DatabaseManager();
+	private static DatabaseManager ourInstance = new DatabaseManager();
 
-    public static DatabaseManager getInstance() {
-        return ourInstance;
-    }
+	public static DatabaseManager getInstance() {
+		return ourInstance;
+	}
 
-    private DatabaseManager() {
+	private DatabaseManager() {
 
-    }
+	}
 
-    public void startSession(final Context context) {
-        DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(context, DATABASE_NAME, null);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        DaoMaster daoMaster = new DaoMaster(db);
-        sDaoSession = daoMaster.newSession();
-        QueryBuilder.LOG_SQL = false;
-        QueryBuilder.LOG_VALUES = false;
-    }
+	public void startSession(final Context context) {
+		DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(context, DATABASE_NAME, null);
+		SQLiteDatabase db = helper.getWritableDatabase();
+		DaoMaster daoMaster = new DaoMaster(db);
+		sDaoSession = daoMaster.newSession();
+		QueryBuilder.LOG_SQL = false;
+		QueryBuilder.LOG_VALUES = false;
+	}
 
-    protected DaoSession getSession() {
-        return sDaoSession;
-    }
+	protected DaoSession getSession() {
+		return sDaoSession;
+	}
 
 
 
-    /**
-     * Insert a new account to the database.
-     * @param universe
-     * @param username
-     * @param passwd
-     * @return ID of the row inserted or modified.
-     */
-    public long addAccount(String universe, String username, String passwd, String lang) {
-        return ApplicationController.getInstance()
-                .getAccountsManager().addAccount(universe, username, passwd, lang);
-    }
+	/**
+	 * Insert a new account to the database.
+	 * @param universe
+	 * @param username
+	 * @param passwd
+	 * @return ID of the row inserted or modified.
+	 */
+	public long addAccount(String universe, String username, String passwd, String lang) {
+		return AccountsManager.getInstance().addAccount(universe, username, passwd, lang);
+	}
 
-    /**
-     * Remove the specified account from the database.
-     * on the main thread.
-     * @param universe
-     * @param username
-     * @return true if an account was removed from the database.
-     */
-    public boolean removeAccount(String universe, String username) {
-        return ApplicationController.getInstance().getAccountsManager()
-                .removeAccount(universe, username);
-    }
+	/**
+	 * Remove the specified account from the database.
+	 * on the main thread.
+	 * @param universe
+	 * @param username
+	 * @return true if an account was removed from the database.
+	 */
+	public boolean removeAccount(String universe, String username) {
+		return AccountsManager.getInstance().removeAccount(universe, username);
+	}
 
-    /**
-     * Get the AccountCredentials of an account.
-     * @param universe - the universe of the account
-     * @param username - the username of the account
-     * @return AccountCredentials containing universe, username, and password of the account.
-     */
-    public AccountCredentials getAccount(String universe, String username) {
-        return ApplicationController.getInstance()
-                .getAccountsManager().getAccountCredentials(universe, username);
-    }
+	/**
+	 * Get the AccountCredentials of an account.
+	 * @param universe - the universe of the account
+	 * @param username - the username of the account
+	 * @return AccountCredentials containing universe, username, and password of the account.
+	 */
+	public AccountCredentials getAccount(String universe, String username) {
+		return AccountsManager.getInstance().getAccountCredentials(universe, username);
+	}
 
-    /**
-     * This thread only reads from the database. It can be called from any thread.
-     * @param rowId - the ID of the row in the database to retrieve
-     * @return AccountCredentials object containing the universe, username, and password of the account
-     * 		associated with rowId. Return null if account does not exist.
-     */
-    public AccountCredentials getAccount(long rowId) {
-        return ApplicationController.getInstance()
-                .getAccountsManager().getAccountCredentials(rowId);
-    }
+	/**
+	 * This thread only reads from the database. It can be called from any thread.
+	 * @param rowId - the ID of the row in the database to retrieve
+	 * @return AccountCredentials object containing the universe, username, and password of the account
+	 * 		associated with rowId. Return null if account does not exist.
+	 */
+	public AccountCredentials getAccount(long rowId) {
+		return AccountsManager.getInstance().getAccountCredentials(rowId);
+	}
 
-    /**
-     * <p>Retrieve and return all account info stored in the database.
-     * This method does not return passwords.</p>
-     *
-     * @return ArrayList of all account credentials.
-     */
-    public ArrayList<AccountCredentials> getAllAccounts() {
-        return ApplicationController.getInstance().getAccountsManager()
-                .getAllAccountCredentials();
-    }
+	/**
+	 * <p>Retrieve and return all account info stored in the database.
+	 * This method does not return passwords.</p>
+	 *
+	 * @return ArrayList of all account credentials.
+	 */
+	public ArrayList<AccountCredentials> getAllAccounts() {
+		return AccountsManager.getInstance().getAllAccountCredentials();
+	}
 
-    /**
-     * Retrieve all cookies from the cookies table in the database.
-     * @return ArrayList of HttpCookie objects. This list is guaranteed to have
-     * 		cookies with a non-null, non-empty domain and path.
-     */
-    public ArrayList<HttpCookie> getCookies() {
-        ArrayList<HttpCookie> cookies = ApplicationController.getInstance()
-                .getCookiesManager().getAllHttpCookies();
+	/**
+	 * Retrieve all cookies from the cookies table in the database.
+	 * @return ArrayList of HttpCookie objects. This list is guaranteed to have
+	 * 		cookies with a non-null, non-empty domain and path.
+	 */
+	public ArrayList<HttpCookie> getCookies() {
+		ArrayList<HttpCookie> cookies = CookiesManager.getInstance().getAllHttpCookies();
+		return cookies;
+	}
 
-        return cookies;
-    }
-
-    /**
-     * Drop the entire cookies table and then save parameter cookie list into the
-     * empty table.
-     * @param cookies
-     */
-    public void saveCookies(List<HttpCookie> cookies) {
-
-        ApplicationController.getInstance().getCookiesManager().saveCookies(cookies);
-    }
+	/**
+	 * Drop the entire cookies table and then save parameter cookie list into the
+	 * empty table.
+	 * @param cookies
+	 */
+	public void saveCookies(List<HttpCookie> cookies) {
+		CookiesManager.getInstance().saveCookies(cookies);
+	}
 }

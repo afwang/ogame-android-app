@@ -1,114 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-    Copyright 2014 Alexander Wang
-    
-    This file is part of Ogame on Android.
+	Copyright 2014 Alexander Wang
 
-    Ogame on Android is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This file is part of Ogame on Android.
 
-    Ogame on Android is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	Ogame on Android is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
+	Ogame on Android is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Ogame on Android.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/parent"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="false">
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/parent"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fitsSystemWindows="false">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
+	<android.support.v7.widget.Toolbar
+		android:id="@+id/toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:visibility="gone" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:orientation="vertical">
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/username"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/default_middle_margin"
-            android:background="@drawable/btn_corner"
-            android:ems="10"
-            android:hint="@string/username"
-            android:padding="5dp" />
+		<View
+			android:layout_width="0dp"
+			android:layout_height="0dp"
+			android:layout_weight="1" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/default_middle_margin"
-            android:background="@drawable/btn_corner"
-            android:orientation="horizontal"
-            android:padding="5dp">
+		<LinearLayout
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:gravity="center_vertical"
+			android:orientation="vertical"
+			android:layout_weight="4">
 
-            <EditText
-                android:id="@+id/password"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_middle_margin"
-                android:background="@drawable/btn_corner"
-                android:ems="10"
-                android:hint="@string/password"
-                android:inputType="textPassword"
-                android:padding="5dp" />
+			<EditText
+				android:id="@+id/username"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="@dimen/default_middle_margin"
+				android:background="@drawable/btn_corner"
+				android:ems="10"
+				android:hint="@string/username"
+				android:padding="5dp" />
 
-            <CheckBox
-                android:id="@+id/pw_checkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:text="@string/show_password_checkbox" />
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="@dimen/default_middle_margin"
+				android:background="@drawable/btn_corner"
+				android:orientation="horizontal"
+				android:padding="5dp">
 
-        </LinearLayout>
+				<EditText
+					android:id="@+id/password"
+					android:layout_width="0dp"
+					android:layout_weight="1"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="@dimen/default_middle_margin"
+					android:background="@drawable/btn_corner"
+					android:ems="10"
+					android:hint="@string/password"
+					android:inputType="textPassword"
+					android:padding="5dp" />
 
-        <EditText
-            android:id="@+id/lang"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/default_middle_margin"
-            android:background="@drawable/btn_corner"
-            android:ems="10"
-            android:hint="@string/lang"
-            android:padding="5dp" />
+				<CheckBox
+					android:id="@+id/pw_checkbox"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="end"
+					android:text="@string/show_password_checkbox" />
 
-        <Spinner
-            android:id="@+id/uniSelect"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:prompt="@string/universe"
-            android:background="#ffffff"
-            android:layout_margin="5dp" />
+			</LinearLayout>
 
-        <com.wikaba.ogapp.views.ButtonRectangle
-            android:id="@+id/login"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/default_middle_margin"
-            android:text="@string/login"
-            app:background="@color/colorPrimary" />
+			<EditText
+				android:id="@+id/lang"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="@dimen/default_middle_margin"
+				android:background="@drawable/btn_corner"
+				android:ems="10"
+				android:hint="@string/lang"
+				android:padding="5dp" />
 
-        <Spinner
-            android:id="@+id/existingAccList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:prompt="@string/existing_accounts"
-            style="@style/AppTheme"
-            android:background="#ffffff" />
-    </LinearLayout>
+			<Spinner
+				android:id="@+id/uniSelect"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"
+				android:prompt="@string/universe"
+				android:background="#ffffff"
+				android:layout_margin="5dp" />
+
+			<com.wikaba.ogapp.views.ButtonRectangle
+				android:id="@+id/login"
+				android:layout_width="wrap_content"
+				android:layout_height="40dp"
+				android:layout_gravity="center_horizontal"
+				android:layout_marginTop="@dimen/default_middle_margin"
+				android:text="@string/login"
+				app:background="@color/colorPrimary" />
+
+			<Spinner
+				android:id="@+id/existingAccList"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"
+				android:prompt="@string/existing_accounts"
+				style="@style/AppTheme"
+				android:background="#ffffff" />
+		</LinearLayout>
+
+		<View
+			android:layout_width="0dp"
+			android:layout_height="0dp"
+			android:layout_weight="1" />
+	</LinearLayout>
 </FrameLayout>

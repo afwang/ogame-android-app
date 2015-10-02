@@ -36,13 +36,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.wikaba.ogapp.AgentActions;
 import com.wikaba.ogapp.AgentService;
-import com.wikaba.ogapp.ApplicationController;
 import com.wikaba.ogapp.R;
 import com.wikaba.ogapp.database.AccountsManager;
-import com.wikaba.ogapp.events.OnLoggedEvent;
-import com.wikaba.ogapp.events.OnLoginEvent;
-import com.wikaba.ogapp.events.OnLoginRequested;
+import com.wikaba.ogapp.events.OnAgentUpdateEvent;
 import com.wikaba.ogapp.ui.main.HomeActivity;
 import com.wikaba.ogapp.utils.AccountCredentials;
 import com.wikaba.ogapp.utils.FragmentStackManager;
@@ -62,8 +60,6 @@ import de.greenrobot.event.ThreadMode;
  * Created by kevinleperf on 03/07/15.
  */
 public class NoAccountActivity extends SystemFittableActivity {
-
-	private static final int ALL_ACCS_LOADER_ID = 0;
 
 	private MaterialDialog _login_progress;
 
@@ -106,12 +102,12 @@ public class NoAccountActivity extends SystemFittableActivity {
 		uniSpinner.setAdapter(adapter);
 
 		String account_spinner = getString(R.string.account_spinner);
-		existingAccountsCredentials = AccountsManager.getInstance(this).getAllAccountCredentials();
+		existingAccountsCredentials = AccountsManager.getInstance().getAllAccountCredentials();
 		String[] accountNames = new String[existingAccountsCredentials.size() + 1];
 		accountNames[0] = getString(R.string.select_an_account);
 		int i = 1;
 		for (AccountCredentials cred : existingAccountsCredentials) {
-			accountNames[i] = String.format(account_spinner, cred.username, cred.universe);
+			accountNames[i] = String.format(account_spinner, cred.getUsername(), cred.getUniverse());
 			i++;
 		}
 		adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, accountNames);
@@ -124,7 +120,7 @@ public class NoAccountActivity extends SystemFittableActivity {
 				if (position >= 0) {
 					AccountCredentials cred = existingAccountsCredentials.get(position);
 					//TODO ?
-					EventBus.getDefault().postSticky(new OnLoginRequested(cred));
+					loginToAccount(cred);
 				}
 			}
 
@@ -210,8 +206,8 @@ public class NoAccountActivity extends SystemFittableActivity {
 			int rowPosition = info.position;
 			AccountCredentials creds = existingAccountsCredentials.get(rowPosition);
 
-			AccountsManager dbmanager = ApplicationController.getInstance().getAccountsManager();
-			dbmanager.removeAccount(creds.universe, creds.username);
+			AccountsManager dbmanager = AccountsManager.getInstance();
+			dbmanager.removeAccount(creds.getUniverse(), creds.getUsername());
 			existingAccountsCredentials.remove(rowPosition);
 
 			//TODO NOTIFY SPINNER CHANGE
@@ -225,7 +221,9 @@ public class NoAccountActivity extends SystemFittableActivity {
 		String username = usernameField.getText().toString().trim();
 		String passwd = passwdField.getText().toString().trim();
 		String lang = langField.getText().toString().trim();
-		if (lang == null || lang.length() == 0) lang = "en";
+		if (lang == null || lang.length() == 0) {
+			lang = "en";
+		}
 		View selectedView = uniSpinner.getSelectedView();
 		if (selectedView == null || username.length() == 0 || passwd.length() == 0) {
 			//TODO SHOW SNACKBAR
@@ -236,11 +234,20 @@ public class NoAccountActivity extends SystemFittableActivity {
 		String universe = selectedText.getText().toString();
 
 		AccountCredentials acc = new AccountCredentials();
-		acc.universe = universe;
-		acc.username = username;
-		acc.passwd = passwd;
-		acc.lang = lang;
-		addAccount(acc);
+		acc.setUniverse(universe);
+		acc.setUsername(username);
+		acc.setPasswd(passwd);
+		acc.setLang(lang);
+		//TODO: Replace screen with ProgressBar
+		loginToAccount(acc);
+	}
+
+	private void loginToAccount(AccountCredentials credentials) {
+		Intent i = new Intent(this, AgentService.class);
+		i.putExtra(AgentActions.ACCOUNT_CREDENTIAL_KEY, credentials);
+		i.putExtra(AgentActions.OGAME_AGENT_KEY, credentials.getId());
+		i.putExtra(AgentActions.AGENT_ACTION_KEY, AgentActions.LOGIN);
+		startService(i);
 	}
 
 	@OnClick(R.id.pw_checkbox)
@@ -251,47 +258,21 @@ public class NoAccountActivity extends SystemFittableActivity {
 		passwdField.setInputType(inputType);
 	}
 
-
-	public void addAccount(AccountCredentials creds) {
-		AccountsManager manager = ApplicationController.getInstance().getAccountsManager();
-		long accountRowId = manager.addAccount(creds.universe, creds.username, creds.passwd, creds.lang);
-
-		if (accountRowId < 0) {
+	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
+	public void onAgentUpdated(OnAgentUpdateEvent event) {
+		EventBus.getDefault().removeStickyEvent(event);
+		boolean loggedIn = event.getWasSuccessful();
+		if(!loggedIn) {
+			//TODO: Return state of the activity to initial state (login fields ready)
+			//TODO: Send toast saying we were unable to log in.
 			return;
 		}
 
-		AccountCredentials activeAccount = new AccountCredentials(creds);
-		activeAccount.id = accountRowId;
-
-		//TODO OPEN LOADER
-		EventBus.getDefault().post(new OnLoginRequested(activeAccount));
-	}
-
-	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
-	public void onProgressLogin(OnLoginEvent event) {
-		if (event.isPendingLogin()) {
-			if (_login_progress == null || !_login_progress.isShowing()) {
-				_login_progress = new MaterialDialog.Builder(this)
-						.title(R.string.login)
-						.content(R.string.please_wait)
-						.progress(true, 0)
-						.cancelable(false)
-						.show();
-			}
-		} else {
-			dismissLogin();
-		}
-	}
-
-	@Subscribe(threadMode = ThreadMode.MainThread, sticky = true)
-	public void onLoggedEvent(OnLoggedEvent event) {
-		if (event.isConnected()) {
-			startOverviewActivity();
-		} else {
-			//possible race condition with http service returning false so dismiss any dialog possible
-			//which could prevent app usability during onCOnfigurationChanged
-			dismissLogin();
-		}
+		long agentKey = event.getAgentManagerKey();
+		Intent i = new Intent(this, HomeActivity.class);
+		i.putExtra(HomeActivity.ACCOUNT_KEY, agentKey);
+		i.setFlags(i.getFlags() | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		startActivity(i);
 	}
 
 	private void dismissLogin() {
@@ -299,12 +280,5 @@ public class NoAccountActivity extends SystemFittableActivity {
 			_login_progress.dismiss();
 		}
 		_login_progress = null;
-	}
-
-	private void startOverviewActivity() {
-		Intent intent = new Intent(this, HomeActivity.class);
-		startActivity(intent);
-		finish();
-		overridePendingTransition(0, 0);
 	}
 }

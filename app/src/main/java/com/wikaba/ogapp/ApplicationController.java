@@ -21,9 +21,8 @@ package com.wikaba.ogapp;
 
 import android.app.Application;
 
-import com.wikaba.ogapp.database.AccountsManager;
-import com.wikaba.ogapp.database.CookiesManager;
 import com.wikaba.ogapp.database.DatabaseManager;
+import com.wikaba.ogapp.utils.OgameAgentManager;
 
 /**
  * Created by kevinleperf on 18/07/15.
@@ -36,9 +35,7 @@ public class ApplicationController extends Application {
 	}
 
 	private DatabaseManager _database_manager;
-	private AccountsManager _accounts_manager;
-	private CookiesManager _cookies_manager;
-
+	private OgameAgentManager agentManager;
 
 	@Override
 	public void onCreate() {
@@ -47,17 +44,10 @@ public class ApplicationController extends Application {
 		_static_application_controller = this;
 		_database_manager = DatabaseManager.getInstance();
 		_database_manager.startSession(this);
-		_accounts_manager = AccountsManager.getInstance(this);
-		_cookies_manager = CookiesManager.getInstance(this);
+		agentManager = OgameAgentManager.getInstance();
 	}
 
-	public AccountsManager getAccountsManager() {
-		return _accounts_manager;
+	public OgameAgentManager getAgentManager() {
+		return agentManager;
 	}
-
-	public CookiesManager getCookiesManager() {
-		return _cookies_manager;
-	}
-
-
 }

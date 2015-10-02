@@ -20,70 +20,62 @@
 package com.wikaba.ogapp.agent;
 
 import com.squareup.okhttp.Interceptor;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
+import java.net.CookieStore;
+import java.net.URI;
 import java.util.HashMap;
-
-import retrofit.RequestInterceptor;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by kevinleperf on 19/07/15.
  */
-public class ReceivedCookiesInterceptor implements RequestInterceptor, Interceptor {
-    HashMap<String, String> _cookies = new HashMap<>();
+public class ReceivedCookiesInterceptor implements Interceptor {
 
-    public void addCookie(String name, String content) {
-        _cookies.put(name, content);
-    }
+	private CustomCookieManager cm;
+	private HashMap<String, String> _cookies = new HashMap<>();
 
-    public void cleanCookie() {
-        _cookies.clear();
-    }
+	public ReceivedCookiesInterceptor() {
+		cm = new CustomCookieManager();
+	}
 
-    public HashMap<String, String> getCookies() {
-        return _cookies;
-    }
+	public HashMap<String, String> getCookies() {
+		return _cookies;
+	}
 
-    public void deleteCookie(String name) {
-        _cookies.remove(name);
-    }
+	public CookieStore getCookieStore() {
+		return cm.getCookieStore();
+	}
 
-    /**
-     * Intercept emission
-     *
-     * @param request
-     */
-    @Override
-    public void intercept(RequestInterceptor.RequestFacade request) {
-        String cookies = "";
-        for (String header : _cookies.values()) {
-            if (cookies.length() > 0) cookies += "; ";
-            cookies += header.split(";")[0];
-        }
-        if (cookies.length() > 0) request.addHeader("Cookie", cookies);
+	/**
+	 * Client interceptor
+	 *
+	 * @param chain
+	 * @return
+	 * @throws IOException
+	 */
+	@Override
+	public Response intercept(Chain chain) throws IOException {
+		Request req = chain.request();
+		Map<String, List<String>> requestHeaders = req.headers().toMultimap();
+		URI uri = req.uri();
+		Map<String, List<String>> cookieHeaders = cm.get(uri, requestHeaders);
+		if(cookieHeaders != null && cookieHeaders.size() > 0) {
+			Request.Builder newReq = req.newBuilder();
+			String cookieKey = "Cookie";
+			List<String> cookieValue = cookieHeaders.get(cookieKey);
+			newReq.addHeader(cookieKey, cookieValue.get(0));
+			req = newReq.build();
+		}
 
-    }
+		Response originalResponse = chain.proceed(req);
+		Map<String, List<String>> responseHeaders = originalResponse.headers().toMultimap();
 
-    /**
-     * Client interceptor
-     *
-     * @param chain
-     * @return
-     * @throws IOException
-     */
-    @Override
-    public Response intercept(Chain chain) throws IOException {
-        com.squareup.okhttp.Response originalResponse = chain.proceed(chain.request());
+		cm.put(uri, responseHeaders);
 
-        if (!originalResponse.headers("Set-Cookie").isEmpty()) {
-
-            for (String header : originalResponse.headers("Set-Cookie")) {
-                String name = header.split("=")[0].trim();
-                _cookies.put(name, header);
-            }
-        }
-
-        return originalResponse;
-    }
+		return originalResponse;
+	}
 }
